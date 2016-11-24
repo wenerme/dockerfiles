@@ -1,0 +1,15 @@
+sudo: required
+
+services:
+  - docker
+
+script:
+  - echo Building images
+  - docker build -t wener/base base
+  - docker build -t wener/zentao zentao
+
+after_success:
+  - echo Push changed
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker push wener/base
+  - docker push wener/zentao
