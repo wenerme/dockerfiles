@@ -7,6 +7,8 @@
 * 使用国内镜像
     * ubuntu
     * alpine
+    * node
+    <!--* maven-->
 * 尽可能的使用 alpine 作为基础镜像
 * 基于 Github 提交自动构建
 

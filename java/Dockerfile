@@ -33,4 +33,8 @@ RUN cd /usr/share \
 
 ENV MAVEN_HOME /usr/share/maven
 
-ENTRYPOINT ["java"]
+# Add bash
+RUN apk add --no-cache bash
+
+ENTRYPOINT ["bin/bash"]
+CMD ["java"]
