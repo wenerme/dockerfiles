@@ -32,3 +32,5 @@ RUN cd /usr/share \
     && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
 ENV MAVEN_HOME /usr/share/maven
+
+ENTRYPOINT ["java"]
