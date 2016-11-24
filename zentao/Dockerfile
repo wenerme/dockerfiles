@@ -8,7 +8,7 @@ RUN apt-get install -y wget && \
 
 ENV ZENTAO_VERSION="8.3.1"
 RUN wget -qO- http://dl.cnezsoft.com/zentao/$ZENTAO_VERSION/ZenTaoPMS.$ZENTAO_VERSION.zbox_64.tar.gz \
-    | tar -zxvC /opt
+    | tar -zxC /opt
 
 COPY ./entrypoint.sh /
 
