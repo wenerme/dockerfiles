@@ -7,9 +7,13 @@ script:
   - echo Building images
   - docker build -t wener/base base
   - docker build -t wener/zentao zentao
+  - docker build -t wener/nginx nginx
+  - docker build -t wener/java java
 
 after_success:
   - echo Push changed
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - docker push wener/base
   - docker push wener/zentao
+  - docker push wener/nginx
+  - docker push wener/java

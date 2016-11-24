@@ -1,5 +1,5 @@
 FROM        alpine:3.4
-MAINTAINER  wener <wener@wener.me>
+MAINTAINER  wener<wener@wener.me>
 
 ENV ALPINE_VERSION=3.4
 
