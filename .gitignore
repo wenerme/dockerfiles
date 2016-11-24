@@ -17,5 +17,5 @@ _book
 *.mobi
 *.pdf
 *.iml
-
+.idea
 ignored
