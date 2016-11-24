@@ -1,5 +1,12 @@
-FROM        wener/base
+FROM        node:7-alpine
 
 MAINTAINER  wener<wener@wener.me>
 
-ENV VERSION=v7.2.0 NPM_VERSION=3
+RUN npm config set registry https://registry.npm.taobao.org
+
+# Global install yarn package manager
+RUN npm set progress=false && \
+    npm install -g --silent --progress=false yarn && \
+    npm cache clean
+
+ENTRYPOINT ["node"]

@@ -25,6 +25,7 @@ script:
   - docker build -t wener/java java
   - docker build -t wener/ubuntu ubuntu
   - docker build -t wener/zentao zentao
+  - docker build -t wener/node node
 
 after_success:
   - echo Push images
@@ -34,3 +35,4 @@ after_success:
   - docker push wener/java
   - docker push wener/ubuntu
   - docker push wener/zentao
+  - docker push wener/node
