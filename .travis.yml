@@ -19,13 +19,17 @@ before_install:
   - if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
 
 script:
+  - set -e
+  - set -o xtrace
   - echo Build images
   - docker build -t wener/base base
+  - docker build -t wener/edge edge
   - docker build -t wener/nginx nginx
   - docker build -t wener/java java
   - docker build -t wener/ubuntu ubuntu
   - docker build -t wener/zentao zentao
   - docker build -t wener/node node
+  - docker build -t wener/autossh autossh
 
 after_success:
   - echo Push images
@@ -36,3 +40,5 @@ after_success:
   - docker push wener/ubuntu
   - docker push wener/zentao
   - docker push wener/node
+  - docker push wener/edge
+  - docker push wener/autossh
