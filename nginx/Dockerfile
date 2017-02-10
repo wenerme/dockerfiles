@@ -1,7 +1,7 @@
 FROM        wener/base
 MAINTAINER  wener<wener@wener.me>
 
-RUN apk --no-cache add nginx-lua && \
+RUN apk --no-cache add nginx-mod-http-lua && \
     chown -R nginx:www-data /var/lib/nginx && \
     mkdir -p /run/nginx/
 

@@ -1,6 +1,10 @@
-FROM        node:7-alpine
+FROM        wener/base
 
 MAINTAINER  wener<wener@wener.me>
+
+ENV NODE_VERSION 6.9.2-r1
+ENV NODE_ALPINE_VERSION 6.9.2-r1
+RUN apk add --no-cache nodejs="$NODE_ALPINE_VERSION"
 
 RUN npm config set registry https://registry.npm.taobao.org
 

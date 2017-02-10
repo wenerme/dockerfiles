@@ -14,7 +14,7 @@
 
 ## 镜像列表
 * base
-    * alpine:3.4
+    * alpine:3.5
     * 镜像: http://mirrors.aliyun.com/alpine
 * nginx
     * base
