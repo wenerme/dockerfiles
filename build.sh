@@ -8,7 +8,7 @@ export COMMENT=${COMMENT:-`command -v git > /dev/null && git log -1 --pretty=%B 
 
 # registry.cn-hangzhou.aliyuncs.com
 # registry.wener.me
-DOCKER_REGISTRY=${DOCKER_REGISTRY:-registry.wener.me}
+DOCKER_REGISTRY=${DOCKER_REGISTRY:-docker.io}
 GROUP=${GROUP:-wener}
 
 echo Build at `date +"%Y%m%d%H%M"`- $BRANCH $COMMIT
