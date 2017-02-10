@@ -13,7 +13,7 @@ GROUP=${GROUP:-wener}
 
 echo Build at `date +"%Y%m%d%H%M"`- $BRANCH $COMMIT
 echo "\t$COMMENT"
-names=${1:-"base edge ubuntu nginx java node builder autossh zentao"}
+names=${1:-"base edge ubuntu nginx java node builder autossh zentao caddy"}
 for name in $names;
 do
     REPO=$GROUP/$name

@@ -12,10 +12,10 @@
 * 尽可能的使用 alpine 作为基础镜像
 * 基于 Github 提交自动构建
 
-## 镜像列表
+## Dockerfiles
 * base
     * alpine:3.5
-    * 镜像: http://mirrors.aliyun.com/alpine
+    * Mirror http://mirrors.aliyun.com/alpine
 * nginx
     * base
     * nginx-lua
@@ -24,11 +24,29 @@
     * OpenJDK 8
     * Maven 3.3.9
 * ubuntu
-    * 镜像: http://mirrors.aliyun.com/ubuntu/
+    * Mirror http://mirrors.aliyun.com/ubuntu/
 * zentao
     * ubuntu
     * zentao 8.3.1
 * node
-    * node:7-alpine
+    * base
     * yarn
-    * 镜像: https://registry.npm.taobao.org
+    * NPM Mirror https://registry.npm.taobao.org
+* caddy
+    * base
+    * full
+        * Will all plugins
+    * dns
+        * full
+        * DNS
+    * php
+        * php7-fpm
+* builder
+    * devtools for build projects
+    * docker
+    * gcc
+    * python
+    * node
+    * golang
+    * java
+    * maven
