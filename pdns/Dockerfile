@@ -1,0 +1,14 @@
+FROM wener/base
+
+MAINTAINER wener<wenermail@gmail.com>
+
+RUN apk add --no-cache pdns pdns-recursor pdns-backend-mysql pdns-backend-sqlite3 pdns-backend-pgsql
+# We need nsupdate, dig
+RUN apk add --no-cache bind-tools
+
+# Expected pdns.conf in /data
+VOLUME /data
+WORKDIR /data
+EXPOSE 53 53/udp 8080
+
+CMD [ "pdns_server", "--daemon=no", "--config-dir=/data" ]

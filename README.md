@@ -16,6 +16,13 @@
 * base
     * alpine:3.5
     * Mirror http://mirrors.aliyun.com/alpine
+    * Package: openssh-client curl busybox file
+    * Link /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2, can run go binary.
+    * [ ] :bash
+        * Bash as default shell
+* edge
+    * alpine:edge
+    * Mirror http://mirrors.aliyun.com/alpine
 * nginx
     * base
     * nginx-lua
@@ -31,11 +38,11 @@
 * node
     * base
     * yarn
-    * NPM Mirror https://registry.npm.taobao.org
+    * Mirror https://registry.npm.taobao.org
 * caddy
     * base
     * full
-        * Will all plugins
+        * With all plugins
     * dns
         * full
         * DNS
@@ -50,3 +57,10 @@
     * golang
     * java
     * maven
+* pdns
+    * PowerDNS
+    * backend mysql,sqlite,pgsql
+    * PowerDNS Recursor
+* autossh
+* [ ] shadowsocks
+    * manager
