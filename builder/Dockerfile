@@ -32,7 +32,7 @@ RUN apk add --no-cache python2="$PYTHON2_ALPINE_VERSION" python2-dev="$PYTHON2_A
 #########
 # GCC
 #########
-RUN apk add --no-cache gcc g++ autoconf automake
+RUN apk add --no-cache gcc g++ autoconf automake make cmake
 
 #########
 # Docker
