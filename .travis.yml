@@ -22,7 +22,6 @@ script:
   - set -e
   - set -o xtrace
   - echo Build images
-  - docker build -t wener/base base
   - SKIP_PUSH=true ./build.sh
 
 after_success:

@@ -64,3 +64,6 @@
 * autossh
 * [ ] shadowsocks
     * manager
+* php
+    * :5
+    * :7
