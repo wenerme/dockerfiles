@@ -18,7 +18,7 @@
     * Mirror http://mirrors.aliyun.com/alpine
     * Package: openssh-client curl busybox file
     * Link /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2, can run go binary.
-    * [ ] :bash
+    * :bash
         * Bash as default shell
 * edge
     * alpine:edge

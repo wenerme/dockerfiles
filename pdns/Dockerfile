@@ -9,6 +9,6 @@ RUN apk add --no-cache bind-tools
 # Expected pdns.conf in /data
 VOLUME /data
 WORKDIR /data
-EXPOSE 53 53/udp 8080
+EXPOSE 53 53/udp 80 8080
 
 CMD [ "pdns_server", "--daemon=no", "--config-dir=/data" ]

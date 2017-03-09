@@ -18,8 +18,8 @@ EXPOSE 80 443 2015
 VOLUME /root/.caddy
 WORKDIR /srv
 
-COPY base/Caddyfile /etc/Caddyfile
-COPY base/index.html /srv/index.html
+COPY caddy/Caddyfile /etc/Caddyfile
+COPY caddy/index.html /srv/index.html
 
 ENTRYPOINT ["/usr/bin/caddy"]
 CMD ["--conf", "/etc/Caddyfile", "--log", "stdout"]

@@ -1,4 +1,4 @@
-FROM        wener/base
+FROM        wener/base:bash
 MAINTAINER  wener<wener@wener.me>
 
 # Default to UTF-8 file.encoding
@@ -23,17 +23,5 @@ RUN set -x \
 	&& apk add --no-cache \
 		openjdk8="$JAVA_ALPINE_VERSION" \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
-
-# Add maven
-ENV MAVEN_VERSION=3.3.9
-RUN cd /usr/share \
-    && wget -qO- http://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | tar xzf - \
-    && mv /usr/share/apache-maven-$MAVEN_VERSION /usr/share/maven \
-    && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
-
-ENV MAVEN_HOME /usr/share/maven
-
-# Add bash
-RUN apk add --no-cache bash
 
 CMD ["java"]
