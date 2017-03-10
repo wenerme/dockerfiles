@@ -1,4 +1,4 @@
-FROM        wener/java
+FROM        wener/java:maven
 MAINTAINER  wener<wener@wener.me>
 
 #########

@@ -14,29 +14,30 @@
 
 ## Dockerfiles
 * base
-    * alpine:3.5
+    * FROM alpine:3.5
     * Mirror http://mirrors.aliyun.com/alpine
     * Package: openssh-client curl busybox file
     * Link /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2, can run go binary.
     * :bash
         * Bash as default shell
 * edge
-    * alpine:edge
+    * FROM alpine:edge
     * Mirror http://mirrors.aliyun.com/alpine
 * nginx
-    * base
+    * FROM base
     * nginx-lua
 * java
-    * base
+    * FROM base:bash
     * OpenJDK 8
-    * Maven 3.3.9
+    * :maven
+        * Maven 3.3.9
 * ubuntu
     * Mirror http://mirrors.aliyun.com/ubuntu/
 * zentao
-    * ubuntu
+    * FROM ubuntu
     * zentao 8.3.1
 * node
-    * base
+    * FROM base
     * yarn
     * Mirror https://registry.npm.taobao.org
 * caddy
@@ -44,24 +45,26 @@
     * full
         * With all plugins
     * dns
-        * full
+        * FROM full
         * DNS
     * php
+        * FROM full
         * php7-fpm
 * builder
+    * FROM java:maven
     * devtools for build projects
     * docker
     * gcc
     * python
     * node
     * golang
-    * java
-    * maven
 * pdns
+    * FROM base
     * PowerDNS
     * backend mysql,sqlite,pgsql
     * PowerDNS Recursor
 * autossh
+    * FROM base
 * [ ] shadowsocks
     * manager
 * php
