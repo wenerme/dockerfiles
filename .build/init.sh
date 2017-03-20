@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-set -o xtrace
+[ -z "$VERBOSE" ] || set -o xtrace
 
 echo Load build init script
 builddocker(){
