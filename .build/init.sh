@@ -26,6 +26,7 @@ buildreport(){
 
 builddocker_dirs(){
 local names="$@"
+echo "Building docker dir: $names"
 for name in $names;
 do
     REPO=$GROUP/$name
@@ -63,6 +64,7 @@ fi
 builddocker_vers(){
 local NAME="`basename $PWD`"
 local names="$@"
+echo "Building docker versions: $names"
 for ver in $names; do
     if [ "$ver" = "$NAME" ]; then
     REPO=$GROUP/$NAME

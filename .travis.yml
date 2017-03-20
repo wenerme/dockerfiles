@@ -20,7 +20,6 @@ before_install:
 
 script:
   - set -e
-  - set -o xtrace
   - echo Build images
   - SKIP_PUSH=true ./build.sh
 
