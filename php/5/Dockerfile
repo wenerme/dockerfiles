@@ -8,7 +8,7 @@ RUN apk --no-cache add bash && \
 
 RUN apk --no-cache add php5 &&\
     apk --no-cache add \
-    php5-{bz2,calendar,ctype,curl,dom,exif,ftp,gd,gettext,gmp,iconv,json,ldap,memcache,mysql,mysqlnd,mysqli} \
+    php5-{bz2,calendar,ctype,curl,dom,exif,ftp,gd,gettext,gmp,iconv,json,ldap,memcache,mysql,mysqli} \
     php5-{odbc,openssl,pcntl,pdo,pdo_mysql,pdo_odbc,pdo_sqlite,phar,posix,shmop,snmp,soap,sockets,sqlite3,sysvmsg} \
     php5-{sysvsem,sysvshm,wddx,xml,xmlreader,xmlrpc,xsl,zip,zlib} \
     php5-fpm
