@@ -12,3 +12,8 @@ forward:
   expose:
     - 53/tcp
 ```
+
+```bash
+# Or use ssh with restart
+docker run -d --restart always -v $HOME/.ssh/:/root/.ssh/ ssh -vNL :53:8.8.8.8:53 user@hosh
+```

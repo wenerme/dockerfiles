@@ -1,5 +1,9 @@
 #!/bin/sh
 set -e
-set -o xtrace
 
-eval sshpass -e -v ssh $SSH_COMMANDS $*
+if [ "$1" == "ssh"* ]; then
+    # Handle ssh command
+    "$@"
+else
+    eval sshpass -e -v ssh $SSH_COMMANDS $*
+fi
