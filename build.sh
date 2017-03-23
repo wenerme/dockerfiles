@@ -3,6 +3,6 @@
 { [ -f ../.build/init.sh ] && . ../.build/init.sh; } || true;
 buildreport || exit
 
-names=${1:-"base edge ubuntu nginx java node builder autossh piwik caddy pdns nmap"}
+names=${1:-"base edge nginx java node autossh piwik pdns nmap tinyproxy"}
 builddocker_dirs $names
 
