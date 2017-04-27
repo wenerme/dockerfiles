@@ -3,9 +3,6 @@ set -e
 [ -z "$VERBOSE" ] || set -o xtrace
 
 echo Load build init script
-builddocker(){
-    echo Trying to build;
-}
 
 command -v git > /dev/null || {
 echo "NOTE: Git not found"
@@ -24,20 +21,40 @@ buildreport(){
     echo "Building `date +"%Y%m%d%H%M"` ${BRANCH}@${COMMIT} : ${COMMENT}"
 }
 
+# Build container in current dir
+builddocker(){
+local name=$(basename $PWD)
+local repo=${REPO:-$GROUP/$name}
+echo "Building container: $repo in '$PWD'"
+
+[ -f 'Dockerfile' ] || { echo No Dockerfile in "'$PWD'";exit 1; }
+[ -f "before.sh" ] && echo Call before hook && ./before.sh || true
+
+if [ -z "${BUILD_IN_PARENT}" ]; then
+    docker build -t ${repo} .
+else
+    ( cd ..; docker build -t ${repo} ${name} )
+fi
+
+[ -f "after.sh" ] && echo Call after hook && ./after.sh || true
+
+}
+
 builddocker_dirs(){
 local names="$@"
 echo "Building docker dir: $names"
-for name in $names;
+for name in ${names};
 do
-    REPO=$GROUP/$name
-    echo Buiding $REPO
 
+    [ -f "$name/before.sh" ] && echo Call before hook && ${name}/before.sh
     if [ -f "$name/build.sh" ];
     then
-        $name/build.sh
+        echo Call custom build
+        ${name}/build.sh
     else
-        docker build -t $REPO $name
+        ( cd ${name} && builddocker )
     fi
+    [ -f "$name/after.sh" ] && echo Call after hook && ${name}/after.sh
 
 done
 
@@ -62,26 +79,27 @@ fi
 }
 
 builddocker_vers(){
-local NAME="`basename $PWD`"
+local name="`basename $PWD`"
 local names="$@"
 echo "Building docker versions: $names"
-for ver in $names; do
-    if [ "$ver" = "$NAME" ]; then
-    REPO=$GROUP/$NAME
+for ver in ${names}; do
+    # Use latest
+    if [ "$ver" = "$name" ]; then
+        REPO="$GROUP/$name"
     else
-    REPO=$GROUP/$NAME:$ver
+        REPO="$GROUP/$name:$ver"
     fi
-
-    docker build -t $REPO -f $ver/Dockerfile .
+    echo "Build version $REPO"
+    ( cd ${ver} && builddocker )
 done
 
 if [ -z "$SKIP_PUSH" ]; then
 
 for ver in $names; do
-    if [ "$ver" = "$NAME" ]; then
-    REPO=$GROUP/$NAME
+    if [ "$ver" = "$name" ]; then
+    REPO=$GROUP/$name
     else
-    REPO=$GROUP/$NAME:$ver
+    REPO=$GROUP/$name:$ver
     fi
 
     [ "`docker images $REPO --format '{{.ID}}' | head -n1`" != "`docker images $DOCKER_REGISTRY/$REPO --format '{{.ID}}' | head -n1`" ] && {

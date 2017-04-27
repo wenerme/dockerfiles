@@ -6,4 +6,4 @@ RUN apk --no-cache add bash && \
     mv /bin/sh /bin/ash && \
     ln -s /bin/bash /bin/sh
 
-COPY bash/root /
+COPY root /

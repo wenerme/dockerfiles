@@ -1,4 +1,4 @@
-FROM        wener/edge
+FROM        wener/base:edge
 MAINTAINER  wener<wener@wener.me>
 
 RUN apk add --no-cache --update sshpass

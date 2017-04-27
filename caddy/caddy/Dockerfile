@@ -1,7 +1,7 @@
 FROM wener/base
 MAINTAINER wener <wener@wener.me>
 
-LABEL caddy_version="0.9.5" architecture="amd64"
+LABEL caddy_version="0.10.0" architecture="amd64"
 
 ARG plugins=git
 
@@ -18,8 +18,8 @@ EXPOSE 80 443 2015
 VOLUME /root/.caddy
 WORKDIR /srv
 
-COPY caddy/Caddyfile /etc/Caddyfile
-COPY caddy/index.html /srv/index.html
+COPY common/Caddyfile /etc/Caddyfile
+COPY common/index.html /srv/index.html
 
 ENTRYPOINT ["/usr/bin/caddy"]
 CMD ["--conf", "/etc/Caddyfile", "--log", "stdout"]

@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver base
-vers=${1:-"base bash"}
+vers=${1:-"base bash edge"}
 builddocker_vers $vers
