@@ -1,4 +1,4 @@
-FROM ubuntu:yakkety
+FROM ubuntu:xenial
 
 MAINTAINER wener<wenermail@gmail.com>
 # Use aliyun ubuntu mirrors to replace original sources.list
