@@ -2,7 +2,7 @@ FROM        wener/java:maven
 MAINTAINER  wener<wener@wener.me>
 
 ENV IVY_HOME /cache
-ENV GRADLE_VERSION 3.4.1
+ENV GRADLE_VERSION 4.0.1
 ENV GRADLE_HOME /usr/local/gradle
 ENV PATH ${PATH}:${GRADLE_HOME}/bin
 
