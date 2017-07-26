@@ -8,6 +8,7 @@ RUN install-plugins.sh \
     ssh-slaves workflow-aggregator copy-to-slave \
     html5-notifier-plugin piwikanalytics \
     ldap matrix-auth role-strategy ldapemail authorize-project \
+    saferestart \
     # SCM \
     git git-changelog gitea workflow-multibranch git-parameter \
     # Build triggers \
