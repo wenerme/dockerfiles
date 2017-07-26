@@ -33,7 +33,8 @@ echo "Building container: $repo in '$PWD'"
 if [ -z "${BUILD_IN_PARENT}" ]; then
     docker build -t ${repo} .
 else
-    ( cd ..; docker build -t ${repo} ${name} )
+    echo "Build in parent dir $(realpath $PWD/..)"
+    ( cd ..; docker build -t ${repo} . -f ${name}/Dockerfile )
 fi
 
 [ -f "after.sh" ] && echo Call after hook && ./after.sh || true
@@ -116,4 +117,8 @@ fi
 builddocker_init_ver(){
 NAME=$1
 [ "`basename $PWD`" == "$NAME" ] || cd $NAME
+
+# Reset configs
+# 在上级目录构建
+unset BUILD_IN_PARENT
 }
