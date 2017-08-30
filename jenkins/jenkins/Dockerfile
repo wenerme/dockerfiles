@@ -8,8 +8,3 @@ MAINTAINER wener<wener AT wener.me>
 RUN install-plugins.sh \
     blueocean ldap git docker
 
-USER root
-RUN echo http://mirrors.aliyun.com/alpine/v$(head -c3 /etc/alpine-release)/main/ > /etc/apk/repositories; \
-    echo http://mirrors.aliyun.com/alpine/v$(head -c3 /etc/alpine-release)/community/ >> /etc/apk/repositories
-RUN apk add --no-cache maven docker
-USER jenkins

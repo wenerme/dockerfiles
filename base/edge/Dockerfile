@@ -4,6 +4,11 @@ MAINTAINER  wener<wener@wener.me>
 RUN echo http://mirrors.aliyun.com/alpine/edge/main/ > /etc/apk/repositories; \
     echo http://mirrors.aliyun.com/alpine/edge/community/ >> /etc/apk/repositories
 
+# Use bash as default shell
+RUN apk --no-cache add bash && \
+    mv /bin/sh /bin/ash && \
+    ln -s /bin/bash /bin/sh
+
 # Base tools
 RUN apk add --no-cache openssh-client curl busybox file
 
