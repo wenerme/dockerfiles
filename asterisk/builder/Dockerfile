@@ -8,7 +8,7 @@ RUN apk add --no-cache \
     make abuild gcc g++ perl \
     # Kernel dev
     linux-headers \
-    # or use linux-vanilla{,-dev} for kernel
-    linux-hardened{,-dev}
+    linux-headers \
+    linux-hardened{,-dev} linux-vanilla{,-dev}
 
 WORKDIR /src
