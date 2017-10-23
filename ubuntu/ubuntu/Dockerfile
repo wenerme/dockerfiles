@@ -21,3 +21,4 @@ deb-src http://mirrors.aliyun.com/ubuntu/ $DISTRIB_CODENAME-backports main restr
 RUN apt-get update && apt-get install -y \
     nano \
     && rm -rf /var/lib/apt/lists/*
+COPY root /

@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver ubuntu
-vers=${1:-"ubuntu precise-i386 r1d"}
+vers=${1:-"ubuntu"}
 builddocker_vers $vers
