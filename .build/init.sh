@@ -1,5 +1,19 @@
 #!/bin/bash
 set -e
+
+# ============
+# Params
+# ============
+# $VERSION
+#   Show more verbose
+# $DOCKER_REGISTRY
+#   Docker push registry
+# $BUILD_SKIP_PUSH
+#   Do not push after build
+# $BUILD_IN_PARENT
+#   Run docker build in parent directory
+#
+
 [ -z "$VERBOSE" ] || set -o xtrace
 
 echo Load build init script
@@ -16,6 +30,7 @@ COMMENT=${COMMENT:-`git log -1 --pretty=%B | tr '\n' ' '`}
 # registry.wener.me
 DOCKER_REGISTRY=${DOCKER_REGISTRY:-docker.io}
 GROUP=${GROUP:-wener}
+BUILD_GOTO_VER_DIR=${BUILD_GOTO_VER_DIR:-1}
 
 buildreport(){
     echo "Building `date +"%Y%m%d%H%M"` ${BRANCH}@${COMMIT} : ${COMMENT}"
@@ -59,7 +74,7 @@ do
 
 done
 
-if [ -z "$SKIP_PUSH" ]; then
+if [ -z "$BUILD_SKIP_PUSH" ]; then
 
 for name in $names;
 do
@@ -94,7 +109,7 @@ for ver in ${names}; do
     ( cd ${ver} && builddocker )
 done
 
-if [ -z "$SKIP_PUSH" ]; then
+if [ -z "$BUILD_SKIP_PUSH" ]; then
 
 for ver in $names; do
     if [ "$ver" = "$name" ]; then
