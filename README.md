@@ -11,6 +11,7 @@
     <!--* maven-->
 * 尽可能的使用 alpine 作为基础镜像
 * 基于 Github 提交自动构建
+* 提供非常方便的构建脚本
 
 ## Dockerfiles
 * base
@@ -70,3 +71,14 @@
 * php
     * :5
     * :7
+
+## Dev
+
+```bash
+# Show help message
+HELP=1 ./build.sh
+# Build image and push
+./build.sh mongo
+# Skip push
+BUILD_SKIP_PUSH=1 ./build.sh mongo
+```

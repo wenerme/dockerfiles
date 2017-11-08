@@ -1,37 +1,6 @@
 #!/bin/bash
 set -e
 
-# ============
-# Params
-# ============
-# $VERSION
-#   Show more verbose
-# $DOCKER_REGISTRY
-#   Docker push registry
-# $BUILD_SKIP_PUSH
-#   Do not push after build
-# $BUILD_IN_PARENT
-#   Run docker build in parent directory
-#
-
-[ -z "$VERBOSE" ] || set -o xtrace
-
-echo Load build init script
-
-command -v git > /dev/null || {
-echo "NOTE: Git not found"
-alias git="echo Git Not Found:"
-}
-BRANCH=${BRANCH:-`git rev-parse --abbrev-ref HEAD`}
-COMMIT=${COMMIT:-`git log --pretty=format:'%h' -n 1`}
-COMMENT=${COMMENT:-`git log -1 --pretty=%B | tr '\n' ' '`}
-
-# registry.cn-hangzhou.aliyuncs.com
-# registry.wener.me
-DOCKER_REGISTRY=${DOCKER_REGISTRY:-docker.io}
-GROUP=${GROUP:-wener}
-BUILD_GOTO_VER_DIR=${BUILD_GOTO_VER_DIR:-1}
-
 buildreport(){
     echo "Building `date +"%Y%m%d%H%M"` ${BRANCH}@${COMMIT} : ${COMMENT}"
 }
@@ -137,3 +106,52 @@ NAME=$1
 # 在上级目录构建
 unset BUILD_IN_PARENT
 }
+
+useage(){
+echo '============
+Params
+============
+$VERSION
+  Show more verbose
+$DOCKER_REGISTRY
+  Docker push registry
+$GROUP
+  Docker repo group
+$BUILD_SKIP_PUSH
+  Do not push after build
+$BUILD_IN_PARENT
+  Run docker build in parent directory
+$BUILD_GOTO_VER_DIR
+  Go to sub dir when build, default enabled
+$HELP
+  Show this help
+$VERBOSE
+  Show more log about build'
+}
+
+main(){
+    [ -z "$HELP" ] || {
+      useage
+      exit
+    }
+
+    [ -z "$VERBOSE" ] || set -o xtrace
+
+    echo Load build init script
+
+    command -v git > /dev/null || {
+    echo "NOTE: Git not found"
+    alias git="echo Git Not Found:"
+    }
+    BRANCH=${BRANCH:-`git rev-parse --abbrev-ref HEAD`}
+    COMMIT=${COMMIT:-`git log --pretty=format:'%h' -n 1`}
+    COMMENT=${COMMENT:-`git log -1 --pretty=%B | tr '\n' ' '`}
+
+    # registry.cn-hangzhou.aliyuncs.com
+    # registry.wener.me
+    DOCKER_REGISTRY=${DOCKER_REGISTRY:-docker.io}
+    GROUP=${GROUP:-wener}
+    BUILD_GOTO_VER_DIR=${BUILD_GOTO_VER_DIR:-1}
+}
+
+main
