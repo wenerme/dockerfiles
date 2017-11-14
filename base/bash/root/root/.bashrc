@@ -19,3 +19,5 @@ done
 # }} sshopt
 
 export PS1="\[\e[32m\]\u@\h \[\e[01;33m\]\w \[\e[34m\][\t] \[\e[0m\]\n$ "
+
+[ -f /etc/profile.d/bash_completion.sh ] && source /etc/profile.d/bash_completion.sh

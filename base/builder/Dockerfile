@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base:util
 
 RUN apk add --no-cache alpine-sdk bash
 RUN adduser -HDh /build builder \

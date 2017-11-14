@@ -7,3 +7,5 @@ RUN apk --no-cache add bash && \
     ln -s /bin/bash /bin/sh
 
 COPY root /
+
+ENTRYPOINT ["bash"]

@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base:util
 MAINTAINER  wener<wener@wener.me>
 
 ENV NMAP_VERSION 7.40-r0

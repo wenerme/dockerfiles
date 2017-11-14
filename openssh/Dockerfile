@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base:util
 MAINTAINER wener
 
 RUN apk add --no-cache openssh
