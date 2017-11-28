@@ -1,7 +1,7 @@
 FROM wener/base:util
 MAINTAINER wener
 
-RUN apk add --no-cache openssh
+RUN apk add --no-cache openssh openssh-sftp-server
 
 ENV PASSWORD ""
 
