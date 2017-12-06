@@ -11,6 +11,10 @@ RUN apk --no-cache add php7 &&\
 #RUN pecl update-channels && \
 #    rm -rf /tmp/pear ~/.pearrc
 
+# https://github.com/docker-library/php/issues/240
+RUN apk add --no-cache --repository http://mirrors.aliyun.com/alpine/edge/testing gnu-libiconv
+ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
+
 COPY root /
 COPY 7/root /
 
