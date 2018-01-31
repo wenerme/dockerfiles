@@ -1,5 +1,4 @@
 FROM wener/base
-
 MAINTAINER wener<wenermail@gmail.com>
 
 RUN apk add --no-cache pdns pdns-recursor pdns-backend-mysql pdns-backend-sqlite3 pdns-backend-pgsql

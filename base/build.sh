@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver base
-vers=${1:-"base bash util builder"}
+vers=${1:-"base bash"}
 builddocker_vers $vers
