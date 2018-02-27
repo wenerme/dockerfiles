@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-if [ "$1" == "ssh"* ]; then
+if echo "$1" | grep "^ssh" ; then
     # Handle ssh command
     "$@"
 else

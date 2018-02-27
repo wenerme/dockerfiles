@@ -15,5 +15,11 @@ forward:
 
 ```bash
 # Or use ssh with restart
-docker run -d --restart always -v $HOME/.ssh/:/root/.ssh/ ssh -vNL :53:8.8.8.8:53 user@hosh
+
+# connection test
+docker run -it --rm -v $HOME/.ssh/:/root/.ssh wener/autossh ssh root@172.17.0.1
+# forward dns
+docker run -d --restart always -v $HOME/.ssh/:/root/.ssh/ wener/autossh -vNL :53:8.8.8.8:53 user@hosh
+# socks
+docker run -d --restart always -p 10.10.0.100:8888:8888 --name socks -v $HOME/.ssh/:/root/.ssh wener/autossh -vgND 8888 -o StrictHostKeyChecking=no -o ExitOnForwardFailure=yes root@172.17.0.1
 ```
