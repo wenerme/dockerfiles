@@ -12,6 +12,10 @@
 * 尽可能的使用 alpine 作为基础镜像
 * 基于 Github 提交自动构建
 * 提供非常方便的构建脚本
+* 所有镜像均可在 docker hub 上访问
+* 默认所有镜像为 amd64
+* [ ] 支持多架构
+  * [ ] arm
 
 ## Dockerfiles
 * base

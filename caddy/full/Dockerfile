@@ -1,25 +1,23 @@
-FROM wener/base
-MAINTAINER wener <wener@wener.me>
+#
+# Builder
+#
+FROM abiosoft/caddy:builder as builder
 
-LABEL caddy_version="0.9.5" architecture="amd64"
+ARG version="0.10.11"
+# Build failed grpc,gopkg
+ARG plugins="authz,awses,awslambda,cache,cgi,cors,datadog,expires,filemanager,filter,forwardproxy,git,hugo,ipfilter,jekyll,jwt,locale,login,mailout,minify,nobots,prometheus,proxyprotocol,ratelimit,realip,reauth,restic,upload,webdav"
 
-ARG plugins=awslambda,cors,expires,filemanager,filter,git,hugo,ipfilter,jsonp,jwt,locale,mailout,minify,multipass,prometheus,ratelimit,realip,search,upload
+RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
 
-RUN apk add --no-cache openssh-client git tar curl
+#
+# Final stage
+#
+FROM wener/caddy
+LABEL maintainer="wener <wener@wener.me>"
 
-RUN curl --silent --show-error --fail --location \
-      --header "Accept: application/tar+gzip, application/x-gzip, application/octet-stream" -o - \
-      "https://caddyserver.com/download/build?os=linux&arch=amd64&features=${plugins}" \
-    | tar --no-same-owner -C /usr/bin/ -xz caddy \
- && chmod 0755 /usr/bin/caddy \
- && /usr/bin/caddy -version
+# install caddy
+COPY --from=builder /install/caddy /usr/bin/caddy
 
-EXPOSE 80 443 2015
-VOLUME /root/.caddy
-WORKDIR /srv
-
-COPY common/Caddyfile /etc/Caddyfile
-COPY common/index.html /srv/index.html
-
-ENTRYPOINT ["/usr/bin/caddy"]
-CMD ["--conf", "/etc/Caddyfile", "--log", "stdout"]
+# validate install
+RUN /usr/bin/caddy -version
+RUN /usr/bin/caddy -plugins

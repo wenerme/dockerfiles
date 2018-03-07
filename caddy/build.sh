@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver caddy
-vers=${1:-caddy full dns php}
-BUILD_IN_PARENT=true builddocker_vers ${vers}
+vers=${1:-caddy}
+builddocker_vers ${vers}
