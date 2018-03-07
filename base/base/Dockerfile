@@ -12,4 +12,4 @@ RUN echo http://mirrors.aliyun.com/alpine/v$(head -c3 /etc/alpine-release)/main/
     echo http://mirrors.aliyun.com/alpine/v$(head -c3 /etc/alpine-release)/community/ >> /etc/apk/repositories
 
 # Base tools
-RUN apk add --no-cache openssh-client curl busybox file nano libc6-compat
+RUN apk add --no-cache openssh-client curl busybox busybox-extras file nano libc6-compat

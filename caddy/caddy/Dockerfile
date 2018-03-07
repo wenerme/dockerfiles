@@ -12,7 +12,7 @@ RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
 # Final stage
 #
 FROM wener/base
-LABEL maintainer "wener <wener@wener.me>"
+LABEL maintainer="wener <wener@wener.me>"
 
 LABEL caddy_version="0.10.11"
 
