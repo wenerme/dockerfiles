@@ -15,6 +15,9 @@ RUN apk --no-cache add php7 &&\
 RUN apk add --no-cache --repository http://mirrors.aliyun.com/alpine/edge/testing gnu-libiconv
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
+# www-data 组已经存在
+RUN set -x adduser -u 82 -D -S -G www-data www-data
+
 COPY root /
 COPY 7/root /
 

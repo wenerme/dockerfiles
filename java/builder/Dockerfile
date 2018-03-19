@@ -2,7 +2,7 @@ FROM        wener/java:maven
 MAINTAINER  wener<wener@wener.me>
 
 ENV IVY_HOME /cache
-ENV GRADLE_VERSION 4.3
+ENV GRADLE_VERSION 4.6
 ENV GRADLE_HOME /usr/local/gradle
 ENV PATH ${PATH}:${GRADLE_HOME}/bin
 
@@ -13,5 +13,3 @@ RUN curl -LOs  https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-
     rm -f gradle-$GRADLE_VERSION-bin.zip && \
     ln -s gradle-$GRADLE_VERSION gradle && \
     echo -ne "- with Gradle $GRADLE_VERSION\n" >> /root/.built
-
-CMD ["gradle"]
