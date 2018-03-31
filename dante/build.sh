@@ -3,6 +3,6 @@
 { [ -f ../.build/init.sh ] && . ../.build/init.sh; } || true;
 buildreport || exit
 
-builddocker_init_ver caddy
-vers=${1:-caddy full php}
+builddocker_init_ver dante
+vers=${1:-dante}
 builddocker_vers ${vers}

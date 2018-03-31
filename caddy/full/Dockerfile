@@ -3,7 +3,7 @@
 #
 FROM abiosoft/caddy:builder as builder
 
-ARG version="0.10.11"
+ARG version="0.10.12"
 # Build failed grpc,gopkg
 ARG plugins="authz,awses,awslambda,cache,cgi,cors,datadog,expires,filemanager,filter,forwardproxy,git,hugo,ipfilter,jekyll,jwt,locale,login,mailout,minify,nobots,prometheus,proxyprotocol,ratelimit,realip,reauth,restic,upload,webdav"
 
