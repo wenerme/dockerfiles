@@ -4,7 +4,7 @@
 FROM abiosoft/caddy:builder as builder
 
 ARG version="0.10.12"
-ARG plugins="git"
+ARG plugins="git,pdns,rfc2136"
 
 RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
 
@@ -13,8 +13,6 @@ RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
 #
 FROM wener/base
 LABEL maintainer="wener <wener@wener.me>"
-
-LABEL caddy_version="0.10.11"
 
 RUN apk add --no-cache openssh-client git
 
