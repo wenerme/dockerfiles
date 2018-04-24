@@ -1,7 +1,7 @@
 FROM        wener/base
 MAINTAINER  wener<wener@wener.me>
 
-RUN apk --no-cache add samba
+RUN apk --no-cache add samba samba-dc
 
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh

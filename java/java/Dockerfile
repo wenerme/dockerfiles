@@ -21,3 +21,10 @@ RUN set -x \
 		openjdk8 \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ] \
     && apk add --no-cache paxctl && paxctl -cm $(which java) && apk del --no-cache paxctl
+
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80 8080 443 8443
+
+ENTRYPOINT ["/entrypoint.sh"]

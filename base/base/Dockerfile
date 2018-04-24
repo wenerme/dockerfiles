@@ -1,5 +1,9 @@
-FROM        alpine:3.7
-MAINTAINER  wener<wener@wener.me>
+FROM wener/base as builder
+RUN mkdir /rootfs && cd /rootfs && \
+    apk -X http://mirrors.aliyun.com/alpine/v3.7/main/ --no-cache --allow-untrusted --root /rootfs --initdb add alpine-base
+
+FROM scratch
+COPY --from=builder /rootfs /
 
 LABEL org.label-schema.name="base" \
         org.label-schema.vendor="Wener" \
@@ -12,4 +16,6 @@ RUN echo http://mirrors.aliyun.com/alpine/v$(head -c3 /etc/alpine-release)/main/
     echo http://mirrors.aliyun.com/alpine/v$(head -c3 /etc/alpine-release)/community/ >> /etc/apk/repositories
 
 # Base tools
-RUN apk add --no-cache openssh-client curl busybox busybox-extras file nano libc6-compat
+RUN apk add --no-cache curl busybox-extras file nano libc6-compat
+
+CMD ["/bin/sh"]
