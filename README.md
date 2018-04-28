@@ -26,6 +26,10 @@
   * Package: openssh-client curl busybox file
   * :bash
     * Bash as default shell
+  * :armhf
+  * :aarch64
+  * :ppc64le
+  * :s390x
 * edge
   * FROM alpine:edge
   * Mirror http://mirrors.aliyun.com/alpine
