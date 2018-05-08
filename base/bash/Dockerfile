@@ -1,5 +1,6 @@
-FROM        wener/base
-MAINTAINER  wener<wener@wener.me>
+FROM wener/base
+LABEL org.label-schema.name="base:bash" \
+    org.label-schema.description="Alpine Linux base image with bash as default shell"
 
 # Use bash as default shell
 RUN apk --no-cache add bash && \

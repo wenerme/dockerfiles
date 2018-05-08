@@ -1,12 +1,8 @@
 FROM        wener/base
-MAINTAINER  wener<wener@wener.me>
 
 LABEL org.label-schema.name="base:svc" \
-        org.label-schema.vendor="Wener" \
-        org.label-schema.description="Docker image uses openRC as a process supervision on Alpine Linux" \
-        org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
-        org.label-schema.version="3.7" \
-        org.label-schema.license="MIT"
+        org.label-schema.description="Docker image uses openRC as a process supervision on Alpine Linux"
+
 
 RUN set -x \
     && apk add --no-cache openrc \
