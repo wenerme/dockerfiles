@@ -16,7 +16,8 @@ RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
 # Final stage
 #
 FROM wener/caddy
-LABEL maintainer="wener <wener@wener.me>"
+LABEL org.label-schema.name="caddy:full" \
+    org.label-schema.description="Caddy will almost all plugins and dns providers"
 
 RUN apk add --no-cache openssh-client git
 

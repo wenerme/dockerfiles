@@ -1,5 +1,4 @@
 FROM        wener/base:builder
-MAINTAINER  wener<wener@wener.me>
 
 #########
 # Golang

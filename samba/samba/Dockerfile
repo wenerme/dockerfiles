@@ -1,5 +1,4 @@
 FROM        wener/base
-MAINTAINER  wener<wener@wener.me>
 
 RUN apk --no-cache add samba samba-dc
 

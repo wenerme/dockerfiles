@@ -1,5 +1,4 @@
 FROM        wener/base:bash
-MAINTAINER  wener<wener@wener.me>
 
 RUN apk add --no-cache nodejs yarn nodejs-npm && \
     apk add --no-cache paxctl && paxctl -cm `which node` && apk del --no-cache paxctl

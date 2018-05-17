@@ -1,5 +1,4 @@
 FROM scratch
-MAINTAINER wener<wenermail@gmail.com>
 ADD precise-i386/ubuntu-precise-core-cloudimg-i386-root.tar.gz /
 
 # a few minor docker-specific tweaks

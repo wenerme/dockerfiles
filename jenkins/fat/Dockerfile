@@ -1,5 +1,4 @@
 FROM wener/jenkins
-MAINTAINER wener<wener AT wener.me>
 
 # 安装常用的插件 https://plugins.jenkins.io/
 RUN install-plugins.sh \

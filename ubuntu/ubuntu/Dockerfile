@@ -1,6 +1,14 @@
 FROM ubuntu:xenial
 
-MAINTAINER wener<wenermail@gmail.com>
+LABEL maintainer="wener@wener.me"\
+    org.label-schema.name="ubuntu" \
+    org.label-schema.vendor="Wener" \
+    org.label-schema.description="Ubuntu with Chinese mirror" \
+    org.label-schema.url="https://github.com/wenerme/dockerfiles" \
+    org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
+    org.label-schema.version="3.7" \
+    org.label-schema.license="MIT"
+
 # Use aliyun ubuntu mirrors to replace original sources.list
 RUN . /etc/lsb-release && \
     echo "# Use Aliyun ubuntu mirror \n\

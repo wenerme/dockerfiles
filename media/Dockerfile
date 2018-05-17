@@ -1,5 +1,4 @@
 FROM wener/base:bash
-MAINTAINER wener
 
 RUN apk add --no-cache sox ffmpeg youtube-dl
 

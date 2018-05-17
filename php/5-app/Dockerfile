@@ -1,5 +1,4 @@
 FROM        wener/php:5-builder as builder
-MAINTAINER  wener<wener@wener.me>
 
 
 RUN pecl install -o -f igbinary     && \
@@ -15,7 +14,6 @@ RUN mkdir /modules; \
     for i in $MODULES; do echo "extension=$i.so" >> /extra.ini; done;
 
 FROM        wener/php:5
-MAINTAINER  wener<wener@wener.me>
 
 COPY --from=builder /modules /usr/lib/php5/modules
 COPY --from=builder /extra.ini /etc/php5/conf.d

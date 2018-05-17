@@ -1,5 +1,4 @@
 FROM        wener/php
-MAINTAINER  wener
 
 # tools
 RUN apk --no-cache add alpine-sdk

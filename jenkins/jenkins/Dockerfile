@@ -1,5 +1,4 @@
 FROM jenkins:alpine
-MAINTAINER wener<wener AT wener.me>
 
 # 清华大学镜像没有插件
 # ENV JENKINS_UC https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates

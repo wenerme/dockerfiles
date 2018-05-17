@@ -1,5 +1,4 @@
 FROM wener/php
-MAINTAINER  wener
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 # 使用中国镜像安装

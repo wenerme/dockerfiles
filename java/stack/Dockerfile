@@ -1,5 +1,4 @@
 FROM wener/java
-MAINTAINER wener
 
 RUN apk add openssh openssh-sftp-server mosh git bash-completion \
             openssl libssl1.0 libcrypto1.0 \

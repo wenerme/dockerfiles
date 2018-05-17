@@ -1,5 +1,4 @@
 FROM wener/php:5
-MAINTAINER  wener<wener@wener.me>
 
 #COPY piwik.zip /
 RUN \

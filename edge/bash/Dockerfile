@@ -1,5 +1,4 @@
 FROM        wener/edge
-MAINTAINER  wener<wener@wener.me>
 
 # Use bash as default shell
 RUN apk --no-cache add bash && \

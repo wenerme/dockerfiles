@@ -1,5 +1,4 @@
 FROM        wener/nginx:bash
-MAINTAINER  wener<wener@wener.me>
 
 RUN apk --no-cache add php5 &&\
     apk --no-cache add \

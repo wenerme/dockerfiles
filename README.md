@@ -7,6 +7,9 @@
 * 使用国内镜像
   * ubuntu
   * alpine
+    * TUNA 镜像 https://mirrors.tuna.tsinghua.edu.cn/alpine
+    * 阿里云镜像 http://mirrors.aliyun.com/alpine
+      * 有时候不稳定, 已经逐渐迁移为 TUNA 镜像
   * node
   <!--* maven-->
 * 尽可能的使用 alpine 作为基础镜像
@@ -14,6 +17,13 @@
 * 提供非常方便的构建脚本
 * 所有镜像均可在 docker hub 上访问
 * 默认所有镜像为 amd64
+* Alpine 多架构
+  * x86_64
+    * armhf
+    * aarch64
+    * ppc64le
+    * s390x
+    * x86
 * [ ] 支持多架构
   * [ ] arm
 
@@ -21,9 +31,11 @@
 
 ### Base
 * base
-  * FROM alpine:3.7
-  * Mirror http://mirrors.aliyun.com/alpine
-  * Package: openssh-client curl busybox file
+  * v3.7
+  * Mirror https://mirrors.tuna.tsinghua.edu.cn/alpine
+  * Package: curl busybox-extras file
+  * :multiarch
+    * Tools for multiarch
   * :bash
     * Bash as default shell
   * :armhf
@@ -132,6 +144,16 @@
   * PowerDNS
   * PowerDNS Recursor
   * all backend
+
+## Multiarch
+
+```bash
+# Register
+docker run --rm -it --priviliged wener/base:multiarch register
+# Run different arch on x86_64
+docker run --rm -it wener/base:armhf uname -a
+docker run --rm -it wener/base:s360x apk --print-arch
+```
 
 ## Development
 

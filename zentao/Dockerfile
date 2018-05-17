@@ -1,6 +1,7 @@
 FROM wener/ubuntu
-
-MAINTAINER wener<wenermail@gmail.com>
+LABEL org.label-schema.name="zentao" \
+    org.label-schema.description="基于 Ubuntu 的禅道镜像" \
+    org.label-schema.version="8.3.1"
 
 RUN apt-get update
 RUN apt-get install -y wget && \

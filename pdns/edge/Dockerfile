@@ -1,5 +1,4 @@
 FROM wener/base:bash
-MAINTAINER wener<wenermail@gmail.com>
 
 RUN echo '@edge http://mirrors.aliyun.com/alpine/edge/main/' >> /etc/apk/repositories; \
     echo '@edge http://mirrors.aliyun.com/alpine/edge/community/' >> /etc/apk/repositories

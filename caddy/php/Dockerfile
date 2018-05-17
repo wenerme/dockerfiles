@@ -1,5 +1,6 @@
 FROM wener/caddy:full
-MAINTAINER wener <wener@wener.me>
+LABEL org.label-schema.name="caddy:php" \
+    org.label-schema.description="Caddy with php-fpm"
 
 RUN apk add --no-cache php7-fpm
 

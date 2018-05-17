@@ -1,5 +1,4 @@
 FROM        wener/java:maven
-MAINTAINER  wener<wener@wener.me>
 
 ENV IVY_HOME /cache
 ENV GRADLE_VERSION 4.6

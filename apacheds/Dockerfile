@@ -1,5 +1,4 @@
 FROM wener/java
-MAINTAINER wener<wener AT wener.me>
 
 ENV APACHEDS_VERSION 2.0.0-M24
 

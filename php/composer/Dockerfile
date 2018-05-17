@@ -1,5 +1,4 @@
-FROM        wener/php:pecl
-MAINTAINER  wener<wener@wener.me>
+FROM        wener/php
 
 # 使用中国镜像安装
 RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.php');" && \

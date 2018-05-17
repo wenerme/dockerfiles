@@ -1,5 +1,4 @@
 FROM wener/base:bash
-MAINTAINER wener
 
 RUN apk add --no-cache asterisk openssl && \
     apk add --no-cache asterisk-{curl,dahdi,pgsql,sample-config,sounds-en,sounds-moh,srtp}

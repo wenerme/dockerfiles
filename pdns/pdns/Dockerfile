@@ -1,5 +1,4 @@
 FROM wener/base:bash
-MAINTAINER wener<wenermail@gmail.com>
 
 RUN apk add --no-cache \
             pdns pdns-recursor \

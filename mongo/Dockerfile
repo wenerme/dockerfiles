@@ -1,5 +1,4 @@
 FROM mongo
-MAINTAINER wener
 
 RUN DISTRIB_CODENAME=$(sed -nr 's/VERSION.*\((.*)\).*/\1/p' /etc/os-release) && \
     echo "# Use Aliyun ubuntu mirror                                                                            \n\
