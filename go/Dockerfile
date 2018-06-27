@@ -1,4 +1,4 @@
-FROM        wener/base
+FROM  wener/base
 LABEL org.label-schema.name="go" \
     org.label-schema.description="Golang based on Alpine Linux"
 
