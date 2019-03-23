@@ -31,7 +31,7 @@
 
 ### Base
 * base
-  * v3.7
+  * v3.9
   * Mirror https://mirrors.tuna.tsinghua.edu.cn/alpine
   * Package: curl busybox-extras file
   * :multiarch

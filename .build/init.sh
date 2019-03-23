@@ -82,7 +82,7 @@ if [ -z "$BUILD_SKIP_PUSH" ]; then
 
 for ver in $names; do
     if [ "$ver" = "$name" ]; then
-    REPO=$GROUP/$name
+    REPO=$GROUP/$name:latest
     else
     REPO=$GROUP/$name:$ver
     fi

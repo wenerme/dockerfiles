@@ -16,7 +16,7 @@ LABEL maintainer="wener@wener.me"\
     org.label-schema.description="Alpine Linux aarch64 based on x86_64 qemu emulator" \
     org.label-schema.url="https://github.com/wenerme/dockerfiles" \
     org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
-    org.label-schema.version="3.7" \
+    org.label-schema.version="3.9" \
     org.label-schema.license="MIT"
 
 ENV ALPINE_ARCH=aarch64
