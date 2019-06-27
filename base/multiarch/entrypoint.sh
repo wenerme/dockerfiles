@@ -122,7 +122,7 @@ build-arch(){
   echo "Build target $ARCH with $QEMU_ARCH to $ROOTDIR"
   local root=${ROOTDIR:-/target-root}
   apk add --no-cache qemu-$QEMU_ARCH
-  wget -q https://mirrors.tuna.tsinghua.edu.cn/alpine/v$(head -c3 /etc/alpine-release)/releases/$ARCH/alpine-minirootfs-$(cat /etc/alpine-release)-$ARCH.tar.gz
+  wget -q https://mirrors.tuna.tsinghua.edu.cn/alpine/v$(sed -n 's/\.\d\+$//p' /etc/alpine-release)/releases/$ARCH/alpine-minirootfs-$(cat /etc/alpine-release)-$ARCH.tar.gz
   mkdir -p $ROOTDIR
   tar zxf alpine-minirootfs-$(cat /etc/alpine-release)-$ARCH.tar.gz -C $ROOTDIR
   cp /usr/bin/qemu-$QEMU_ARCH $ROOTDIR/usr/bin

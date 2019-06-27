@@ -3,7 +3,7 @@ ENV ARCH=aarch64
 WORKDIR /root
 RUN QEMU_ARCH=${QEMU_ARCH:-$ARCH} \
     && apk add --no-cache qemu-$QEMU_ARCH \
-    && wget -q https://mirrors.tuna.tsinghua.edu.cn/alpine/v$(head -c3 /etc/alpine-release)/releases/$ARCH/alpine-minirootfs-$(cat /etc/alpine-release)-$ARCH.tar.gz \
+    && wget -q https://mirrors.tuna.tsinghua.edu.cn/alpine/v$(sed -n 's/\.\d\+$//p' /etc/alpine-release)/releases/$ARCH/alpine-minirootfs-$(cat /etc/alpine-release)-$ARCH.tar.gz \
     && mkdir target-root \
     && tar zxf alpine-minirootfs-$(cat /etc/alpine-release)-$ARCH.tar.gz -C target-root \
     && cp /usr/bin/qemu-$QEMU_ARCH target-root/usr/bin \
