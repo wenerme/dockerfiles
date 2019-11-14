@@ -4,17 +4,20 @@ FROM wener/base
 RUN apk add --no-cache openrc su-exec ca-certificates wait4ports \
     # Disable getty's
     && sed -i 's/^\(tty\d\:\:\)/#\1/g' /etc/inittab \
-    && sed -i \
-        # Change subsystem type to "docker"
-        -e 's/#rc_sys=".*"/rc_sys="docker"/g' \
-        # Allow all variables through
-        -e 's/#rc_env_allow=".*"/rc_env_allow="\*"/g' \
-        # Start crashed services
-        -e 's/#rc_crashed_stop=.*/rc_crashed_stop=NO/g' \
-        -e 's/#rc_crashed_start=.*/rc_crashed_start=YES/g' \
-        # Define extra dependencies for services
-        -e 's/#rc_provide=".*"/rc_provide="loopback net"/g' \
-        /etc/rc.conf \
+    && mkdir /etc/rc.conf.d \
+    # Change subsystem type to "docker"
+    && echo 'rc_sys="docker"' >> /etc/rc.conf.d/docker.conf \
+    # Allow all variables through
+    && echo 'rc_env_allow="*"' >> /etc/rc.conf.d/docker.conf \
+    # Start crashed services
+    && echo 'rc_crashed_stop=NO' >> /etc/rc.conf.d/docker.conf \
+    && echo 'rc_crashed_start=YES' >> /etc/rc.conf.d/docker.conf \
+    # Define extra dependencies for services
+    # - docker provide network
+    # - docker control the hostname unless add cap SYS_ADMIN
+    && echo 'rc_provide="loopback net hostname"' >> /etc/rc.conf.d/docker.conf \
+    # Verbose rc log for debugging
+#    && echo 'rc_verbose=yes' >> /etc/rc.conf.d/docker.conf \
     # Remove unnecessary services
     && rm -f /etc/init.d/hwdrivers \
             /etc/init.d/hwclock \

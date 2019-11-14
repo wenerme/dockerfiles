@@ -1,12 +1,9 @@
 FROM wener/base:bash
 
-RUN echo '@edge http://mirrors.aliyun.com/alpine/edge/main/' >> /etc/apk/repositories; \
-    echo '@edge http://mirrors.aliyun.com/alpine/edge/community/' >> /etc/apk/repositories
-
 RUN apk add --no-cache \
-            pdns pdns-recursor@edge \
-            pdns-tools@edge \
-            pdns-backend-{remote,sqlite3,bind,geoip,ldap,lua,mydns,mysql,odbc,pgsql,pipe,random}@edge \
+            pdns pdns-recursor \
+            pdns-tools \
+            pdns-backend-{remote,sqlite3,bind,geoip,ldap,lua,mydns,mysql,odbc,pgsql,pipe,random} \
             bind-tools drill
 
 COPY entrypoint.sh /

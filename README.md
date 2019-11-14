@@ -165,3 +165,6 @@ HELP=1 ./build.sh
 # Skip push
 BUILD_SKIP_PUSH=1 ./build.sh mongo
 ```
+## FAQ
+### No permission to apply cgroup settings
+When using openrc in docker, will throw this error, it's ok.

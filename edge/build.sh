@@ -4,5 +4,6 @@
 buildreport || exit
 
 builddocker_init_ver edge
-vers=${1:-"edge bash"}
+# edge will always build
+vers=${1:-"bash builder"}
 builddocker_vers $vers

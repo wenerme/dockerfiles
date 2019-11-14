@@ -2,11 +2,11 @@
 # Builder
 #
 FROM abiosoft/caddy:builder as builder
-
-ARG version="0.10.12"
+# minify,
+ARG version="0.11.1"
 ARG plugins="\
     # HTTP Plugins \
-    authz,awses,awslambda,cache,cgi,cors,datadog,expires,filemanager,filter,forwardproxy,git,gopkg,grpc,hugo,ipfilter,jekyll,jwt,locale,login,mailout,minify,nobots,prometheus,proxyprotocol,ratelimit,realip,reauth,restic,upload,webdav,\
+    authz,awses,awslambda,cache,cgi,cors,datadog,expires,filemanager,filter,forwardproxy,git,gopkg,grpc,hugo,ipfilter,jekyll,jwt,locale,login,mailout,nobots,prometheus,proxyprotocol,ratelimit,realip,reauth,restic,upload,webdav,\
     # TLS DNS Provider \
     auroradns,azure,cloudflare,cloudxns,digitalocean,dnsimple,dnsmadeeasy,dnspod,duckdns,dyn,exoscale,fastdns,gandi,gandiv5,glesys,godaddy,googlecloud,lightsail,linode,namecheap,namedotcom,ns1,otc,ovh,pdns,rackspace,rfc2136,route53,vultr"
 

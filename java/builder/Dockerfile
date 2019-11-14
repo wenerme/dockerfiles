@@ -1,7 +1,7 @@
 FROM        wener/java:maven
 
 ENV IVY_HOME /cache
-ENV GRADLE_VERSION 4.6
+ENV GRADLE_VERSION 5.3
 ENV GRADLE_HOME /usr/local/gradle
 ENV PATH ${PATH}:${GRADLE_HOME}/bin
 

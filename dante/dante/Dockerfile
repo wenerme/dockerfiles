@@ -9,6 +9,6 @@ COPY sockd.conf /etc
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 8888 7777
+EXPOSE 8888
 
 ENTRYPOINT ["/entrypoint.sh"]
