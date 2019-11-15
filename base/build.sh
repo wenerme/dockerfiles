@@ -5,7 +5,7 @@ buildreport || exit
 
 builddocker_init_ver base
 # By default not build base, because base will always build no matter it changed or not
-vers=${@:-"bash"}
+vers=${@:-"bash openrc"}
 vers_all="bash util builder svc sys man armhf aarch64 s390x ppc64le x86"
 [ "$BUILD_ALL" != "" ] && vers="$vers_all"
 

@@ -24,8 +24,9 @@
     * ppc64le
     * s390x
     * x86
-* [ ] 支持多架构
-  * [ ] arm
+* 支持多架构
+  * [arm32v7](https://hub.docker.com/orgs/warm32v7)
+  * [ ] [arm64v7](https://hub.docker.com/orgs/warm64v8)
 
 ## Dockerfiles
 
@@ -168,3 +169,14 @@ BUILD_SKIP_PUSH=1 ./build.sh mongo
 ## FAQ
 ### No permission to apply cgroup settings
 When using openrc in docker, will throw this error, it's ok.
+
+### multi arch
+* manifest 文件位于 `$HOME/.docker/manifests`
+
+```bash
+# build different arch
+GROUP=warm32v7 ./build.sh
+
+# create manifest
+./.build/archs.sh base bash
+```

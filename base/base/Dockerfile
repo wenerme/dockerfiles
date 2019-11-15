@@ -1,4 +1,4 @@
-FROM wener/base as builder
+FROM alpine as builder
 # Change the version to upgrade the base image
 RUN mkdir /rootfs && cd /rootfs && \
     apk -X https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.10/main --no-cache --allow-untrusted --root /rootfs --initdb add alpine-base
@@ -13,7 +13,7 @@ LABEL maintainer="wener@wener.me"\
     org.label-schema.version="3.10" \
     org.label-schema.license="MIT"
 
-ENV ALPINE_ARCH=x86_64
+#ENV ALPINE_ARCH=x86_64
 ENV ALPINE_VERSION=3.10
 
 COPY --from=builder /rootfs /
