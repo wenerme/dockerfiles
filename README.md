@@ -25,8 +25,8 @@
     * s390x
     * x86
 * 支持多架构
-  * [arm32v7](https://hub.docker.com/orgs/warm32v7)
-  * [ ] [arm64v7](https://hub.docker.com/orgs/warm64v8)
+  * [arm32v7](https://hub.docker.com/orgs/warm32v7) - armhf - eaib5
+  * [ ] [arm64v7](https://hub.docker.com/orgs/warm64v8) - aarch64
 
 ## Dockerfiles
 

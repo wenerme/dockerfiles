@@ -16,10 +16,8 @@ ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
 ENV PATH $PATH:/usr/lib/jvm/java-1.8-openjdk/jre/bin:/usr/lib/jvm/java-1.8-openjdk/bin
 
 RUN set -x \
-	&& apk add --no-cache \
-		openjdk8 \
-	&& [ "$JAVA_HOME" = "$(docker-java-home)" ] \
-    && apk add --no-cache paxctl && paxctl -cm $(which java) && apk del --no-cache paxctl
+	&& apk add --no-cache openjdk8 \
+	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
 
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
