@@ -17,7 +17,7 @@ LABEL maintainer="wener@wener.me"\
     org.label-schema.description="Alpine Linux armhf based on armhf qemu emulator" \
     org.label-schema.url="https://github.com/wenerme/dockerfiles" \
     org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
-    org.label-schema.version="3.7" \
+    org.label-schema.version="3.10" \
     org.label-schema.license="MIT"
 
 ENV ALPINE_ARCH=armhf

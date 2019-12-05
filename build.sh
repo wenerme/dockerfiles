@@ -3,6 +3,6 @@
 { [ -f ../.build/init.sh ] && . ../.build/init.sh; } || true;
 buildreport || exit
 
-names=${1:-"base app java node go"}
+names=${1:-"base app java node go dns"}
 builddocker_dirs $names
 
