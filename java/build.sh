@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver java
-vers=${1:-java maven}
+vers=${1:-8 11}
 builddocker_vers $vers
