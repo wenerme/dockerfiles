@@ -1,0 +1,5 @@
+auto lo:0
+iface lo:0 inet static
+  address 127.0.0.2
+  netmask 255.0.0.0
+

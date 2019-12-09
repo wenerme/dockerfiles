@@ -5,7 +5,7 @@ buildreport || exit
 
 builddocker_init_ver app
 # By default not build base, because base will always build no matter it changed or not
-vers=${@:-"app builder"}
+vers=${@:-"app builder dns"}
 [ "$BUILD_ALL" != "" ] && vers="$vers_all"
 
 builddocker_vers $vers
