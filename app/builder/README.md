@@ -8,6 +8,8 @@ docker run -d --restart=unless-stopped \
     -v $PWD/distfiles:/var/cache/distfiles -v $PWD/cache:/etc/apk/cache \
     --name build-server wener/app:builder
 
+# clear last hostkey
+ssh-keygen -R [127.0.0.1]:2222
 # enter build server
 # password admin
 ssh admin@127.0.0.1 -p 2222
