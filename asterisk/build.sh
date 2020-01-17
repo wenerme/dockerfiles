@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver asterisk
-vers=${1:-"asterisk"}
+vers=${1:-"asterisk full"}
 builddocker_vers $vers

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Container $(hostname) IPs"
+ifconfig -a | grep -B 1 'inet addr:' | grep -v -- "^--$"

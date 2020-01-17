@@ -9,4 +9,4 @@ RUN apk --no-cache add bash && \
 
 COPY root /
 
-ENTRYPOINT ["bash"]
+CMD ["/bin/bash"]
