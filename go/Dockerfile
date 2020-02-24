@@ -9,4 +9,4 @@ RUN (cd /etc/apk/keys; curl -LO https://repo.wener.me/alpine/wenermail@gmail.com
 RUN apk add --no-cache go musl-dev git
 RUN mkdir /root/go
 
-ENTRYPOINT ["go"]
+# ENTRYPOINT ["go"]
