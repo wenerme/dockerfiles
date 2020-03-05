@@ -1,3 +1,5 @@
 FROM wener/node
 
-RUN yarn global add webtorrent-hybrid webtorrent-cli
+# hybrid need glibc
+RUN apk add --no-cache gcompat \
+    && yarn global add webtorrent-hybrid webtorrent-cli
