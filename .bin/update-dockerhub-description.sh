@@ -11,8 +11,6 @@ IFS=$'\n\t'
 # Set the default path to README.md
 README_FILEPATH=${README_FILEPATH:="./README.md"}
 
-[ -d "$README_FILEPATH" ]
-
 # Check the file size
 if [ $(wc -c <${README_FILEPATH}) -gt 25000 ]; then
   echo "File size exceeds the maximum allowed 25000 bytes"

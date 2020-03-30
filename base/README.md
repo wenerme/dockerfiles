@@ -1,3 +1,10 @@
+## Supported Tags
+
+- base
+- bash
+- openrc
+- app
+
 # Alpine Base Image
 
 - build from rootfs
@@ -11,7 +18,17 @@
   - nano - easy editing
   - libc6-compat - glibc compat layer for common use
 
-<!-- lang:zh -->
+## base:bash
+
+Use bash as default shell
+
+## wener/base:openrc
+
+Running openrc in docker.
+
+## wener/base:openrc
+
+Running openrc in docker, by default enabled local and syslog service, create admin account with disabled password.
 
 # Alpine 基础镜像
 
@@ -25,3 +42,20 @@
   - file - 检测文件、设备、块等
   - nano - 简化编辑
   - libc6-compat - glibc 兼容
+
+## base:bash
+
+使用 bash 作为默认 shell。
+
+## wener/base:openrc
+
+在 Docker 中运行 openrc 服务.
+
+## wener/base:openrc
+
+在 Docker 中运行 openrc 服务, 默认启用了 syslog 和 local 服务。创建了 admin 账号，但禁用了密码
+
+- syslog
+  - 用于服务日志记录 - 例如 ssh
+- local
+  - 用于启动本地脚本

@@ -1,0 +1,31 @@
+{
+  "_": "https://github.com/google/gts/blob/master/tsconfig-google.json",
+  "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": [
+      "esnext"
+    ],
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "commonjs",
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "pretty": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2018"
+  },
+  "include": [
+    "scripts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".yarn"
+  ]
+}

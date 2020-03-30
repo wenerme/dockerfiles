@@ -1,0 +1,3 @@
+{
+  "children": ["base", "bash", "openrc", "app"]
+}
