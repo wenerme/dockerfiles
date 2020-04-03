@@ -1,3 +1,4 @@
 FROM wener/node
 
-RUN yarn global add ncc pkg
+# https://www.npmjs.com/package/node-gyp
+RUN apk add python make gcc g++ nodejs-dev

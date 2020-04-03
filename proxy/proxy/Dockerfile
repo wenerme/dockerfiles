@@ -14,3 +14,5 @@ RUN apk add --no-cache privoxy dante dante-server \
 
 COPY privoxy.conf /etc/privoxy/config
 COPY sockd.conf /etc
+
+EXPOSE 7777 8888

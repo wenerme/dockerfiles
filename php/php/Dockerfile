@@ -1,4 +1,4 @@
-FROM        wener/nginx:bash
+FROM wener/nginx
 
 RUN apk --no-cache add php7 &&\
     apk --no-cache add \

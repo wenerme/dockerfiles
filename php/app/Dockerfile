@@ -11,5 +11,5 @@ RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.ph
 RUN composer config -g repo.packagist composer https://packagist.phpcomposer.com
 
 # 添加额外预编译模块
-COPY modules/*.so /usr/lib/php7/modules/
-COPY modules/*.ini /etc/php7/conf.d/
+#COPY modules/*.so /usr/lib/php7/modules/
+#COPY modules/*.ini /etc/php7/conf.d/
