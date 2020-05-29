@@ -10,3 +10,14 @@ docker run --rm -it \
 
 heroku ps
 ```
+
+# wener/heroku-cli:docker
+
+Add docker, fot heroku container command.
+
+```bash
+# login to registry
+heroku container:login
+# build Dockerfile and push to registry
+heroku container:push web
+```
