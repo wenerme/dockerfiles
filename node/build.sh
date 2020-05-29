@@ -4,6 +4,6 @@
 buildreport || exit
 
 builddocker_init_ver node
-vers=${1:-"node builder"}
+vers=${1:-"node"}
 
 builddocker_vers $vers
