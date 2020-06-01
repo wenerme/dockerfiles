@@ -6,4 +6,4 @@ RUN echo https://mirrors.aliyun.com/alpine/v$(sed -n 's/\.\d\+$//p' /etc/alpine-
 RUN apk add --no-cache docker curl nano \
       # https://www.npmjs.com/package/node-gyp
       # + 200MB
-      python make gcc g++
+      python3 make gcc g++ alpine-sdk
