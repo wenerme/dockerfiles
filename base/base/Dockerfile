@@ -27,7 +27,7 @@ RUN echo ${ALPINE_MIRROR}/v${ALPINE_VERSION}/main > /etc/apk/repositories; \
     echo ${ALPINE_MIRROR}/v${ALPINE_VERSION}/community >> /etc/apk/repositories
 
 # Base tools
-RUN apk add --no-cache curl busybox-extras file nano libc6-compat bash
+RUN apk add --no-cache curl busybox-extras file nano libc6-compat gcompat bash
 SHELL [ "/bin/bash", "-c"]
 
 COPY root /
