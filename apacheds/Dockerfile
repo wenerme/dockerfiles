@@ -1,6 +1,6 @@
-FROM wener/java
+FROM wener/java:8
 
-ENV APACHEDS_VERSION 2.0.0-M24
+ENV APACHEDS_VERSION 2.0.0.AM26
 
 ENV APACHEDS_INSTANCE default
 ENV APACHEDS_BOOTSTRAP /bootstrap
@@ -8,13 +8,13 @@ ENV APACHEDS_DATA /opt/apacheds/instances
 
 RUN curl -sLO http://mirrors.aliyun.com/apache/directory/apacheds/dist/${APACHEDS_VERSION}/apacheds-${APACHEDS_VERSION}.zip && \
     unzip apacheds-${APACHEDS_VERSION}.zip && \
-    mkdir /opt && mv apacheds-${APACHEDS_VERSION} /opt/apacheds && \
+    mkdir -p /opt && mv apacheds-${APACHEDS_VERSION} /opt/apacheds && \
     # Backup default instance data
     cp -r /opt/apacheds/instances/default ${APACHEDS_BOOTSTRAP} && \
     rm apacheds-${APACHEDS_VERSION}.zip && \
     chmod +x /opt/apacheds/bin/apacheds.sh
 
-RUN apk add --no-cache openldap-clients=2.4.44-r5
+RUN apk add --no-cache openldap-clients
 
 # Ports defined by the default instance configuration:
 # 10389: ldap
