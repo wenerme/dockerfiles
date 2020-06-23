@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base
 
 RUN apk add --no-cache sudo \
     # admin account - disable login but enable sudo
