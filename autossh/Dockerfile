@@ -1,6 +1,6 @@
-FROM        wener/base
+FROM wener/base
 
-RUN apk add --no-cache --update sshpass
+RUN apk add --no-cache --update autossh sshpass openssh
 
 # Password for ssh
 ENV SSHPASS ''
