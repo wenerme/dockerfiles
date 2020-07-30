@@ -34,6 +34,26 @@ all: x86_64-image armv7-image aarch64-image armhf-image x86-image s390x-image
 	--amend wener/miniroot:arm64v8
 	docker manifest push -p wener/miniroot:latest
 
+	docker manifest create \
+	wener/miniroot:$(ver) \
+	--amend wener/miniroot:$(ver)-amd64 \
+	--amend wener/miniroot:$(ver)-i386 \
+	--amend wener/miniroot:$(ver)-s390x \
+	--amend wener/miniroot:$(ver)-arm32v6 \
+	--amend wener/miniroot:$(ver)-arm32v7 \
+	--amend wener/miniroot:$(ver)-arm64v8
+	docker manifest push -p wener/miniroot:$(ver)-latest
+
+	docker manifest create \
+	wener/miniroot:$(version) \
+	--amend wener/miniroot:$(version)-amd64 \
+	--amend wener/miniroot:$(version)-i386 \
+	--amend wener/miniroot:$(version)-s390x \
+	--amend wener/miniroot:$(version)-arm32v6 \
+	--amend wener/miniroot:$(version)-arm32v7 \
+	--amend wener/miniroot:$(version)-arm64v8
+	docker manifest push -p wener/miniroot:$(version)-latest
+
 minirootfs.tar.gz:=alpine-minirootfs-${version}-${arch}.tar.gz
 url:=${mirror}/v${ver}/releases/${arch}/$(minirootfs.tar.gz)
 $(minirootfs.tar.gz):
@@ -44,8 +64,14 @@ $(minirootfs.tar.gz):
 	$(MAKE) arch=$* image
 
 image: $(minirootfs.tar.gz)
-	docker build --build-arg arch=$(arch) --build-arg version=$(version)  . -t wener/miniroot:$(image_arch) --platform $(image_platform)
-	[ -n "$(push)" ] && docker push wener/miniroot:$(image_arch) || true
+	docker build --build-arg arch=$(arch) --build-arg version=$(version)  . \
+		-t wener/miniroot:$(image_arch) \
+		-t wener/miniroot:$(ver)-$(image_arch) \
+		-t wener/miniroot:$(version)-$(image_arch) \
+		--platform $(image_platform)
+	docker push wener/miniroot:$(image_arch)
+	docker push wener/miniroot:$(ver)-$(image_arch)
+	docker push wener/miniroot:$(version)-$(image_arch)
 
 report:
 	@echo Alpine $(arch) $(version) Image Arch $(image_arch)
