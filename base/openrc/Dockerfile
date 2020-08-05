@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base
 
 # https://github.com/dockage/alpine/blob/master/3.10/openrc/Dockerfile
 RUN apk add --no-cache openrc su-exec ca-certificates wait4ports \

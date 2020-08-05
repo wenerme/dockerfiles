@@ -9,7 +9,7 @@ image_arch_armhf:=arm32v6
 image_arch_armv7:=arm32v7
 image_arch_aarch64:=arm64v8
 image_arch_s390x:=s390x
-image_arch_mips64:=mips64le
+image_arch_mips64:=mips64be
 image_arch:=$(image_arch_$(arch))
 
 image_platform_x86:=linux/386
@@ -18,7 +18,7 @@ image_platform_armhf:=linux/arm/v6
 image_platform_armv7:=linux/arm/v7
 image_platform_aarch64:=linux/arm64
 image_platform_s390x:=linux/s390x
-image_platform_mips64:=linux/mips64le
+image_platform_mips64:=linux/mips64be
 image_platform:=$(image_platform_$(arch))
 
 push?=1
