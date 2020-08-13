@@ -1,7 +1,8 @@
-FROM wener/base:util
+FROM wener/base
 
-RUN apk add --no-cache alpine-sdk cmake git
+RUN apk add --no-cache alpine-sdk git bash-completion sudo
 
+# uid 1000
 RUN adduser -HDh /build builder \
 	&& echo "builder  ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 	&& addgroup builder builder \
@@ -12,4 +13,10 @@ RUN adduser -HDh /build builder \
 	&& chmod g+w /build /var/cache/distfiles
 
 RUN cp /root/.bashrc /etc/profile
+COPY inputrc /etc/inputrc
+
+USER builder
+
 WORKDIR /build
+
+CMD ["/bin/bash", "-l"]
