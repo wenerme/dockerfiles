@@ -1,10 +1,6 @@
 FROM  wener/base
-LABEL org.label-schema.name="go" \
-    org.label-schema.description="Golang based on Alpine Linux"
 
-# add repo.wener.me to install newer go version
-RUN (cd /etc/apk/keys; curl -LO https://repo.wener.me/alpine/wenermail@gmail.com-5dc8c7cd.rsa.pub ) && \
-    echo https://repo.wener.me/alpine/v$ALPINE_VERSION/community >> /etc/apk/repositories
-
-RUN apk add --no-cache go musl-dev git
+# Install newer version
+RUN apk add --no-cache go -X https://mirrors.aliyun.com/alpine/edge/community/ \
+    && apk add --no-cache musl-dev git make gcc
 RUN mkdir /root/go

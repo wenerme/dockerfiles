@@ -6,4 +6,10 @@ alias goer='docker run --rm -v $HOME/go:/root/go --workdir /root/$(realpath --re
 
 # with https://goproxy.io
 alias goer='docker run --rm -e GO111MODULE=on -e GOPROXY=https://goproxy.io -v $HOME/go:/root/go --workdir /root/$(realpath --relative-to="$HOME" "$PWD") wener/go go'
+
+docker run --rm -it \
+    -e GO111MODULE=on -e GOPROXY=https://goproxy.io \
+    -v $HOME/go:/root/go \
+    --workdir /root/$(realpath --relative-to="$HOME" "$PWD") \
+    --name go wener/go bash
 ```

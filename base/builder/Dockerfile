@@ -1,6 +1,6 @@
 FROM wener/base
 
-RUN apk add --no-cache alpine-sdk git bash-completion sudo
+RUN apk add --no-cache alpine-sdk git bash-completion sudo ccache
 
 # uid 1000
 RUN adduser -HDh /build builder \

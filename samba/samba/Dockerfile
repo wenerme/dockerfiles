@@ -1,8 +1,8 @@
-FROM        wener/base
+FROM wener/base
 
 RUN apk --no-cache add samba samba-dc
 
-COPY entrypoint.sh /
+COPY ./rootfs/ /
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 139 445 137/udp 138/udp
