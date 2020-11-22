@@ -48,8 +48,8 @@
   * Mirror http://mirrors.aliyun.com/alpine
 * ubuntu
   * Mirror http://mirrors.aliyun.com/ubuntu/
-  
-  
+
+
 ### Languages
 * java
   * FROM base:bash
@@ -101,7 +101,7 @@
     * protowrap
       * Generate multi package for golang in one command
     * [ ] proto-gen-slate
-      * Generate slate document for grpc 
+      * Generate slate document for grpc
 
 ### Tool
 * autossh
@@ -179,4 +179,10 @@ GROUP=warm32v7 ./build.sh
 
 # create manifest
 ./.build/archs.sh base bash
+```
+
+## Local Load
+
+```bash
+docker save wener/gitlab-runner | pv | ssh admin@host 'docker load'
 ```

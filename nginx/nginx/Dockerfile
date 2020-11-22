@@ -1,6 +1,6 @@
 FROM        wener/base:bash
 
-RUN apk --no-cache add nginx-mod-http-lua && \
+RUN apk --no-cache add nginx nginx-mod-stream && \
     chown -R nginx:www-data /var/lib/nginx && \
     mkdir -p /run/nginx/
 
