@@ -18,10 +18,3 @@ ENV PATH $PATH:/usr/lib/jvm/java-1.8-openjdk/jre/bin:/usr/lib/jvm/java-1.8-openj
 RUN set -x \
 	&& apk add --no-cache openjdk8 \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
-
-COPY entrypoint.sh /
-RUN chmod +x /entrypoint.sh
-
-EXPOSE 80 8080 443 8443
-
-ENTRYPOINT ["/entrypoint.sh"]
