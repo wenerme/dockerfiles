@@ -1,15 +1,15 @@
 FROM alpine as builder
-ARG ALPINE_VERSION=3.12
+ARG ALPINE_VERSION=3.13
 ARG ALPINE_MIRROR=https://mirrors.aliyun.com/alpine
 
 # Change the version to upgrade the base image
 RUN mkdir /rootfs && cd /rootfs && \
-    apk -X https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/main --no-cache --allow-untrusted --root /rootfs --initdb add alpine-base
+    apk -X https://mirrors.sjtug.sjtu.edu.cn/alpine/v${ALPINE_VERSION}/main --no-cache --allow-untrusted --root /rootfs --initdb add alpine-base
 
 FROM scratch
 
-ARG ALPINE_VERSION=3.12
-ARG ALPINE_MIRROR=https://mirrors.aliyun.com/alpine
+ARG ALPINE_VERSION=3.13
+ARG ALPINE_MIRROR=https://mirrors.sjtug.sjtu.edu.cn/alpine
 ENV ALPINE_VERSION=${ALPINE_VERSION}
 ENV ALPINE_MIRROR=${ALPINE_MIRROR}
 
