@@ -4,6 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver samba
-BUILD_IN_PARENT=1
 vers=${1:-"samba"}
 builddocker_vers $vers

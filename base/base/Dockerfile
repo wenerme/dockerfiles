@@ -1,6 +1,5 @@
 FROM alpine as builder
 ARG ALPINE_VERSION=3.13
-ARG ALPINE_MIRROR=https://mirrors.aliyun.com/alpine
 
 # Change the version to upgrade the base image
 RUN mkdir /rootfs && cd /rootfs && \

@@ -1,10 +1,8 @@
-FROM wener/base
+FROM wener/app
 
-RUN apk --no-cache add samba samba-dc
+RUN apk --no-cache add samba samba-dc \
+    && rc-update add samba
 
-COPY ./rootfs/ /
-RUN chmod +x /entrypoint.sh
+COPY rootfs/ /
 
-EXPOSE 139 445 137/udp 138/udp
-
-ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE 137/udp 138/udp 139 445
