@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver gitlab-runner
-vers=${1:-gitlab-runner}
+vers=${1:-gitlab-runner dev}
 builddocker_vers $vers
