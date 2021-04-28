@@ -10,6 +10,17 @@ alias goer='docker run --rm -e GO111MODULE=on -e GOPROXY=https://goproxy.io -v $
 docker run --rm -it \
     -e GO111MODULE=on -e GOPROXY=https://goproxy.io \
     -v $HOME/go:/root/go \
+    -v $HOME/.cache:/root/.cache \
     --workdir /root/$(realpath --relative-to="$HOME" "$PWD") \
+    --name go wener/go bash
+
+# 映射当前目录 - 现在已经不需要在 ~/go/src 下开发
+docker run --rm -it \
+    -e GO111MODULE=on -e GOPROXY=https://goproxy.io \
+    -v $HOME/go:/root/go \
+    -v $HOME/.cache:/root/.cache \
+    -v $PWD:/host \
+    --workdir /host \
+    -u $(id -u) -e HOME=/root\
     --name go wener/go bash
 ```
