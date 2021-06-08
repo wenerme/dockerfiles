@@ -1,10 +1,8 @@
-FROM debian:buster-backports
+FROM wener/debian
 
-RUN apt-get update && apt-get install -t buster-backports -y \
+RUN apt update && apt install -t buster-backports -y \
   # core
   asterisk asterisk-opus asterisk-mp3 \
-  # utils
-  tree file nano \
   && rm -rf /var/lib/apt/lists/*
 
 # HTTP HTTPS AMI
