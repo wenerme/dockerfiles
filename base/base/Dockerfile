@@ -1,5 +1,5 @@
 FROM alpine as builder
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3.14
 
 # Change the version to upgrade the base image
 RUN mkdir /rootfs && cd /rootfs && \
@@ -7,7 +7,7 @@ RUN mkdir /rootfs && cd /rootfs && \
 
 FROM scratch
 
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3.14
 ARG ALPINE_MIRROR=https://mirrors.sjtug.sjtu.edu.cn/alpine
 ENV ALPINE_VERSION=${ALPINE_VERSION}
 ENV ALPINE_MIRROR=${ALPINE_MIRROR}
