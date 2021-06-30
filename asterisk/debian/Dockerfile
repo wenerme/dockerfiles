@@ -3,6 +3,8 @@ FROM wener/debian
 RUN apt update && apt install -t buster-backports -y \
   # core
   asterisk asterisk-opus asterisk-mp3 \
+  # deps
+  sqlite3 \
   && rm -rf /var/lib/apt/lists/*
 
 # HTTP HTTPS AMI

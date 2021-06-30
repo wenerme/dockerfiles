@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base
 
 RUN apk add --no-cache \
     # Deps
