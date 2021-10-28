@@ -1,4 +1,5 @@
 FROM  wener/base
 
-RUN apk add --no-cache go musl-dev git make gcc pkgconf
+RUN apk upgrade --no-cache -a && apk add --no-cache musl-dev git make gcc pkgconf && \
+  apk add --no-cache go -X https://mirrors.aliyun.com/alpine/edge/community
 RUN mkdir /root/go
