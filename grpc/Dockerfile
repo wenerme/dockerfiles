@@ -5,7 +5,7 @@ RUN go get -u -v github.com/golang/protobuf/protoc-gen-go    && \
 
 FROM        wener/base:util
 LABEL org.label-schema.name="grpc" \
-    org.label-schema.description="gRpc tools based on Alpine Linux"
+    org.label-schema.description="GRPC tools based on Alpine Linux"
 
 RUN wget -q -O /etc/apk/keys/wenerme.rsa.pub https://raw.githubusercontent.com/wenerme/statics/master/abuild/wenerme.rsa.pub && \
     echo '@wener https://raw.githubusercontent.com/wenerme/statics/master/abuild/packages/wener' >> /etc/apk/repositories

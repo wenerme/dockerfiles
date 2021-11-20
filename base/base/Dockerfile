@@ -12,10 +12,10 @@ ARG ALPINE_MIRROR=https://mirrors.sjtug.sjtu.edu.cn/alpine
 ENV ALPINE_VERSION=${ALPINE_VERSION}
 ENV ALPINE_MIRROR=${ALPINE_MIRROR}
 
-LABEL maintainer="wener@wener.me"\
+LABEL maintainer="wener@wener.me" \
     org.label-schema.name="base" \
     org.label-schema.vendor="Wener" \
-    org.label-schema.description="Alpine Linux with Chinese mirror and common packages" \
+    org.label-schema.description="Alpine Linux with chinese mirror and common packages" \
     org.label-schema.url="https://github.com/wenerme/dockerfiles" \
     org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
     org.label-schema.version="${ALPINE_VERSION}" \
