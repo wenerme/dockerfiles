@@ -15,4 +15,5 @@ RUN chown -R nginx:www-data /var/lib/nginx && \
     mkdir -p /run/nginx/
 
 EXPOSE 80 443
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["nginx", "-g", "daemon off;"]

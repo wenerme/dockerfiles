@@ -1,6 +1,6 @@
 FROM wener/base
 
-RUN apk add --no-cache docker git make openssh \
-  && apk add gitlab-runner -X https://mirrors.aliyun.com/alpine/edge/community
+RUN apk add --no-cache dumb-init docker git make openssh gitlab-runner
 
-CMD ["/usr/bin/gitlab-runner","run"]
+ENTRYPOINT ["/usr/bin/dumb-init", "/usr/bin/gitlab-runner"]
+CMD ["run"]

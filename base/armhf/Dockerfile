@@ -12,7 +12,7 @@ RUN QEMU_ARCH=${QEMU_ARCH:-$ARCH} \
 
 FROM scratch
 
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3.14
 ARG ALPINE_MIRROR=https://mirrors.sjtug.sjtu.edu.cn/alpine
 ENV ALPINE_VERSION=${ALPINE_VERSION}
 ENV ALPINE_MIRROR=${ALPINE_MIRROR}
@@ -23,7 +23,7 @@ LABEL maintainer="wener@wener.me"\
     org.label-schema.description="Alpine Linux armhf based on armhf qemu emulator" \
     org.label-schema.url="https://github.com/wenerme/dockerfiles" \
     org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
-    org.label-schema.version="3.13" \
+    org.label-schema.version="3.14" \
     org.label-schema.license="MIT"
 
 ENV ALPINE_ARCH=armhf

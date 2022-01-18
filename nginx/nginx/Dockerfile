@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base
 
 RUN apk --no-cache add nginx nginx-mod-stream && \
     chown -R nginx:www-data /var/lib/nginx && \
