@@ -14,6 +14,6 @@ RUN \
     # NOPASSWORD
     && echo 'admin ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
     # unlock user - use same ts to prevent unneed change
-    && sed -i -re 's/^admin:.:\d+/admin:*:18000/' /etc/shadow \
+    && sed -i -re 's/^admin:.:\d+/admin:*:18000/' /etc/shadow
 
 COPY 00-echo-ips.start /etc/local.d/
