@@ -28,7 +28,7 @@
     - arch, dnsd, fakeidentd, ftpd, ftpget, ftpput, httpd, inetd, readahead, telnet, telnetd, tftp, tftpd, udhcpd
   - file - 检测文件、设备、块等
   - nano - 简化编辑
-  - libc6-compat - glibc 兼容
+  - libc6-compat,gcompat - glibc 兼容
 
 ```bash
 # Build a specified version
