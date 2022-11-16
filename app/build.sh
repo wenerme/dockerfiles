@@ -4,6 +4,6 @@
 buildreport || exit
 
 builddocker_init_ver app
-vers=${@:-"app builder dns nginx"}
+vers=${@:-"app ssh"}
 
 builddocker_vers $vers

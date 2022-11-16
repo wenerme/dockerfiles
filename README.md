@@ -7,9 +7,10 @@
 * 使用国内镜像
   * ubuntu
   * alpine
+    * 上海交大 https://mirrors.sjtug.sjtu.edu.cn/alpine/
+      * 目前主要使用
     * TUNA 镜像 https://mirrors.tuna.tsinghua.edu.cn/alpine
     * 阿里云镜像 http://mirrors.aliyun.com/alpine
-      * 有时候不稳定, 已经逐渐迁移为 TUNA 镜像
   * node
   <!--* maven-->
 * 尽可能的使用 alpine 作为基础镜像
