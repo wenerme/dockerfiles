@@ -1,4 +1,4 @@
-FROM debian:buster-backports
+FROM debian:bullseye-backports
 
 LABEL org.label-schema.name="debian" \
     org.label-schema.vendor="Wener" \
@@ -7,7 +7,7 @@ LABEL org.label-schema.name="debian" \
     org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
     org.label-schema.license="MIT"
 
-ENV VERSION_CODENAME=buster
+ENV VERSION_CODENAME=bullseye
 ENV DEBIAN_MIRROR=http://mirrors.aliyun.com
 RUN echo "# China mirror                                                                         \n\
 deb $DEBIAN_MIRROR/debian/               $VERSION_CODENAME main non-free contrib                     \n\

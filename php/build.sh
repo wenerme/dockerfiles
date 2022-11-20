@@ -5,5 +5,5 @@ buildreport || exit
 
 builddocker_init_ver php
 BUILD_IN_PARENT=1
-vers=${1:-"php"}
+vers=${1:-"php composer"}
 builddocker_vers $vers

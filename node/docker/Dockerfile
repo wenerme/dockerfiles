@@ -1,14 +1,10 @@
 FROM wener/node
 
-# offcial alpine is 3.11
-#FROM node:12-alpine
-#RUN echo https://mirrors.aliyun.com/alpine/v$(sed -n 's/\.\d\+$//p' /etc/alpine-release)/main/ > /etc/apk/repositories; \
-#    echo https://mirrors.aliyun.com/alpine/v$(sed -n 's/\.\d\+$//p' /etc/alpine-release)/community/ >> /etc/apk/repositories
-
 # + 300MB
-RUN apk add --no-cache docker curl nano \
+RUN apk add --no-cache docker docker-cli-buildx curl nano \
       # https://www.npmjs.com/package/node-gyp
       # + 200MB
       python3 make gcc g++ alpine-sdk \
       # dev
       git
+RUN docker buildx install
