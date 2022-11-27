@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Linux Desktop in Container: https://github.com/wenerme/dockerfiles"
+echo "Open VNC https://novnc.com/noVNC/vnc.html?host=localhost&port=5901&path=&encrypt=0"

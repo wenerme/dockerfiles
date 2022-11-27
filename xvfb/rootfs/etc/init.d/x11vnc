@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+supervisor=supervise-daemon
+
+name="X11VNC"
+command="/usr/bin/x11vnc"
+command_args="${command_args:-}"
+
+output_log="/var/log/${RC_SVCNAME}.log"
+error_log="/var/log/${RC_SVCNAME}.log"
+
+depend() {
+  need x11 window-manager
+  provide vnc
+}

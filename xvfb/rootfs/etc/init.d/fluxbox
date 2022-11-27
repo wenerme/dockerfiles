@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+supervisor=supervise-daemon
+
+name="Fluxbox"
+command="/usr/bin/fluxbox"
+command_args="${command_args:-}"
+
+output_log="/var/log/${RC_SVCNAME}.log"
+error_log="/var/log/${RC_SVCNAME}.log"
+
+depend() {
+  need x11
+  provide window-manager
+}

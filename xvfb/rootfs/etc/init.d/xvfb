@@ -1,0 +1,11 @@
+#!/sbin/openrc-run
+supervisor=supervise-daemon
+
+name="Xvfb Framebuffer"
+command="/usr/bin/Xvfb"
+command_args="${command_args:-}"
+
+
+depend() {
+  provide x11
+}

@@ -1,9 +1,19 @@
-FROM wener/base
+FROM wener/app
 
-ENV DISPLAY=:1
 
-RUN apk add --no-cache xvfb xdpyinfo fluxbox glib x11vnc \
+RUN apk add --no-cache xvfb xdpyinfo glib x11vnc fluxbox \
     && apk add -X https://mirrors.sjtug.sjtu.edu.cn/alpine/edge/testing wmctrl
+
+# Applications
+RUN apk add --no-cache xterm htop xmessage feh
 
 EXPOSE 5900
 EXPOSE 5901
+
+COPY rootfs /
+
+RUN rc-update add xvfb default  \
+    && rc-update add fluxbox default  \
+    && rc-update add x11vnc default
+
+ENV DISPLAY=:0

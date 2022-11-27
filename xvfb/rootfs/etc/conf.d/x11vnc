@@ -1,0 +1,1 @@
+command_args="-forever -shared -ncache 10 -display :0 -wait 20  -rfbport 5901"
