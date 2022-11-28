@@ -1,0 +1,27 @@
+contents:
+  repositories:
+  - https://mirrors.sjtug.sjtu.edu.cn/alpine/v3.17/main
+  - https://mirrors.sjtug.sjtu.edu.cn/alpine/v3.17/community
+  packages:
+  - alpine-base
+  - curl
+  - busybox-extras
+  - file
+  - nano
+  - libc6-compat
+  - gcompat
+  - bash
+cmd: /bin/bash -l
+environment:
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+archs:
+- amd64
+- arm64
+os-release:
+  name: Alpine Linux
+  id: alpine
+  version-id: 3.17.0
+  pretty-name: Alpine Linux v3.17
+  home-url: https://alpinelinux.org/
+  bug-report-url: https://bugs.alpinelinux.org/
+
