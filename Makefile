@@ -1,3 +1,18 @@
+REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
+-include $(REPO_ROOT)/build.mk
+
+.PHONY: xvfb
+xvfb:
+	@printf Building $(COLOR_INFO) "app"
+	docker buildx build --cache-from=wener/cache:xvfb_xvfb --cache-to=wener/cache:xvfb_xvfb --load -t wener/xvfb xvfb
+	docker push wener/xvfb
+
+.PHONY: chromium
+chromium:
+	@printf Building $(COLOR_INFO) "chromium"
+	docker buildx build --cache-from=wener/cache:chromium_chromium --cache-to=wener/cache:chromium_chromium --load -t wener/chromium chromium
+	docker push wener/chromium
+
 apko:
 	docker run --rm -it -v $(PWD):/host -w /host --name apko distroless.dev/apko
 

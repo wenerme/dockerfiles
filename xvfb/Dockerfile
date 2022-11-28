@@ -1,11 +1,11 @@
 FROM wener/app
 
 
-RUN apk add --no-cache xvfb xdpyinfo glib x11vnc fluxbox \
-    && apk add -X https://mirrors.sjtug.sjtu.edu.cn/alpine/edge/testing wmctrl
-
-# Applications
-RUN apk add --no-cache xterm htop xmessage feh
+RUN --mount=type=cache,target=/etc/apk/cache \
+    apk add xvfb xdpyinfo glib x11vnc fluxbox \
+    && apk add -X https://mirrors.sjtug.sjtu.edu.cn/alpine/edge/testing wmctrl \
+    # Applications
+    && apk add xterm htop xmessage feh
 
 EXPOSE 5900
 EXPOSE 5901

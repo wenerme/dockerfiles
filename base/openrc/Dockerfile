@@ -1,7 +1,7 @@
 FROM wener/base
 
 # https://github.com/dockage/alpine/blob/master/3.10/openrc/Dockerfile
-RUN apk add --no-cache openrc su-exec ca-certificates wait4ports \
+RUN --mount=type=cache,target=/etc/apk/cache apk add openrc su-exec ca-certificates wait4ports \
     # Disable getty's
     && sed -i 's/^\(tty\d\:\:\)/#\1/g' /etc/inittab \
     && mkdir /etc/rc.conf.d \

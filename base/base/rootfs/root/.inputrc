@@ -1,0 +1,72 @@
+# /etc/inputrc - ~/.inputrc
+# This file configures keyboard input for programs using readline.
+# See "man 3 readline" for more examples.
+
+# Make Tab autocomplete regardless of filename case
+set completion-ignore-case on
+
+# List all matches in case multiple possible completions are possible
+set show-all-if-ambiguous on
+
+# Immediately add a trailing slash when autocompleting symlinks to directories
+set mark-symlinked-directories on
+
+# Use the text that has already been typed as the prefix for searching through
+# commands (i.e. more intelligent Up/Down behavior)
+"\eOA": history-search-backward
+"\e[A": history-search-backward
+"\eOB": history-search-forward
+"\e[B": history-search-forward
+
+# Do not autocomplete hidden files unless the pattern explicitly begins with a dot
+set match-hidden-files off
+
+# Show all autocomplete results at once
+set page-completions off
+
+# If there are more than 200 possible completions for a word, ask to show them all
+set completion-query-items 200
+
+# Show extra file information when completing, like `ls -F` does
+set visible-stats on
+
+# Be more intelligent when autocompleting by also looking at the text after
+# the cursor. For example, when the current line is "cd ~/src/mozil", and
+# the cursor is on the "z", pressing Tab will not autocomplete it to "cd
+# ~/src/mozillail", but to "cd ~/src/mozilla". (This is supported by the
+# Readline used by Bash 4.)
+set skip-completed-text on
+
+# Allow UTF-8 input and output, instead of showing stuff like $'\0123\0456'
+# Enable 8 bit input.
+set meta-flag On
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# Use Alt/Meta + Delete to delete the preceding word
+"\e[3;3~": kill-word
+
+# Set various nice escape sequences:
+"\eOd": backward-word
+"\eOc": forward-word
+
+# for linux console
+"\e[1~": beginning-of-line
+"\e[4~": end-of-line
+"\e[5~": beginning-of-history
+"\e[6~": end-of-history
+"\e[3~": delete-char
+"\e[2~": quoted-insert
+
+# for rxvt                     #added
+"\e[7~": beginning-of-line
+"\e[8~": end-of-line
+
+# for xterm
+"\eOH": beginning-of-line
+"\eOF": end-of-line
+
+# for freebsd console
+"\e[H": beginning-of-line
+"\e[F": end-of-line
