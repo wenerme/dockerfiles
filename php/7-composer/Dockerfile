@@ -1,4 +1,4 @@
-FROM wener/php
+FROM wener/php:7
 
 # 使用中国镜像安装
 RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.php');" && \

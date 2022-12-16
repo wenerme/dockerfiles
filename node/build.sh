@@ -13,6 +13,7 @@ ver_short=${ver%.*}
 ver_major=${ver_short%.*}
 
 [[ $vers =~ "node" ]] && {
+  echo Taging version $ver $ver_short $ver_major
   for v in $ver $ver_short $ver_major; do
     docker tag wener/node $DOCKER_REGISTRY/$GROUP/node:"$v"
     docker push $DOCKER_REGISTRY/$GROUP/node:"$v"

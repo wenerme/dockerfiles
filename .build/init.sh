@@ -15,10 +15,10 @@ echo "Building container: $repo in '$PWD'"
 [ -f "before.sh" ] && echo Call before hook && ./before.sh || true
 
 if [ -z "${BUILD_IN_PARENT}" ]; then
-    docker build ${DOCKER_BUILD_ARGS} -t ${repo} .
+    docker buildx build --load ${DOCKER_BUILD_ARGS} -t ${repo} .
 else
     echo "Build in parent dir $(realpath $PWD/..)"
-    ( cd ..; docker build ${DOCKER_BUILD_ARGS} -t ${repo} . -f ${name}/Dockerfile )
+    ( cd ..; docker buildx build --load  ${DOCKER_BUILD_ARGS} -t ${repo} . -f ${name}/Dockerfile )
 fi
 
 [ -f "after.sh" ] && echo Call after hook && ./after.sh || true

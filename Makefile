@@ -12,6 +12,8 @@ chromium:
 	@printf Building $(COLOR_INFO) "chromium"
 	docker buildx build --cache-from=wener/cache:chromium_chromium --cache-to=wener/cache:chromium_chromium --load -t wener/chromium chromium
 	docker push wener/chromium
+	VER=`docker run --rm  wener/chromium /usr/bin/chromium-browser --version | grep -Eo '[0-9.]+'` \
+	&& crane tag wener/chromium $$VER
 
 apko:
 	docker run --rm -it -v $(PWD):/host -w /host --name apko distroless.dev/apko

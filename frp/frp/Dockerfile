@@ -1,5 +1,4 @@
 FROM wener/base
 
-RUN apk add --no-cache -X https://mirrors.sjtug.sjtu.edu.cn/alpine/edge/community frp \
-    # inotify-tools help reload frp
-    && apk add --no-cache inotify-tools
+# inotify-tools help reload frp
+RUN apk add --no-cache frp inotify-tools
