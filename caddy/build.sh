@@ -4,5 +4,5 @@
 buildreport || exit
 
 builddocker_init_ver caddy
-vers=${1:-caddy full php}
+vers=${1:-caddy php}
 builddocker_vers ${vers}

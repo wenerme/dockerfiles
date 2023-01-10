@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# : ${CI_SERVER_URL:=https://gitlab.com/}
+# : ${RUNNER_EXECUTOR:=shell}
+
+# REGISTRATION_TOKEN=
+# RUNNER_NAME=
+
+
+if [ -f /etc/gitlab-runner/config.toml ] ; then
+  echo "config.toml already exists"
+else
+  echo "Registering runner..."
+
+  gitlab-runner register \
+    --non-interactive \
+    --run-untagged \
+    --locked=false \
+    --access-level=not_protected \
+    --builds-dir /build \
+    --cache-dir /cache \
+    --shell bash \
+    --tag-list shell \
+    ${GITLAB_RUNNER_REGISTER_ARGS}
+fi
+
+touch /var/log/gitlab-runner.log
+chown gitlab-runner /etc/gitlab-runner/config.toml /var/log/gitlab-runner.log /build /cache
+
+echo "Tailing /var/log/gitlab-runner.log"
+tail -F /var/log/gitlab-runner.log &

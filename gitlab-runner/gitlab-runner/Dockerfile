@@ -1,7 +1,9 @@
-FROM wener/base
+FROM wener/app:ssh
 
-RUN apk add --no-cache dumb-init docker git make openssh gitlab-runner
-RUN apk add --no-cache docker-cli-buildx && docker buildx use default && docker buildx install
+RUN apk add --no-cache dumb-init docker git make openssh gitlab-runner docker-cli-buildx  \
+    && docker buildx use default  \
+    && docker buildx install
 
-ENTRYPOINT ["/usr/bin/dumb-init", "/usr/bin/gitlab-runner"]
-CMD ["run"]
+RUN rc-update add gitlab-runner
+
+COPY rootfs /

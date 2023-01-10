@@ -1,0 +1,26 @@
+# Configuration for /etc/init.d/gitlab-runner
+
+# Path to the config file (--config).
+#cfgfile="/etc/gitlab-runner/config.toml"
+
+# Path to the working directory (--working-directory).
+#datadir="/var/lib/gitlab-runner"
+
+# "runner", "text", "json", or "syslog"
+#log_format=
+
+# Path to the logging file where stderr will be redirected. Defaults to
+# /var/log/gitlab-runner.log if log_syslog=no, otherwise disabled.
+#error_log="/var/log/gitlab-runner.log"
+
+# Extra options passed to 'gitlab-runner run'.
+#command_args=
+
+# Comment out to run without process supervisor.
+supervisor=supervise-daemon
+
+
+# prefer log to file
+log_syslog=no
+# System Wide Environment
+command_user="root"

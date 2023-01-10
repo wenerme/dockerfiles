@@ -6,3 +6,5 @@ RUN apk add --no-cache nodejs yarn npm go && \
     npm install -g npm pnpm && \
     npm cache clean --force && \
     apk add --no-cache python3 g++ gcc make --virtual .gyp
+
+COPY rootfs /
