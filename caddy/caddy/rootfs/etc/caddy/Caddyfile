@@ -1,0 +1,11 @@
+{
+	admin 0.0.0.0:2019
+	skip_install_trust
+}
+
+:80 {
+	root * /var/www/html
+	encode gzip
+	# try_files {path} /index.html
+	file_server
+}
