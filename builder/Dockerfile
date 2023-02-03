@@ -1,35 +1,17 @@
-FROM        wener/base:builder
+FROM wener/app:ssh
 
-#########
-# Golang
-#########
-RUN apk add --no-cache go go-tools
-RUN apk add --no-cache godep
+RUN apk add --no-cache docker git make openssh docker-cli-buildx jq file curl ca-certificates libstdc++ libgcc alpine-sdk  musl-dev gcc pkgconf
+RUN docker buildx use default  \
+    && docker buildx install
 
-#########
-# Nodejs
-#########
-RUN apk add --no-cache nodejs-current nodejs-current-dev yarn
+# by Languages
+# golang
+RUN apk add --no-cache go
 
-RUN npm config set registry https://registry.npm.taobao.org
+# nodejs
+ENV N_NODE_MIRROR=https://npmmirror.com/mirrors/node-unofficial-builds
+RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s -- --arch x64-musl lts
+RUN npm config set registry https://registry.npmmirror.com
+RUN npm add -g n pnpm && npm cache clean --force
 
-
-#########
-# Python
-#########
-RUN apk add --no-cache python2 python2-dev
-RUN apk add --no-cache python3 python3-dev
-
-#########
-# Docker
-#########
-RUN apk add --no-cache docker
-
-#########
-# Helper
-#########
-RUN apk add --no-cache jq
-
-COPY root /
-
-CMD ["bash"]
+COPY rootfs /
