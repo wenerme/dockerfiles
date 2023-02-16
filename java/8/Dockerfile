@@ -1,4 +1,4 @@
-FROM        wener/base
+FROM wener/base
 
 # Default to UTF-8 file.encoding
 ENV LANG C.UTF-8

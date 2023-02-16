@@ -25,3 +25,6 @@ openrc:
 .PHONY: base
 base:
 	cd base && $(MAKE) build
+
+ma-base:
+	docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag wener/base:latest base

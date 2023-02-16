@@ -1,4 +1,4 @@
 FROM wener/base
 
-# inotify-tools help reload frp
-RUN apk add --no-cache frp inotify-tools
+# inotify-tools help auto reload frp
+RUN apk add --no-cache -X https://mirrors.sjtug.sjtu.edu.cn/alpine/edge/testing frp inotify-tools
