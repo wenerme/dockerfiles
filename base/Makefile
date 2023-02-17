@@ -26,5 +26,6 @@ openrc:
 base:
 	cd base && $(MAKE) build
 
-ma-base:
+ma:
 	docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag wener/base:latest base
+	docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag wener/base:openrc openrc
