@@ -17,10 +17,17 @@ RUN set -x \
 	&& apk add --no-cache openjdk8 \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
 
-# maven
-
 # 基础依赖+工具
-RUN apk add --no-cache maven git make python3 py3-pip curl unzip gcc python3-dev musl-dev linux-headers go tree
+RUN apk add --no-cache \
+    # container
+    docker docker-cli-buildx \
+    # build
+    gcc g++ python3-dev musl-dev linux-headers build-base util-linux coreutils findutils \
+    git make \
+    # qci deps
+    python3 py3-pip curl unzip go \
+    # misc
+    maven tree
 
 # CI_HOME
 #RUN mkdir -p /root/codingci

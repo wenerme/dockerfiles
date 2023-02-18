@@ -1,7 +1,7 @@
 FROM wener/base
 
 # https://github.com/dockage/alpine/blob/master/3.10/openrc/Dockerfile
-RUN --mount=type=cache,target=/etc/apk/cache apk add openrc su-exec ca-certificates wait4ports \
+RUN apk add --no-cache openrc su-exec ca-certificates wait4ports \
     # Disable getty's
     && sed -i 's/^\(tty\d\:\:\)/#\1/g' /etc/inittab \
     && mkdir /etc/rc.conf.d \
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add openrc su-exec ca-certifica
     # - docker control the hostname unless add cap SYS_ADMIN
     && echo 'rc_provide="loopback net hostname"' >> /etc/rc.conf.d/docker.conf \
     # Verbose rc log for debugging
-#    && echo 'rc_verbose=yes' >> /etc/rc.conf.d/docker.conf \
+    # && echo 'rc_verbose=yes' >> /etc/rc.conf.d/docker.conf \
     # Remove unnecessary services
     && rm -f /etc/init.d/hwdrivers \
             /etc/init.d/hwclock \

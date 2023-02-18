@@ -32,6 +32,7 @@
 ## Dockerfiles
 
 ### Base
+
 * base
   * v3.9
   * Mirror https://mirrors.tuna.tsinghua.edu.cn/alpine
@@ -50,8 +51,8 @@
 * ubuntu
   * Mirror http://mirrors.aliyun.com/ubuntu/
 
-
 ### Languages
+
 * java
   * FROM base:bash
   * OpenJDK 8
@@ -74,6 +75,7 @@
       * grpc
 
 ### Dev Tool
+
 * builder
   * FROM java:maven
   * devtools for build projects
@@ -105,6 +107,7 @@
       * Generate slate document for grpc
 
 ### Tool
+
 * autossh
   * FROM base
 * media
@@ -112,13 +115,14 @@
   * youtube-dl
 
 ### Application
+
 * zentao
   * FROM ubuntu
   * zentao 8.3.1
   * 禅道
 
-
 ### Server
+
 * jenkins
   * Jenkins CI/CD server
 * nginx
@@ -167,11 +171,15 @@ HELP=1 ./build.sh
 # Skip push
 BUILD_SKIP_PUSH=1 ./build.sh mongo
 ```
+
 ## FAQ
+
 ### No permission to apply cgroup settings
+
 When using openrc in docker, will throw this error, it's ok.
 
 ### multi arch
+
 * manifest 文件位于 `$HOME/.docker/manifests`
 
 ```bash
@@ -187,3 +195,7 @@ GROUP=warm32v7 ./build.sh
 ```bash
 docker save wener/gitlab-runner | pv | ssh admin@host 'docker load'
 ```
+
+## 缓存问题
+
+multiarch 下不可以 `--mount=type=cache,target=/etc/apk/cache`
