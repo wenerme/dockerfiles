@@ -23,11 +23,22 @@ RUN apk add --no-cache \
     docker docker-cli-buildx \
     # build
     gcc g++ python3-dev musl-dev linux-headers build-base util-linux coreutils findutils \
-    git make \
+    openssh git make \
     # qci deps
     python3 py3-pip curl unzip go \
     # misc
     maven tree
+
+# NodeJS
+RUN apk add --no-cache \
+    nodejs npm
+
+# NodeJS - 无 arm64
+#RUN apk add --no-cache libstdc++ libgcc \
+#    && curl -sfL https://ghproxy.com/https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
+#    && chmod +x n \
+#    && N_NODE_MIRROR=https://npmmirror.com/mirrors/node-unofficial-builds n --arch x64-musl 16 \
+#    && n rm 16
 
 # CI_HOME
 #RUN mkdir -p /root/codingci
