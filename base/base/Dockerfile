@@ -1,4 +1,4 @@
-FROM wener/base AS builder
+FROM alpine AS builder
 ARG ALPINE_VERSION
 ARG ALPINE_MIRROR
 

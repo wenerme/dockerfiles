@@ -23,7 +23,11 @@ target "base" {
     "docker.io/wener/base:${ALPINE_VERSION}","quay.io/wener/base:${ALPINE_VERSION}",
     "docker.io/wener/base:${TAG}","quay.io/wener/base:${TAG}",
   ]
-  platforms = ["linux/amd64", "linux/arm64"]
+  platforms = [
+    "linux/amd64", "linux/arm64",
+    "linux/386", "linux/arm/v7", "linux/arm/v6",
+    "linux/ppc64le", "linux/s390x",
+  ]
   args = {
     ALPINE_VERSION = ALPINE_VERSION
     ALPINE_MIRROR = ALPINE_MIRROR
