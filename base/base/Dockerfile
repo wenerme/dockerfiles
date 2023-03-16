@@ -1,18 +1,19 @@
-FROM alpine AS builder
-ARG ALPINE_VERSION=3.17
-ARG ALPINE_MIRROR=https://mirrors.sjtug.sjtu.edu.cn/alpine
+FROM wener/base AS builder
+ARG ALPINE_VERSION
+ARG ALPINE_MIRROR
 
 # Change the version to upgrade the base image
-RUN --mount=type=cache,target=/etc/apk/cache mkdir /rootfs && cd /rootfs && \
+RUN mkdir /rootfs && cd /rootfs && \
     apk -X ${ALPINE_MIRROR}/v${ALPINE_VERSION}/main --allow-untrusted --root /rootfs --initdb add alpine-base
 RUN echo ${ALPINE_MIRROR}/v${ALPINE_VERSION}/main > /rootfs/etc/apk/repositories; \
     echo ${ALPINE_MIRROR}/v${ALPINE_VERSION}/community >> /rootfs/etc/apk/repositories
-RUN --mount=type=cache,target=/etc/apk/cache apk add --root /rootfs --no-cache curl busybox-extras file nano libc6-compat gcompat bash
+RUN apk add --root /rootfs -U --no-cache curl busybox-extras file nano libc6-compat gcompat bash && \
+    rm /rootfs/var/cache/apk/*
 
 FROM scratch
 
-ARG ALPINE_VERSION=3.17
-ARG ALPINE_MIRROR=https://mirrors.sjtug.sjtu.edu.cn/alpine
+ARG ALPINE_VERSION
+ARG ALPINE_MIRROR
 ENV ALPINE_VERSION=${ALPINE_VERSION}
 ENV ALPINE_MIRROR=${ALPINE_MIRROR}
 

@@ -1,4 +1,5 @@
-FROM wener/base:openrc
+ARG RELEASE_VERSION
+FROM wener/base:${RELEASE_VERSION}-openrc
 
 RUN \
     # prefer to enable syslog for service logging

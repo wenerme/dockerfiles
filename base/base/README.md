@@ -34,3 +34,12 @@
 # Build a specified version
 docker build -t wener/base:3.12 base --build-arg ALPINE_VERSION=3.12
 ```
+
+```bash
+mkdir -p /rootfs && cd /rootfs
+apk -X https://mirrors.sjtug.sjtu.edu.cn/alpine/v3.17/main --allow-untrusted --root /rootfs --initdb add alpine-base
+
+echo https://mirrors.sjtug.sjtu.edu.cn/alpine/v3.17/main > /rootfs/etc/apk/repositories
+echo https://mirrors.sjtug.sjtu.edu.cn/alpine/v3.17/community >> /rootfs/etc/apk/repositories
+apk add --root /rootfs --no-cache -U curl busybox-extras file nano libc6-compat gcompat bash
+```
