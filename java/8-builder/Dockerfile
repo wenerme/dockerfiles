@@ -1,3 +1,5 @@
-FROM wener/java:8
+# syntax=docker/dockerfile:1
+
+FROM base
 
 RUN apk add --no-cache maven make

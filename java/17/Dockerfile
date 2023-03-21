@@ -1,6 +1,4 @@
-# syntax=docker/dockerfile:1
-
-FROM wener/base
+FROM        wener/base
 
 # Default to UTF-8 file.encoding
 ENV LANG C.UTF-8
@@ -14,9 +12,9 @@ RUN { \
 		echo 'dirname "$(dirname "$(readlink -f "$(which javac || which java)")")"'; \
 	} > /usr/local/bin/docker-java-home \
 	&& chmod +x /usr/local/bin/docker-java-home
-ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
-ENV PATH $PATH:/usr/lib/jvm/java-1.8-openjdk/jre/bin:/usr/lib/jvm/java-1.8-openjdk/bin
+ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk
+ENV PATH $PATH:/usr/lib/jvm/java-17-openjdk/jre/bin:/usr/lib/jvm/java-17-openjdk/bin
 
 RUN set -x \
-	&& apk add --no-cache openjdk8 \
+	&& apk add --no-cache openjdk17-jdk \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
