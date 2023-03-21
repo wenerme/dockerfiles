@@ -4,37 +4,26 @@ variable "TAG" {
 variable "VERSION" {default="" }
 
 group "default" {
-  targets = ["8","8-builder","17"]
+  targets = ["docker"]
 }
 
-target "8" {
-  context = "8"
-  tags = tags("8")
-
+target "base" {
   dockerfile = "Dockerfile"
   platforms = ["linux/amd64", "linux/arm64"]
   pull = true
 }
 
-target "8-builder" {
-  inherits = ["8"]
-  context = "8-builder"
-  contexts = {
-    "wener/java:8" = "target:8"
-  }
-  tags = tags("8-builder")
+target "docker" {
+  inherits = ["base"]
+  context = "docker"
+  tags = tags("latest")
 }
 
-target "17" {
-  inherits = ["8"]
-  context = "17"
-  tags = tags("17")
-}
 
 function "tags" {
   params = [name]
   result = [
-    "docker.io/wener/java:${name}","quay.io/wener/java:${name}",
+    "docker.io/wener/docker:${name}","quay.io/wener/docker:${name}",
 #    notequal("",VERSION) ? "docker.io/wener/java:${VERSION}": "",
 #    notequal("",VERSION) ? "quay.io/wener/java:${VERSION}": "",
   ]

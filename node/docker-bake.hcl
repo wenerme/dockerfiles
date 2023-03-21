@@ -26,14 +26,14 @@ target "16" {
 target "node" {
   inherits = ["base"]
   context = "node"
-  tags = tags("latest")
+  tags = concat(tags("latest"),tags("18"))
 }
 
 target "docker" {
-  inherits = ["docker"]
+  inherits = ["base"]
   context = "docker"
   contexts = {
-    "wener/node" = "node"
+    "wener/node" = "target:node"
   }
   tags = tags("docker")
 }

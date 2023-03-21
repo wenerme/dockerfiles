@@ -199,3 +199,8 @@ docker save wener/gitlab-runner | pv | ssh admin@host 'docker load'
 ## 缓存问题
 
 multiarch 下不可以 `--mount=type=cache,target=/etc/apk/cache`
+
+
+## bake
+
+- https://github.com/docker/buildx/blob/master/bake/hclparser/stdlib.go
