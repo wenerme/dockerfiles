@@ -4,7 +4,7 @@ variable "TAG" {
 variable "VERSION" {default="" }
 
 group "default" {
-  targets = ["16","node","docker"]
+  targets = ["16","node","docker","tsx"]
 }
 
 target "base" {
@@ -38,6 +38,14 @@ target "docker" {
   tags = tags("docker")
 }
 
+target "tsx" {
+  inherits = ["base"]
+  context = "tsx"
+  contexts = {
+    "wener/node" = "target:node"
+  }
+  tags = tags("tsx")
+}
 
 function "tags" {
   params = [name]

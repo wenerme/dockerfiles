@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM wener/app
 
 # sshd for op

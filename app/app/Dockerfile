@@ -1,13 +1,15 @@
 FROM wener/base:openrc
 
+# syslog for service logging
+# crond for commond task
+# local for pre start script
+# sudo & doas for privilege escalation
 RUN \
-    # enable syslog for service logging
     rc-update add syslog \
-    # enable local to run custom scripts
+    && rc-update add crond \
     && rc-update add local \
     # by default nothing will display
     && echo rc_verbose=yes >> /etc/conf.d/local \
-    # add sudo
     && apk add --no-cache sudo doas \
     # admin account - disable login but enable sudo
     && adduser -D admin \
