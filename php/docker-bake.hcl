@@ -7,7 +7,7 @@ variable "IMAGE_NAME" {
 variable "VERSION" {default="" }
 
 group "default" {
-  targets = ["7","7-composer"]
+  targets = ["7","7-composer","81"]
 }
 
 target "base" {
@@ -21,6 +21,12 @@ target "7" {
   context = "."
   dockerfile = "7/Dockerfile"
   tags = tags("7")
+}
+target "81" {
+  inherits = ["base"]
+  context = "."
+  dockerfile = "81/Dockerfile"
+  tags = tags("81")
 }
 target "7-composer" {
   inherits = ["base"]
