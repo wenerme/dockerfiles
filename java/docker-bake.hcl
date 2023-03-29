@@ -4,7 +4,7 @@ variable "TAG" {
 variable "VERSION" {default="" }
 
 group "default" {
-  targets = ["8","8-builder","17"]
+  targets = ["8","8-builder","8-ui","17"]
 }
 
 target "8" {
@@ -23,6 +23,15 @@ target "8-builder" {
     "wener/java:8" = "target:8"
   }
   tags = tags("8-builder")
+}
+
+target "8-ui" {
+  inherits = ["8"]
+  context = "8-ui"
+  contexts = {
+    "wener/java:8" = "target:8"
+  }
+  tags = tags("8-ui")
 }
 
 target "17" {
