@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ARG RELEASE_VERSION
 FROM wener/base:${RELEASE_VERSION}-openrc
 

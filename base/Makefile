@@ -4,6 +4,9 @@
 RELEASE_VERSION ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
 export RELEASE_VERSION
 
+build:
+	docker buildx bake --push
+
 
 #build: base openrc app
 #

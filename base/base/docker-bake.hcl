@@ -3,7 +3,7 @@ variable "TAG" {
 }
 
 variable "RELEASE_VERSION" {
-  default = "3.17.2"
+  default = "3.17.3"
 }
 variable "ALPINE_VERSION" {
   default = "${split(".", RELEASE_VERSION)[0]}.${split(".", RELEASE_VERSION)[1]}"

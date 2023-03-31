@@ -28,10 +28,7 @@ function "tags" {
   ]
 }
 
-target "openrc" {
-  context = "openrc"
-  tags = tags("openrc")
-
+target base {
   dockerfile = "Dockerfile"
   platforms = ["linux/amd64", "linux/arm64"]
   args = {
@@ -40,8 +37,17 @@ target "openrc" {
   pull = true
 }
 
+target "openrc" {
+  inherits = ["base"]
+  context = "openrc"
+  tags = tags("openrc")
+}
+
 target "app" {
   inherits = ["openrc"]
   context = "app"
   tags = tags("app")
+  contexts = {
+    "wener/base:${RELEASE_VERSION}-openrc":"target:openrc"
+  }
 }
