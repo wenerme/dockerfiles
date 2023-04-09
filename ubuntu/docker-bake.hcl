@@ -5,7 +5,7 @@ variable "VERSION" { default = "" }
 variable "DEV" { default = "" }
 
 group "default" {
-  targets = ["jammy", "focal", "bionic"]
+  targets = ["jammy", "focal", "bionic", "ml"]
 }
 
 target "base" {
@@ -32,13 +32,22 @@ target "focal" {
   }
 }
 
-
 target "bionic" {
   inherits = ["base"]
   context  = "ubuntu"
   tags     = tags("18.04")
   args     = {
     VERSION = "18.04"
+  }
+}
+
+target "ml" {
+  inherits  = ["base"]
+  context   = "ml"
+  tags      = tags("ml")
+  platforms = ["linux/amd64"]
+  contexts  = {
+    "wener/ubuntu" : "target:jammy"
   }
 }
 
