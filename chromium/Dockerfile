@@ -1,7 +1,7 @@
 FROM wener/xvfb
 
-RUN --mount=type=cache,target=/etc/apk/cache \
-      apk add \
+# --mount=type=cache,target=/etc/apk/cache
+RUN apk add \
       nss \
       freetype \
       harfbuzz \

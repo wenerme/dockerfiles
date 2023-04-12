@@ -1,8 +1,7 @@
 FROM wener/app
 
-
-RUN --mount=type=cache,target=/etc/apk/cache \
-    apk add xvfb xdpyinfo glib x11vnc fluxbox \
+# --mount=type=cache,target=/etc/apk/cache
+RUN apk add xvfb xdpyinfo glib x11vnc fluxbox dbus \
     && apk add -X https://mirrors.sjtug.sjtu.edu.cn/alpine/edge/testing wmctrl \
     # Applications
     && apk add xterm htop xmessage feh
@@ -12,7 +11,8 @@ EXPOSE 5901
 
 COPY rootfs /
 
-RUN rc-update add xvfb default  \
+RUN rc-update add dbus default  \
+    && rc-update add xvfb default  \
     && rc-update add fluxbox default  \
     && rc-update add x11vnc default
 
