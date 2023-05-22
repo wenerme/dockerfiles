@@ -15,6 +15,7 @@ info:
 build:
 	docker buildx bake
 push:
+	echo Building $(RELEASE_VERSION)
 	docker buildx bake --push
 
 #build: image tag

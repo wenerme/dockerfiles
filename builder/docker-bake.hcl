@@ -1,17 +1,18 @@
-variable "IMAGE_NAME" { default = "chromium" }
+variable "IMAGE_NAME" { default = "builder" }
 variable "VERSION" { default = "" }
 variable "DEV" { default = "" }
 
 
 target "base" {
   dockerfile = "Dockerfile"
-  platforms  = equal("", DEV) ? ["linux/amd64", "linux/arm64"] : ["linux/amd64"]
+  #platforms  = equal("", DEV) ? ["linux/amd64", "linux/arm64"] : ["linux/amd64"]
+  platforms  = ["linux/amd64"]
   pull       = true
 }
 
 target "default" {
   inherits = ["base"]
-  context  = "."
+  context  = "builder"
   tags     = tags("latest")
 }
 
