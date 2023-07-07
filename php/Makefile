@@ -1,5 +1,5 @@
 
-build:
+push:
 	docker buildx bake --push
 
 mod-prepare:

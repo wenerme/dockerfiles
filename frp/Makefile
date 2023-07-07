@@ -1,6 +1,7 @@
 PKG:=frp
 
-VERSION ?= $(shell docker run --rm -it wener/base sh -c 'apk update >/dev/null;apk policy $(PKG) | sed "2!d" | sed "s/[^0-9a-z.-]//g"')
+#VERSION ?= $(shell docker run --rm -it wener/base sh -c 'apk update >/dev/null;apk policy $(PKG) | sed "2!d"  | sed -r "s/^\s*([0-9.]+).*/\1/"')
+VERSION=0.51.0
 export VERSION
 
 info:

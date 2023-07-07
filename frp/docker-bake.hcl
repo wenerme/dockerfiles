@@ -12,19 +12,29 @@ target "frp" {
   tags = tags("frp")
 
   dockerfile = "Dockerfile"
-  platforms = ["linux/amd64", "linux/arm64"]
+  #platforms = ["linux/amd64", "linux/arm64"]
+  platforms = ["linux/amd64"]
   pull = true
+  env = {
+    VERSION = VERSION
+  }
 }
 
 target "frps" {
   inherits = ["frp"]
   context = "frps"
   tags = tags("frps")
+  contexts = {
+    "wener/frp" : "target:frp"
+  }
 }
 target "frpc" {
   inherits = ["frp"]
   context = "frpc"
   tags = tags("frpc")
+  contexts = {
+    "wener/frp" : "target:frp"
+  }
 }
 
 function "tags" {

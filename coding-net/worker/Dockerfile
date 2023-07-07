@@ -23,14 +23,14 @@ RUN apk add --no-cache \
     docker docker-cli-buildx \
     # build
     gcc g++ python3-dev musl-dev linux-headers build-base util-linux coreutils findutils \
-    openssh git make \
+    openssh git make zip \
     # qci deps
     python3 py3-pip curl unzip go \
     # misc
-    maven tree
-
-# NodeJS
-RUN apk add --no-cache \
+    maven tree openssh \
+    # java
+#    openjdk11 openjdk17 \
+    # nodejs
     nodejs npm
 
 # NodeJS - 无 arm64

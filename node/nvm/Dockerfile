@@ -10,7 +10,7 @@ RUN apk add --no-cache sudo \
     && cp /root/.bashrc ~admin/ && chown admin:admin ~admin/.bashrc \
     # https://github.com/nvm-sh/nvm#installing-nvm-on-alpine-linux
     # alpine requirement - build from source
-    && apk add --no-cache libc6-compat gcompat curl bash ca-certificates openssl ncurses coreutils python2 make gcc g++ libgcc linux-headers grep util-linux binutils findutils
+    && apk add --no-cache libc6-compat gcompat curl bash ca-certificates openssl ncurses coreutils python3 make gcc g++ libgcc linux-headers grep util-linux binutils findutils
 
 USER admin
 

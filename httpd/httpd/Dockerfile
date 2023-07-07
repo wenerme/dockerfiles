@@ -10,7 +10,8 @@ RUN apk add --no-cache \
       apache2-proxy \
       apache2-proxy-html \
       apache2-ssl \
-      apache2-webdav
+      apache2-webdav \
+      libxml2-dev
 
 COPY rootfs /
 
