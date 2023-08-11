@@ -15,7 +15,7 @@ target "frp" {
   #platforms = ["linux/amd64", "linux/arm64"]
   platforms = ["linux/amd64"]
   pull = true
-  env = {
+  args = {
     VERSION = VERSION
   }
 }
