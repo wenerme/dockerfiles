@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-ARG RELEASE_VERSION
-FROM wener/base:${RELEASE_VERSION}-openrc
+ARG ALPINE_RELEASE
+FROM wener/base:${ALPINE_RELEASE}-openrc
 
 RUN \
     # prefer to enable syslog for service logging

@@ -7,8 +7,8 @@
 #SH_VERSION ?=sh -c 'cat /etc/os-release | grep VERSION_ID | cut -d= -f2 | tr -d "[:space:]"'
 #VERSION ?= $(shell docker run --rm $(IMAGE) $(SH_VERSION))
 
-RELEASE_VERSION ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
-export RELEASE_VERSION
+ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+export ALPINE_RELEASE
 
 info:
 	docker buildx bake --print

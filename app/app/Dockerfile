@@ -1,4 +1,5 @@
-FROM wener/base:openrc
+ARG ALPINE_RELEASE
+FROM wener/base:${ALPINE_RELEASE}-openrc
 
 # syslog for service logging
 # crond for commond task

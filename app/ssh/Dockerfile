@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-
-FROM wener/app
+ARG ALPINE_RELEASE
+FROM wener/app:${ALPINE_RELEASE}
 
 # sshd for op
 # python for manage like ansible

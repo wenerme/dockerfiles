@@ -2,16 +2,16 @@
 #  default = "latest"
 #}
 
-variable "RELEASE_VERSION" {
+variable "ALPINE_RELEASE" {
   default = "3.17.2"
 }
 
-variable "MINOR_VERSION" {
-  default = "${split(".", RELEASE_VERSION)[0]}.${split(".", RELEASE_VERSION)[1]}"
+variable "ALPINE_VERSION" {
+  default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
 }
 
 variable "MAJOR_VERSION" {
-  default = "${split(".", RELEASE_VERSION)[0]}"
+  default = "${split(".", ALPINE_RELEASE)[0]}"
 }
 
 group "default" {
@@ -21,8 +21,8 @@ group "default" {
 function "tags" {
   params = [name]
   result = [
-    "docker.io/wener/base:${RELEASE_VERSION}-${name}","quay.io/wener/base:${RELEASE_VERSION}-${name}",
-    "docker.io/wener/base:${MINOR_VERSION}-${name}","quay.io/wener/base:${MINOR_VERSION}-${name}",
+    "docker.io/wener/base:${ALPINE_RELEASE}-${name}","quay.io/wener/base:${ALPINE_RELEASE}-${name}",
+    "docker.io/wener/base:${ALPINE_VERSION}-${name}","quay.io/wener/base:${ALPINE_VERSION}-${name}",
     "docker.io/wener/base:${MAJOR_VERSION}-${name}","quay.io/wener/base:${MAJOR_VERSION}-${name}",
     "docker.io/wener/base:${name}","quay.io/wener/base:${name}",
   ]
@@ -32,7 +32,7 @@ target base {
   dockerfile = "Dockerfile"
   platforms = ["linux/amd64", "linux/arm64"]
   args = {
-    RELEASE_VERSION = RELEASE_VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
   }
   pull = true
 }
@@ -48,6 +48,6 @@ target "app" {
   context = "app"
   tags = tags("app")
   contexts = {
-    "wener/base:${RELEASE_VERSION}-openrc":"target:openrc"
+    "wener/base:${ALPINE_RELEASE}-openrc":"target:openrc"
   }
 }

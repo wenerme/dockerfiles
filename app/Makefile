@@ -1,8 +1,11 @@
-REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
--include $(REPO_ROOT)/build.mk
+#REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
+#-include $(REPO_ROOT)/build.mk
+
+ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+export ALPINE_RELEASE
+
+print:
+	docker buildx bake --print
 
 push:
-
-tags:
-	VERSION=3.18.0 $(MAKE) push
-	VERSION=3.18 $(MAKE) push
+	docker buildx bake --push

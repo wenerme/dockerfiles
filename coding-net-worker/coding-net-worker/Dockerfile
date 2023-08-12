@@ -1,4 +1,8 @@
-FROM wener/app
+# syntax = docker/dockerfile:1
+
+ARG ALPINE_RELEASE
+ARG TARGETARCH
+FROM wener/app:${ALPINE_RELEASE}
 
 ENV LANG C.UTF-8
 
@@ -13,21 +17,23 @@ RUN { \
 ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
 ENV PATH $PATH:/usr/lib/jvm/java-1.8-openjdk/jre/bin:/usr/lib/jvm/java-1.8-openjdk/bin
 
-RUN set -x \
+RUN --mount=type=cache,target=/etc/apk/cache \
+  set -x \
 	&& apk add --no-cache openjdk8 \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
 
 # 基础依赖+工具
-RUN apk add --no-cache \
+RUN  --mount=type=cache,target=/etc/apk/cache \
+    apk add --no-cache \
     # container
     docker docker-cli-buildx \
     # build
     gcc g++ python3-dev musl-dev linux-headers build-base util-linux coreutils findutils \
-    openssh git make zip \
+    openssh git make zip tar rsync grep \
     # qci deps
     python3 py3-pip curl unzip go \
     # misc
-    maven tree openssh \
+    maven tree \
     # java
 #    openjdk11 openjdk17 \
     # nodejs
