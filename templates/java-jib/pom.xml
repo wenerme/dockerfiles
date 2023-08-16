@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <!-- for repro -->
+    <project.build.outputTimestamp>2023-01-01T00:00:00Z</project.build.outputTimestamp>
+    <image>
+      example.com/server/my-app-${project.artifactId}:${image-tag}
+    </image>
+    <image-tag>latest</image-tag>
+  </properties>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.google.cloud.tools</groupId>
+          <artifactId>jib-maven-plugin</artifactId>
+          <version>3.3.1</version>
+          <configuration>
+            <from>
+              <!-- tag 会每次都拉，可能出发 docker 限流，用 digest 更快 -->
+              <!-- 确保基础镜像无 CVE -->
+              <!-- quay.io/wener/java:8-ui -->
+              <image>
+                quay.io/wener/java@sha256:XYZ
+              </image>
+            </from>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>io.github.zlika</groupId>
+          <artifactId>reproducible-build-maven-plugin</artifactId>
+          <version>0.16</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
