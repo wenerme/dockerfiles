@@ -1,0 +1,63 @@
+# woodpecker < 1.0
+
+variables:
+- &node_image 'wener/node:docker'
+- &notify_image 'wener/woodpecker-feishu-bot'
+
+#when:
+#  path: "src/*"
+
+pipeline:
+  Notify Start:
+    image: *notify_image
+    failure: ignore
+    settings:
+      feishu_bot_url:
+        from_secret: feishu_bot_url
+      debug: true
+    environment:
+      PLUGIN_MARKDOWN: |
+        🏗️ 开始构建 <%= env.CI_REPO_NAME %> #<%= env.CI_BUILD_NUMBER %>
+
+        - <%= $.link(env.CI_COMMIT_SHA.slice(0,6),env.CI_COMMIT_LINK) %> <%=env.CI_COMMIT_MESSAGE.replaceAll(/\n/g,';')%>
+
+        📦️ <%=$.link(env.CI_REPO_NAME,env.CI_BUILD_LINK)%>
+
+  Install Dependency:
+    image: *node_image
+    commands:
+    - make ci-install
+  Build App:
+    group: build
+    image: *node_image
+    commands:
+    - make build
+  Build Image:
+    group: build
+    image: *node_image
+    secrets:
+    - docker_username
+    - docker_password
+    - docker_registry
+    commands:
+    - |
+      [ -z "$DOCKER_REGISTRY" ] || docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_REGISTRY"
+    - make ci-image
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+
+  Notify Done:
+    image: *notify_image
+    failure: ignore
+    settings:
+      feishu_bot_url:
+        from_secret: feishu_bot_url
+    environment:
+      PLUGIN_MARKDOWN: |
+        <%= env.CI_PIPELINE_STATUS === 'success' ? '✅' : '❌' %> 构建完成 <%= env.CI_REPO_NAME %> #<%= env.CI_BUILD_NUMBER %>
+
+        - <%= $.link(env.CI_COMMIT_SHA.slice(0,6),env.CI_COMMIT_LINK) %> <%=env.CI_COMMIT_MESSAGE.replaceAll(/\n/g,';')%>
+
+        📦️ <%= $.link(env.CI_REPO_NAME, env.CI_BUILD_LINK) %> · ⏳<%= env.CI_PIPELINE_FINISHED - env.CI_PIPELINE_STARTED %>s
+    when:
+      status: [ success, failure ]

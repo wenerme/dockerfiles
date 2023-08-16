@@ -1,4 +1,5 @@
-FROM wener/app
+ARG ALPINE_RELEASE
+FROM wener/app:${ALPINE_RELEASE}
 
 # --mount=type=cache,target=/etc/apk/cache
 RUN apk add xvfb xdpyinfo glib x11vnc fluxbox dbus \

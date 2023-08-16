@@ -1,0 +1,9 @@
+! If you're looking for settings to configure, they won't be saved here until
+! you change something in the fluxbox configuration menu.
+
+session.menuFile: ~/.fluxbox/menu
+session.keyFile: ~/.fluxbox/keys
+session.configVersion:  13
+session.styleFile: /usr/share/fluxbox/styles/WineBox
+
+session.screen0.rootCommand:	fbsetbg -f /usr/share/fluxbox/backgrounds/windows-xp.jpg

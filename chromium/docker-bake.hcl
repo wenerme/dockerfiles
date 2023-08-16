@@ -1,5 +1,6 @@
 variable "IMAGE_NAME" { default = "chromium" }
 variable "VERSION" { default = "" }
+variable "ALPINE_RELEASE" { default = "3.18.3" }
 variable "DEV" { default = "" }
 
 
@@ -13,6 +14,9 @@ target "default" {
   inherits = ["base"]
   context  = "."
   tags     = tags("latest")
+  args     = {
+    ALPINE_RELEASE = ALPINE_RELEASE
+  }
 }
 
 function "tags" {

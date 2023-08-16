@@ -1,4 +1,5 @@
-FROM gitea/act_runner:nightly as builder
+ARG VERSION
+FROM gitea/act_runner:$VERSION as builder
 
 FROM quay.io/wener/builder:3.18
 

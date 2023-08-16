@@ -1,7 +1,12 @@
 variable "IMAGE_NAME" {
   default = "xvfb"
 }
-variable "VERSION" { default = "" }
+variable "ALPINE_RELEASE" {
+  default = "3.18.2"
+}
+variable "ALPINE_VERSION" {
+  default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
+}
 variable "DEV" { default = "" }
 
 
@@ -15,14 +20,22 @@ target "base" {
 target "default" {
   inherits = ["base"]
   context  = "."
-  tags     = tags("latest")
+  tags     = tags(IMAGE_NAME)
+  args     = {
+    ALPINE_RELEASE = ALPINE_RELEASE
+    ALPINE_VERSION = ALPINE_VERSION
+  }
 }
 
 function "tags" {
   params = [name]
-  result = [
+  result = notequal(IMAGE_NAME, name) ?[
+    "docker.io/wener/${IMAGE_NAME}:${ALPINE_RELEASE}-${name}", "quay.io/wener/${IMAGE_NAME}:${ALPINE_RELEASE}-${name}",
+    "docker.io/wener/${IMAGE_NAME}:${ALPINE_VERSION}-${name}", "quay.io/wener/${IMAGE_NAME}:${ALPINE_VERSION}-${name}",
     "docker.io/wener/${IMAGE_NAME}:${name}", "quay.io/wener/${IMAGE_NAME}:${name}",
-    notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
-    notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
+  ] : [
+    "docker.io/wener/${IMAGE_NAME}:${ALPINE_RELEASE}", "quay.io/wener/${IMAGE_NAME}:${ALPINE_RELEASE}",
+    "docker.io/wener/${IMAGE_NAME}:${ALPINE_VERSION}", "quay.io/wener/${IMAGE_NAME}:${ALPINE_VERSION}",
+    "docker.io/wener/${IMAGE_NAME}", "quay.io/wener/${IMAGE_NAME}",
   ]
 }

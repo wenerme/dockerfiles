@@ -1,4 +1,5 @@
-FROM wener/xvfb
+ARG ALPINE_RELEASE
+FROM wener/xvfb:${ALPINE_RELEASE}
 
 # --mount=type=cache,target=/etc/apk/cache
 RUN apk add \

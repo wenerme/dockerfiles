@@ -1,5 +1,5 @@
+ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+export ALPINE_RELEASE
+
 push:
 	docker buildx bake --push
-tags:
-	VERSION=3.18.0 $(MAKE) push
-	VERSION=3.18 $(MAKE) push

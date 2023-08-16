@@ -1,5 +1,6 @@
 variable "IMAGE_NAME" { default = "gitea-runner" }
 variable "VERSION" { default = "" }
+variable "ALPINE_VERSION" { default = "3.18" }
 variable "DEV" { default = "" }
 
 
@@ -14,6 +15,10 @@ target "default" {
   inherits = ["base"]
   context  = "gitea-runner"
   tags     = tags("latest")
+  args     = {
+    VERSION = VERSION
+    ALPINE_VERSION = ALPINE_VERSION
+  }
 }
 
 function "tags" {
