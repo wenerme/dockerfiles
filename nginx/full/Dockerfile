@@ -1,4 +1,4 @@
-FROM wener/base:bash
+FROM wener/base
 
 # https://pkgs.alpinelinux.org/packages?name=nginx-mod-*&branch=v3.11&arch=x86_64
 RUN apk --no-cache add \
