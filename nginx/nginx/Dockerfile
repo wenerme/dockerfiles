@@ -1,4 +1,5 @@
-FROM wener/base
+ARG ALPINE_RELEASE
+FROM wener/base:${ALPINE_RELEASE}
 
 RUN apk --no-cache add nginx nginx-mod-stream && \
     chown -R nginx:www-data /var/lib/nginx && \

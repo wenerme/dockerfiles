@@ -10,16 +10,34 @@ COLOR_WARN 	:= "\e[1;31m%s\e[0m\n"
 
 IMAGE_NAME?:=$(shell basename $(CURDIR))
 
+#
+ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+
+
 ifneq ($(wildcard docker-bake.hcl),)
 
+DOCKER_BUILD_BAKE?=docker buildx bake
+
 info:
-	@echo "IMAGE_NAME:          $(IMAGE_NAME)"
-	docker buildx bake --print
-	realpath $(CURDIR) --relative-to $(REPO_ROOT)
+	@realpath $(CURDIR) --relative-to $(REPO_ROOT)
+	@echo "IMAGE_NAME:      $(IMAGE_NAME)"
+	@echo "ALPINE_RELEASE:  $(ALPINE_RELEASE)"
+	@echo "VERSION:         $(VERSION)"
+# docker buildx bake --print
 push:
-	docker buildx bake --push
+	$(DOCKER_BUILD_BAKE) --push
 push\:%:
-	docker buildx bake --push $(*)
+	$(DOCKER_BUILD_BAKE) --push $(*)
+print:
+	$(DOCKER_BUILD_BAKE) --print
+load:
+	$(DOCKER_BUILD_BAKE) --load
+load\:%:
+	$(DOCKER_BUILD_BAKE) --load $(*)
+
+.PHONY: build
+build:
+	$(DOCKER_BUILD_BAKE)
 
 endif
 

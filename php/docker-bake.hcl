@@ -1,13 +1,9 @@
-variable "TAG" {
-  default = "latest"
-}
-variable "IMAGE_NAME" {
-  default = "php"
-}
+variable "TAG" { default = "latest" }
+variable "IMAGE_NAME" { default = "php" }
 variable "VERSION" { default = "" }
 
 group "default" {
-  targets = ["7", "7-composer", "81", "8"]
+  targets = ["81", "82"]
 }
 
 target "base" {
@@ -25,9 +21,17 @@ target "7" {
 target "81" {
   inherits   = ["base"]
   context    = "."
-  dockerfile = "81/Dockerfile"
-  tags       = tags("81")
+  dockerfile = "8.1/Dockerfile"
+  tags       = tags("8.1")
 }
+
+target "82" {
+  inherits   = ["base"]
+  context    = "."
+  dockerfile = "8.2/Dockerfile"
+  tags       = tags("8.2")
+}
+
 target "8" {
   inherits   = ["base"]
   context    = "."
