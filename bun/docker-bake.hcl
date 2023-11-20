@@ -18,8 +18,9 @@ target "default" {
 function "tags" {
   params = [name]
   result = [
-    "docker.io/wener/${IMAGE_NAME}:${name}", "quay.io/wener/${IMAGE_NAME}:${name}",
+    "docker.io/wener/${IMAGE_NAME}:${name}",
     notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
-    notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
+    // "quay.io/wener/${IMAGE_NAME}:${name}",
+    // notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
   ]
 }

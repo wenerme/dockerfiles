@@ -1,4 +1,4 @@
-export VERSION=1.0.0
+export VERSION=1.0.13
 push:
 	docker buildx bake --push
 
