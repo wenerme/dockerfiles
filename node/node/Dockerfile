@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM wener/base
+ARG ALPINE_VERSION
+FROM wener/base:${ALPINE_VERSION}
 
-RUN apk add --no-cache nodejs yarn npm make && npm install -g npm pnpm && npm cache clean --force
+RUN apk add --no-cache nodejs npm make
+RUN --mount=type=cache,target=/root/.npm/ \
+    npm install -g npm pnpm yarn

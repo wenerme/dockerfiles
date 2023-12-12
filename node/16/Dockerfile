@@ -1,4 +1,5 @@
-FROM wener/base
+ARG ALPINE_RELEASE=3.18
+FROM wener/base:${ALPINE_RELEASE}
 
 ARG NODE_VERSION=16
 RUN --mount=type=cache,target=/etc/apk/cache \
