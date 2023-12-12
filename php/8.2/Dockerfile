@@ -1,6 +1,8 @@
 FROM wener/nginx
 
 # https://pkgs.alpinelinux.org/packages?name=php82-pecl-*&arch=x86_64
+# for composer
+# apk add php82-{openssl,phar,iconv,mbstring,curl} gnu-libiconv
 RUN apk --no-cache add \
     php82 \
     # Base package exclude cgi,litespeed,apache2,doc

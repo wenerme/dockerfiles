@@ -15,7 +15,7 @@ info:
 build:
 	docker buildx bake
 push:
-	echo Building $(RELEASE_VERSION)
+	echo Building $(ALPINE_RELEASE)
 	docker buildx bake --push
 
 #build: image tag
