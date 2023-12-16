@@ -1,33 +1,35 @@
 ARG ALPINE_RELEASE
 FROM wener/base:${ALPINE_RELEASE}
 
-# https://github.com/dockage/alpine/blob/master/3.10/openrc/Dockerfile
+# https://github.com/dockage/alpine/blob/main/3.18/Dockerfile
 RUN apk add --no-cache openrc su-exec ca-certificates wait4ports \
     # Disable getty's
     && sed -i 's/^\(tty\d\:\:\)/#\1/g' /etc/inittab \
-    && mkdir /etc/rc.conf.d \
-    # Change subsystem type to "docker"
-    && echo 'rc_sys="docker"' >> /etc/rc.conf.d/docker.conf \
-    # Allow all variables through
-    && echo 'rc_env_allow="*"' >> /etc/rc.conf.d/docker.conf \
-    # Start crashed services
-    && echo 'rc_crashed_stop=NO' >> /etc/rc.conf.d/docker.conf \
-    && echo 'rc_crashed_start=YES' >> /etc/rc.conf.d/docker.conf \
-    # Define extra dependencies for services
-    # - docker provide network
-    # - docker control the hostname unless add cap SYS_ADMIN
-    && echo 'rc_provide="loopback net hostname"' >> /etc/rc.conf.d/docker.conf \
-    # Verbose rc log for debugging
-    # && echo 'rc_verbose=yes' >> /etc/rc.conf.d/docker.conf \
+    && sed -i \
+        # Change subsystem type to "docker"
+        -e 's/#rc_sys=".*"/rc_sys="docker"/g' \
+        # Allow all variables through
+        -e 's/#rc_env_allow=".*"/rc_env_allow="\*"/g' \
+        # Start crashed services
+        -e 's/#rc_crashed_stop=.*/rc_crashed_stop=NO/g' \
+        -e 's/#rc_crashed_start=.*/rc_crashed_start=YES/g' \
+        # Define extra dependencies for services - maybe hostname ?
+        -e 's/#rc_provide=".*"/rc_provide="loopback net"/g' \
+        /etc/rc.conf \
     # Remove unnecessary services
     && rm -f /etc/init.d/hwdrivers \
-            /etc/init.d/hwclock \
-            /etc/init.d/hwdrivers \
-            /etc/init.d/modules \
-            /etc/init.d/modules-load \
-            /etc/init.d/modloop \
+             /etc/init.d/hwclock \
+             /etc/init.d/hwdrivers \
+             /etc/init.d/modules \
+             /etc/init.d/modules-load \
+             /etc/init.d/modloop \
     # Can't do cgroups
     && sed -i 's/\tcgroup_add_service/\t#cgroup_add_service/g' /lib/rc/sh/openrc-run.sh \
-    && sed -i 's/VSERVER/DOCKER/Ig' /lib/rc/sh/init.sh
+    && sed -i 's/VSERVER/DOCKER/Ig' /lib/rc/sh/init.sh \
+    # avoid clean_run
+    && sed -i 's/VSERVER/DOCKER/Ig' /etc/init.d/bootmisc
 
 CMD ["/sbin/init"]
+
+# for debug
+# echo 'rc_verbose=yes' >> /etc/rc.conf.d/docker.conf

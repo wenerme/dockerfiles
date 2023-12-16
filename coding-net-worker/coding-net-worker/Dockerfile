@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/etc/apk/cache \
 	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
 
 # 基础依赖+工具
-RUN  --mount=type=cache,target=/etc/apk/cache \
+RUN --mount=type=cache,target=/etc/apk/cache \
     apk add --no-cache \
     # container
     docker docker-cli-buildx \

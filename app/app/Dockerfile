@@ -8,6 +8,7 @@ FROM wener/base:${ALPINE_RELEASE}-openrc
 RUN \
     rc-update add syslog \
     && rc-update add crond \
+    && rc-update add machine-id \
     && rc-update add local \
     # by default nothing will display
     && echo rc_verbose=yes >> /etc/conf.d/local \
