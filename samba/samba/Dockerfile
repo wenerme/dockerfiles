@@ -1,4 +1,5 @@
-FROM wener/app
+ARG ALPINE_RELEASE
+FROM wener/app:${ALPINE_RELEASE}
 
 RUN apk --no-cache add samba samba-dc \
     && rc-update add samba
