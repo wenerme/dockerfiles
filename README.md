@@ -1,33 +1,27 @@
 # Dockerfiles
 
-[![Build Status](https://travis-ci.org/wenerme/dockerfiles.svg?branch=master)](https://travis-ci.org/wenerme/dockerfiles)
+- https://quay.io/organization/wener
+- https://hub.docker.com/u/wener
 
 很多常用的镜像,与其他相同的镜像相比有如下特点
 
+* 使用 alpine 作为基础镜像
 * 使用国内镜像
-  * ubuntu
   * alpine
     * 上海交大 https://mirrors.sjtug.sjtu.edu.cn/alpine/
       * 目前主要使用
     * TUNA 镜像 https://mirrors.tuna.tsinghua.edu.cn/alpine
     * 阿里云镜像 http://mirrors.aliyun.com/alpine
+  * ubuntu
   * node
-  <!--* maven-->
-* 尽可能的使用 alpine 作为基础镜像
+  * maven
 * 基于 Github 提交自动构建
 * 提供非常方便的构建脚本
 * 所有镜像均可在 docker hub 上访问
 * 默认所有镜像为 amd64
-* Alpine 多架构
-  * x86_64
-    * armhf
-    * aarch64
-    * ppc64le
-    * s390x
-    * x86
-* 支持多架构
-  * [arm32v7](https://hub.docker.com/orgs/warm32v7) - armhf - eaib5
-  * [ ] [arm64v7](https://hub.docker.com/orgs/warm64v8) - aarch64
+* 多架构
+  * linux/amd64
+  * linux/arm64
 
 ## Dockerfiles
 

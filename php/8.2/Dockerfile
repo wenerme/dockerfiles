@@ -1,4 +1,5 @@
-FROM wener/nginx
+ARG ALPINE_RELEASE
+FROM wener/nginx:alpine-${ALPINE_RELEASE}
 
 # https://pkgs.alpinelinux.org/packages?name=php82-pecl-*&arch=x86_64
 # for composer

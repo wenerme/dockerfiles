@@ -1,4 +1,5 @@
-FROM wener/nginx
+ARG ALPINE_RELEASE
+FROM wener/nginx:${ALPINE_RELEASE}
 
 RUN apk --no-cache add \
     php82 \
@@ -15,7 +16,7 @@ ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 RUN set -x adduser -u 82 -D -S -G www-data www-data
 
 COPY root /
-COPY 81/root /
+COPY 8.2/root /
 
 WORKDIR /var/www/html
 

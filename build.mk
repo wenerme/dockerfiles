@@ -9,9 +9,13 @@ COLOR_INFO 	:= "\e[1;36m%s\e[0m\n"
 COLOR_WARN 	:= "\e[1;31m%s\e[0m\n"
 
 IMAGE_NAME?:=$(shell basename $(CURDIR))
+IMAGE_NAME:=$(or $(IMAGE_NAME),$(shell realpath $(CURDIR) --relative-to $(REPO_ROOT)))
 
 #
 ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+
+# if tty set progress=plain by env
+DOCKER_BUILD_PROGRESS?=auto
 
 
 ifneq ($(wildcard docker-bake.hcl),)

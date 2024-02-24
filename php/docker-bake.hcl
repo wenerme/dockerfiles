@@ -1,15 +1,24 @@
 variable "TAG" { default = "latest" }
 variable "IMAGE_NAME" { default = "php" }
 variable "VERSION" { default = "" }
+variable "ALPINE_RELEASE" { default = "3.18.3" }
+variable "ALPINE_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}" }
 
 group "default" {
-  targets = ["81", "82"]
+  targets = ["81", "82",
+    // 有些 pecl 还在 testing
+    // "83",
+  ]
 }
 
 target "base" {
   dockerfile = "Dockerfile"
   platforms  = ["linux/amd64", "linux/arm64"]
   pull       = true
+  args       = {
+    ALPINE_RELEASE = ALPINE_RELEASE
+    ALPINE_VERSION = ALPINE_VERSION
+  }
 }
 
 target "7" {
@@ -32,12 +41,20 @@ target "82" {
   tags       = tags("8.2")
 }
 
+target "83" {
+  inherits   = ["base"]
+  context    = "."
+  dockerfile = "8.3/Dockerfile"
+  tags       = tags("8.3")
+}
+
 target "8" {
   inherits   = ["base"]
   context    = "."
   dockerfile = "8/Dockerfile"
   tags       = tags("8")
 }
+
 target "7-composer" {
   inherits = ["base"]
   context  = "7-composer"

@@ -11,15 +11,15 @@ target "base" {
   dockerfile = "Dockerfile"
   platforms  = ["linux/amd64", "linux/arm64"]
   pull       = true
+  args       = {
+    VERSION = VERSION
+  }
 }
 
 target "mihomo" {
   inherits = ["base"]
   context  = "mihomo"
   tags     = tags("mihomo")
-  args     = {
-    VERSION = "1.17.0"
-  }
 }
 
 target "compatible" {
@@ -27,9 +27,6 @@ target "compatible" {
   context   = "compatible"
   platforms = ["linux/amd64"]
   tags      = tags("compatible")
-  args      = {
-    VERSION = VERSION
-  }
 }
 
 function "tags" {
