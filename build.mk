@@ -13,6 +13,7 @@ IMAGE_NAME:=$(or $(IMAGE_NAME),$(shell realpath $(CURDIR) --relative-to $(REPO_R
 
 #
 ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+ALPINE_VERSION ?= $(shell echo $(ALPINE_RELEASE) | cut -d. -f1,2)
 
 # if tty set progress=plain by env
 DOCKER_BUILD_PROGRESS?=auto
@@ -26,6 +27,7 @@ info:
 	@realpath $(CURDIR) --relative-to $(REPO_ROOT)
 	@echo "IMAGE_NAME:      $(IMAGE_NAME)"
 	@echo "ALPINE_RELEASE:  $(ALPINE_RELEASE)"
+	@echo "ALPINE_VERSION:  $(ALPINE_VERSION)"
 	@echo "VERSION:         $(VERSION)"
 # docker buildx bake --print
 push:

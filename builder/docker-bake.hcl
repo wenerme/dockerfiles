@@ -1,13 +1,15 @@
 variable "IMAGE_NAME" { default = "builder" }
 variable "VERSION" { default = "" }
 variable "DEV" { default = "" }
-
+variable "ALPINE_RELEASE" { default = "3.19.1" }
 
 target "base" {
   dockerfile = "Dockerfile"
-  #platforms  = equal("", DEV) ? ["linux/amd64", "linux/arm64"] : ["linux/amd64"]
-  platforms  = ["linux/amd64"]
+  platforms  = ["linux/amd64", "linux/arm64"]
   pull       = true
+  args       = {
+    ALPINE_RELEASE = ALPINE_RELEASE
+  }
 }
 
 target "default" {
