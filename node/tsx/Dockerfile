@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
-FROM wener/node
+ARG VERSION
+FROM wener/node:${VERSION}
 
-RUN npm add -g tsx esbuild typescript @types/node \
-    && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm/ \
+    npm add -g tsx esbuild typescript @types/node

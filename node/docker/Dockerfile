@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
-FROM wener/node
+ARG VERSION
+FROM wener/node:${VERSION}
 
 # + 300MB
 RUN apk add --no-cache docker docker-cli-buildx curl nano \
