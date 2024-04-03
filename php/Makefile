@@ -3,6 +3,8 @@ REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 export ALPINE_RELEASE
 
+push:
+
 mod-prepare:
 	docker run -d -it --name php-builder wener/php:builder
 

@@ -4,11 +4,13 @@ FROM wener/nginx:alpine-${ALPINE_RELEASE}
 # https://pkgs.alpinelinux.org/packages?name=php82-pecl-*&arch=x86_64
 # for composer
 # apk add php82-{openssl,phar,iconv,mbstring,curl} gnu-libiconv
+# pecl-psr will cause problem
 RUN apk --no-cache add \
     php82 \
     # Base package exclude cgi,litespeed,apache2,doc
     php82-{bcmath,bz2,calendar,common,ctype,curl,dev,dba,dom,embed,enchant,exif,fileinfo,fpm,ftp,gd,gettext,gmp,iconv,imap,intl,json,ldap,mbstring,mysqli,mysqlnd,odbc,opcache,openssl,pcntl,pdo,pdo_dblib,pdo_mysql,pdo_odbc,pdo_pgsql,pdo_sqlite,pear,pgsql,phar,phpdbg,posix,pspell,session,shmop,simplexml,snmp,soap,sockets,sodium,sqlite3,sysvmsg,sysvsem,sysvshm,tidy,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib} \
-    php82-pecl-{redis,yaml,uuid,protobuf,igbinary,psr,zstd}
+    php82-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd} \
+    make
 
 RUN ln -s $(which php82) /usr/bin/php || true
 

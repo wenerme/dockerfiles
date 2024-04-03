@@ -3,6 +3,18 @@
 - https://quay.io/organization/wener
 - https://hub.docker.com/u/wener
 
+| image          | size  | base       | note                  |
+|----------------|-------|------------|-----------------------|
+| wener/base     | 7MB   |            | curl,fil,compact,bash |
+| wener/app      | 8MB   | wener/base | openrc                |
+| wener/app:ssh  | 27MB  | wener/app  | ssh server            |
+| wener/xvfb     | 30MB  | wener/app  |                       |
+| wener/chromium | 350MB | wener/xvfb |                       |
+| wener/node     | 37MB  | wener/base |                       |
+| wener/go       | 127MB | wener/base |                       |
+| wener/go:win   | 372MB | wener/go   | mingw                 |
+| wener/nginx    | 8MB   | wener/base |                       |
+
 很多常用的镜像,与其他相同的镜像相比有如下特点
 
 * 使用 alpine 作为基础镜像
@@ -193,7 +205,6 @@ docker save wener/gitlab-runner | pv | ssh admin@host 'docker load'
 ## 缓存问题
 
 multiarch 下不可以 `--mount=type=cache,target=/etc/apk/cache`
-
 
 ## bake
 

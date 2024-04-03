@@ -23,6 +23,7 @@ function "tags" {
   params = [name]
   result = [
     "docker.io/wener/nginx:${name}", "quay.io/wener/nginx:${name}",
+    "docker.io/wener/nginx:alpine-${ALPINE_RELEASE}", "quay.io/wener/nginx:alpine-${ALPINE_RELEASE}",
     notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
     notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
   ]

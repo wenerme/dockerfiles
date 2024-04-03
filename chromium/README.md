@@ -1,8 +1,6 @@
 
 # wener/chromium
 
-- ~28 MiB
-
 ```
 # installed version
 docker run --rm -it wener/chromium chromium-browser --version
