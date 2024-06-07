@@ -1,5 +1,5 @@
 variable "TAG" {
-  default = "latest"
+  default = ""
 }
 
 variable "ALPINE_RELEASE" {
@@ -19,10 +19,11 @@ group "default" {
 
 target "base" {
   dockerfile = "Dockerfile"
-  tags       = [
+  tags = [
     "docker.io/wener/base:${ALPINE_RELEASE}", "quay.io/wener/base:${ALPINE_RELEASE}",
     "docker.io/wener/base:${ALPINE_VERSION}", "quay.io/wener/base:${ALPINE_VERSION}",
-    "docker.io/wener/base:${TAG}", "quay.io/wener/base:${TAG}",
+      notequal("", TAG) ? "docker.io/wener/base:${TAG}" : "",
+      notequal("", TAG) ? "quay.io/wener/base:${TAG}" : "",
   ]
   platforms = [
     "linux/amd64", "linux/arm64",

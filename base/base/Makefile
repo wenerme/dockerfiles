@@ -18,6 +18,9 @@ push:
 	echo Building $(ALPINE_RELEASE)
 	docker buildx bake --push
 
+push-latest:
+	TAG=latest ALPINE_RELEASE=$(ALPINE_RELEASE) docker buildx bake --push
+
 #build: image tag
 #image:
 #	docker buildx build --cache-from=wener/cache:$(CACHE_KEY) --cache-to=wener/cache:$(CACHE_KEY) --load -t wener/base:latest .

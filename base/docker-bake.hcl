@@ -2,6 +2,10 @@
 #  default = "latest"
 #}
 
+variable LATEST {
+  default = false
+}
+
 variable "ALPINE_RELEASE" {
   default = "3.17.2"
 }

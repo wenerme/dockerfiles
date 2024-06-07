@@ -1,29 +1,16 @@
-#
-# Builder
-#
-FROM abiosoft/caddy:builder as builder
-# minify,
-ARG version="0.11.1"
-ARG plugins="\
-    # HTTP Plugins \
-    authz,awses,awslambda,cache,cgi,cors,datadog,expires,filemanager,filter,forwardproxy,git,gopkg,grpc,hugo,ipfilter,jekyll,jwt,locale,login,mailout,nobots,prometheus,proxyprotocol,ratelimit,realip,reauth,restic,upload,webdav,\
-    # TLS DNS Provider \
-    auroradns,azure,cloudflare,cloudxns,digitalocean,dnsimple,dnsmadeeasy,dnspod,duckdns,dyn,exoscale,fastdns,gandi,gandiv5,glesys,godaddy,googlecloud,lightsail,linode,namecheap,namedotcom,ns1,otc,ovh,pdns,rackspace,rfc2136,route53,vultr"
+ARG VERSION=2.8.4
+FROM caddy:${VERSION}-builder AS builder
 
-RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
+RUN xcaddy build \
+    --with github.com/lucaslorentz/caddy-docker-proxy/v2 \
+    --with github.com/caddy-dns/acmedns \
+    --with github.com/caddy-dns/powerdns \
+    --with github.com/sagikazarmark/caddy-fs-s3
 
-#
-# Final stage
-#
-FROM wener/caddy
-LABEL org.label-schema.name="caddy:full" \
-    org.label-schema.description="Caddy will almost all plugins and dns providers"
+FROM caddy:${VERSION}-alpine
 
-RUN apk add --no-cache openssh-client git
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 
-# install caddy
-COPY --from=builder /install/caddy /usr/bin/caddy
+COPY rootfs /
 
-# validate install
-RUN /usr/bin/caddy -version
-RUN /usr/bin/caddy -plugins
+CMD ["caddy", "docker-proxy"]

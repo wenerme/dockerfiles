@@ -2,7 +2,7 @@ PKG:=frp
 
 #https://github.com/fatedier/frp/releases
 #VERSION ?= $(shell docker run --rm -it wener/base sh -c 'apk update >/dev/null;apk policy $(PKG) | sed "2!d"  | sed -r "s/^\s*([0-9.]+).*/\1/"')
-VERSION=0.53.2
+VERSION=0.56.0
 export VERSION
 
 info:
