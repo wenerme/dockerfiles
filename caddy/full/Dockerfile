@@ -13,4 +13,4 @@ COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 
 COPY rootfs /
 
-CMD ["caddy", "docker-proxy"]
+CMD ["/usr/sbin/caddy","run","--adapter","caddyfile","--config","/etc/caddy/Caddyfile"]

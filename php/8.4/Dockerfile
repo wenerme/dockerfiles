@@ -1,18 +1,18 @@
 ARG ALPINE_RELEASE
 FROM wener/nginx:alpine-${ALPINE_RELEASE}
 
-# https://pkgs.alpinelinux.org/packages?name=php83-pecl-*&arch=x86_64
+# https://pkgs.alpinelinux.org/packages?name=php84-pecl-*&arch=x86_64
 # for composer
-# apk add php83-{openssl,phar,iconv,mbstring,curl} gnu-libiconv
+# apk add php84-{openssl,phar,iconv,mbstring,curl} gnu-libiconv
 RUN apk --no-cache add \
-    php83 \
+    php84 \
     # Base package exclude cgi,litespeed,apache2,doc
-    php83-{bcmath,bz2,calendar,common,ctype,curl,dev,dba,dom,embed,enchant,exif,fileinfo,fpm,ftp,gd,gettext,gmp,iconv,imap,intl,json,ldap,mbstring,mysqli,mysqlnd,odbc,opcache,openssl,pcntl,pdo,pdo_dblib,pdo_mysql,pdo_odbc,pdo_pgsql,pdo_sqlite,pear,pgsql,phar,phpdbg,posix,pspell,session,shmop,simplexml,snmp,soap,sockets,sodium,sqlite3,sysvmsg,sysvsem,sysvshm,tidy,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib} \
-    php83-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd} \
+    php84-{bcmath,bz2,calendar,common,ctype,curl,dev,dba,dom,embed,enchant,exif,fileinfo,fpm,ftp,gd,gettext,gmp,iconv,imap,intl,json,ldap,mbstring,mysqli,mysqlnd,odbc,opcache,openssl,pcntl,pdo,pdo_dblib,pdo_mysql,pdo_odbc,pdo_pgsql,pdo_sqlite,pear,pgsql,phar,phpdbg,posix,pspell,session,shmop,simplexml,snmp,soap,sockets,sodium,sqlite3,sysvmsg,sysvsem,sysvshm,tidy,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib} \
+    php84-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd} \
     make
 
-RUN ln -s $(which php83) /usr/bin/php || true
-RUN ln -s $(which php-fpm83) /usr/bin/php-fpm || true
+RUN ln -s $(which php84) /usr/bin/php || true
+RUN ln -s $(which php-fpm84) /usr/bin/php-fpm || true
 
 # https://github.com/docker-library/php/issues/240
 RUN apk add --no-cache gnu-libiconv
@@ -22,7 +22,7 @@ ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 RUN set -x adduser -u 82 -D -S -G www-data www-data
 
 COPY root /
-COPY 8.3/root /
+COPY 8.4/root /
 
 # 使用中国镜像安装
 RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.php');" && \

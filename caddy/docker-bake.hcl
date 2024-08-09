@@ -6,20 +6,31 @@ variable "DEV" { default = "" }
 
 target "base" {
   dockerfile = "Dockerfile"
-  platforms  = ["linux/amd64", "linux/arm64"]
+  platforms = ["linux/amd64", "linux/arm64"]
   pull       = true
 }
 
 group "default" {
-  targets = ["docker-proxy"]
+  targets = ["caddy"]
+}
+
+target "caddy" {
+  inherits = ["base"]
+  context = "caddy"
+  tags = tags("latest")
+  args = {
+    VERSION = VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
+  }
 }
 
 target "docker-proxy" {
   inherits = ["base"]
-  context  = "docker-proxy"
-  tags     = tags("docker-proxy")
-  args     = {
+  context = "docker-proxy"
+  tags = tags("docker-proxy")
+  args = {
     VERSION = VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
   }
 }
 
@@ -27,7 +38,7 @@ function "tags" {
   params = [name]
   result = [
     "docker.io/wener/${IMAGE_NAME}:${name}", "quay.io/wener/${IMAGE_NAME}:${name}",
-    notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
-    notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
+      notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
+      notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
   ]
 }

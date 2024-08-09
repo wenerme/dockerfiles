@@ -5,9 +5,11 @@ variable "ALPINE_RELEASE" { default = "3.18.3" }
 variable "ALPINE_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}" }
 
 group "default" {
-  targets = ["81", "82",
-    // 有些 pecl 还在 testing
-    // "83",
+  targets = [
+    // "81", // 3.19 only
+    "82",
+    "83",
+    // "84",
   ]
 }
 
@@ -46,6 +48,13 @@ target "83" {
   context    = "."
   dockerfile = "8.3/Dockerfile"
   tags       = tags("8.3")
+}
+
+target "84" {
+  inherits   = ["base"]
+  context    = "."
+  dockerfile = "8.4/Dockerfile"
+  tags       = tags("8.4")
 }
 
 target "8" {
