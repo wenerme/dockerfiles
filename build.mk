@@ -11,8 +11,9 @@ COLOR_WARN 	:= "\e[1;31m%s\e[0m\n"
 IMAGE_NAME?:=$(shell basename $(CURDIR))
 IMAGE_NAME:=$(or $(IMAGE_NAME),$(shell realpath $(CURDIR) --relative-to $(REPO_ROOT)))
 
-#
+# 3.20.0
 ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
+# 3.20
 ALPINE_VERSION ?= $(shell echo $(ALPINE_RELEASE) | cut -d. -f1,2)
 
 # if tty set progress=plain by env
