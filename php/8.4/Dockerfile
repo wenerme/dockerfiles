@@ -1,6 +1,8 @@
 ARG ALPINE_RELEASE
 FROM wener/nginx:alpine-${ALPINE_RELEASE}
 
+RUN apk add icu-data-full # for replacing iconv
+
 # https://pkgs.alpinelinux.org/packages?name=php84-pecl-*&arch=x86_64
 # for composer
 # apk add php84-{openssl,phar,iconv,mbstring,curl} gnu-libiconv
@@ -13,10 +15,6 @@ RUN apk --no-cache add \
 
 RUN ln -s $(which php84) /usr/bin/php || true
 RUN ln -s $(which php-fpm84) /usr/bin/php-fpm || true
-
-# https://github.com/docker-library/php/issues/240
-RUN apk add --no-cache gnu-libiconv
-ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
 # www-data 组已经存在
 RUN set -x adduser -u 82 -D -S -G www-data www-data

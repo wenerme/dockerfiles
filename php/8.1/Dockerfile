@@ -1,6 +1,8 @@
 ARG ALPINE_RELEASE
 FROM wener/nginx:alpine-${ALPINE_RELEASE}
 
+RUN apk add icu-data-full # for replacing iconv
+
 # https://pkgs.alpinelinux.org/packages?name=php81-pecl-*&arch=x86_64
 RUN apk --no-cache add \
     php81 \
