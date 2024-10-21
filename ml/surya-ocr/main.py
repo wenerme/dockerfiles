@@ -16,6 +16,8 @@ import surya.model.table_rec.model
 import surya.model.table_rec.processor
 import surya.model.ordering.processor
 import surya.model.recognition.processor
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 load_dotenv(".env.local", override=True)
@@ -23,8 +25,6 @@ load_dotenv(".env.local", override=True)
 # 设置日志记录
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-app = FastAPI()
 
 # 定义全局上传目录
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/tmp/uploads")
@@ -37,6 +37,17 @@ def signal_handler(signal, frame):
 
 
 signal.signal(signal.SIGINT, signal_handler)
+
+app = FastAPI()
+
+allow_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # 请求日志中间件
@@ -53,9 +64,9 @@ async def log_requests(request: Request, call_next):
 
 
 # 定义 Ping API
-@app.get("/ping")
-async def ping():
-    return {"message": "pong"}
+@app.get("/live")
+async def health_check():
+    return {"status": "healthy"}
 
 
 _cache = {}
@@ -396,13 +407,26 @@ async def tabled(images: list[UploadFile] = File(...)):
 @app.post("/reading-order")
 async def reading_order(images: list[UploadFile] = File(...)):
     from surya.ordering import batch_ordering
-
-    model, processor = load_cache("ordering.model", "ordering.processor")
-
-    _images = [Image.open(image.file) for image in images]
+    from surya.detection import batch_text_detection
+    from surya.layout import batch_layout_detection
 
     try:
-        result = batch_ordering(_images, [bboxes], model, processor)
+        model, processor = load_cache("ordering.model", "ordering.processor")
+        layout_model, layout_processor, det_model, det_processor = load_cache("layout.model", "layout.processor",
+                                                                              "detection.model",
+                                                                              "detection.processor")
+
+        _images = [Image.open(image.file) for image in images]
+        line_predictions = batch_text_detection(_images, det_model, det_processor)
+        layout_predictions = batch_layout_detection(
+            _images, layout_model, layout_processor, line_predictions
+        )
+        result = batch_ordering(_images, [
+            [
+                l.bbox for l in res.bboxes
+            ]
+            for res in layout_predictions
+        ], model, processor)
         return {"data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
