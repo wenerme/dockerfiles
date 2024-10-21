@@ -25,3 +25,4 @@ buildground
 ignored
 *.tar.gz
 *ignored*
+local.mk

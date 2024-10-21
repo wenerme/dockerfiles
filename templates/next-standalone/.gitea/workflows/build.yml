@@ -1,0 +1,74 @@
+name: Build
+on:
+- push
+
+jobs:
+  Build:
+    name: Build
+    runs-on: alpine-exec
+    steps:
+    - uses: https://gitee.com/mirror-actions/checkout@v3
+      with:
+        fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+    # https://stackoverflow.com/a/74268200/1870054
+    - name: Changes
+      id: changes
+      run: |
+        if ${{ github.event_name == 'pull_request' }}; then
+            echo "files=$(git diff --name-only -r HEAD^1 HEAD | xargs)" >> $GITHUB_OUTPUT
+        else
+            echo "files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | xargs)" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Install
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # NPM_TOKEN: ${{ secrets.GITEA_TOKEN }}
+      run: |
+        set -e
+
+        time npm add -g pnpm@latest
+        time CI=true \
+        PUPPETEER_SKIP_DOWNLOAD=true \
+        pnpm i
+
+    - name: Docker Login
+      run: |
+        [ -z "$DOCKER_REGISTRY" ] || docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_REGISTRY"
+        [ -z "${{ secrets.DOCKER_REGISTRY }}" ] || docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}" "${{ secrets.DOCKER_REGISTRY }}"
+
+    - uses: https://gitee.com/mirror-actions/cache@v3
+      with:
+        path: |
+          apps/er-web/.next/cache
+        key: "next-${{ hashFiles('package.json') }}"
+
+    - name: Build
+      env:
+        IMAGE_REPO: "${{ secrets.DOCKER_REGISTRY }}"
+        TURBO_TEAM: "${{ secrets.TURBO_TEAM }}"
+        TURBO_API: "${{ secrets.TURBO_API }}"
+        TURBO_TOKEN: "${{ secrets.TURBO_TOKEN }}"
+        TURBO_REMOTE_ONLY: true
+      run: |
+        set -eo pipefail
+        export BUILDKIT_PROGRESS=plain
+        
+        TMPDIR=/tmp/run/$GITHUB_RUN_ID/tmp
+        mkdir -p $TMPDIR
+        
+        echo Message:
+        echo "${{github.event.head_commit.message}}" | sed -e "s/^/  /m"
+        
+        echo Changes:
+        # 空格分割
+        echo ${{ steps.changes.outputs.files }} > $TMPDIR/changes
+        cat $TMPDIR/changes | sed -e "s/^/  /m"
+        
+        make deploy
+
+    - uses: https://gitee.com/mirror-actions/cache/save@v3
+      with:
+        path: |
+          .next/cache
+        key: "next-${{ hashFiles('package.json') }}"

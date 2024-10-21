@@ -97,10 +97,13 @@ def load_cache(*keys: str) -> list:
             elif key == "ordering.processor":
                 _cache[key] = surya.model.ordering.processor.load_processor()
             elif key == "layout.model":
-                _cache[key] = surya.model.detection.model.load_model(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
+                _cache[key] = surya.model.detection.model.load_model(
+                    checkpoint=settings.LAYOUT_MODEL_CHECKPOINT
+                )
             elif key == "layout.processor":
                 _cache[key] = surya.model.detection.model.load_processor(
-                    checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
+                    checkpoint=settings.LAYOUT_MODEL_CHECKPOINT
+                )
             elif key == "table_rec.model":
                 _cache[key] = surya.model.table_rec.model.load_model()
             elif key == "table_rec.processor":
@@ -141,7 +144,7 @@ async def ocr(images: list[UploadFile] = File(...), langs: str = None):
         "detection.model",
         "detection.processor",
         "recognition.model",
-        "recognition.processor"
+        "recognition.processor",
     )
 
     # 保存文件到服务器临时目录
@@ -190,6 +193,7 @@ def load_images(images: list[UploadFile] = File(...)):
 @app.post("/detect")
 async def detect(images: list[UploadFile] = File(...)):
     from surya.detection import batch_text_detection
+
     model, processor = load_cache("detection.model", "detection.processor")
 
     try:
@@ -216,8 +220,9 @@ async def detect(images: list[UploadFile] = File(...)):
     from surya.detection import batch_text_detection
     from surya.layout import batch_layout_detection
 
-    model, processor, det_model, det_processor = load_cache("layout.model", "layout.processor", "detection.model",
-                                                            "detection.processor")
+    model, processor, det_model, det_processor = load_cache(
+        "layout.model", "layout.processor", "detection.model", "detection.processor"
+    )
 
     try:
         _images = [Image.open(image.file) for image in images]
@@ -249,18 +254,23 @@ async def table(images: list[UploadFile] = File(...)):
     from surya.postprocessing.util import rescale_bboxes, rescale_bbox
     from surya.input.pdflines import get_table_blocks
 
-    model, processor, layout_model, layout_processor, det_model, det_processor = load_cache("table_rec.model",
-                                                                                            "table_rec.processor",
-                                                                                            "layout.model",
-                                                                                            "layout.processor",
-                                                                                            "detection.model",
-                                                                                            "detection.processor")
+    model, processor, layout_model, layout_processor, det_model, det_processor = (
+        load_cache(
+            "table_rec.model",
+            "table_rec.processor",
+            "layout.model",
+            "layout.processor",
+            "detection.model",
+            "detection.processor",
+        )
+    )
 
     tmpdir = load_images_dir(images)
     try:
         images, _, _ = load_from_folder(tmpdir, None)
-        highres_images, names, text_lines = load_from_folder(tmpdir, None, dpi=settings.IMAGE_DPI_HIGHRES,
-                                                             load_text_lines=True)
+        highres_images, names, text_lines = load_from_folder(
+            tmpdir, None, dpi=settings.IMAGE_DPI_HIGHRES, load_text_lines=True
+        )
         pnums = []
         prev_name = None
         for i, name in enumerate(names):
@@ -272,7 +282,9 @@ async def table(images: list[UploadFile] = File(...)):
             prev_name = name
 
         line_predictions = batch_text_detection(images, det_model, det_processor)
-        layout_predictions = batch_layout_detection(images, layout_model, layout_processor, line_predictions)
+        layout_predictions = batch_layout_detection(
+            images, layout_model, layout_processor, line_predictions
+        )
 
         table_cells = []
         table_imgs = []
@@ -280,7 +292,9 @@ async def table(images: list[UploadFile] = File(...)):
         skip_table_detection = False
         detect_boxes = True
 
-        for layout_pred, text_line, img, highres_img in zip(layout_predictions, text_lines, images, highres_images):
+        for layout_pred, text_line, img, highres_img in zip(
+            layout_predictions, text_lines, images, highres_images
+        ):
             # The table may already be cropped
             if skip_table_detection:
                 table_imgs.append(highres_img)
@@ -306,12 +320,25 @@ async def table(images: list[UploadFile] = File(...)):
                 table_imgs.extend(page_table_imgs)
 
             # The text cells inside each table
-            table_blocks = get_table_blocks(highres_bbox, text_line,
-                                            highres_img.size) if text_line is not None else None
-            if text_line is None or detect_boxes or any(len(tb) == 0 for tb in table_blocks):
-                det_results = batch_text_detection(page_table_imgs, det_model, det_processor, )
-                cell_bboxes = [[{"bbox": tb.bbox, "text": None} for tb in det_result.bboxes] for det_result in
-                               det_results]
+            table_blocks = (
+                get_table_blocks(highres_bbox, text_line, highres_img.size)
+                if text_line is not None
+                else None
+            )
+            if (
+                text_line is None
+                or detect_boxes
+                or any(len(tb) == 0 for tb in table_blocks)
+            ):
+                det_results = batch_text_detection(
+                    page_table_imgs,
+                    det_model,
+                    det_processor,
+                )
+                cell_bboxes = [
+                    [{"bbox": tb.bbox, "text": None} for tb in det_result.bboxes]
+                    for det_result in det_results
+                ]
                 table_cells.extend(cell_bboxes)
             else:
                 table_cells.extend(table_blocks)
@@ -324,7 +351,8 @@ async def table(images: list[UploadFile] = File(...)):
                     "cells": [cell.model_dump() for cell in res.cells],
                     "rows": [row.model_dump() for row in res.rows],
                     "cols": [col.model_dump() for col in res.cols],
-                } for idx, res in enumerate(table_preds)
+                }
+                for idx, res in enumerate(table_preds)
             ]
         }
     except Exception as e:
@@ -336,6 +364,7 @@ async def table(images: list[UploadFile] = File(...)):
 
 def load_images_dir(images: list[UploadFile]):
     import uuid
+
     tmpdir = os.path.join(UPLOAD_DIR, f"images-{uuid.uuid4()}")
     os.makedirs(tmpdir, exist_ok=True)
     for idx, image in enumerate(images):
@@ -353,7 +382,9 @@ async def tabled(images: list[UploadFile] = File(...)):
     from tabled.fileinput import load_pdfs_images
     from tabled.formats import csv_format, html_format
 
-    det_models, rec_models = load_cache("tabled.detection.model", "tabled.recognition.model")
+    det_models, rec_models = load_cache(
+        "tabled.detection.model", "tabled.recognition.model"
+    )
 
     tmpdir = load_images_dir(images)
 
@@ -412,24 +443,25 @@ async def reading_order(images: list[UploadFile] = File(...)):
 
     try:
         model, processor = load_cache("ordering.model", "ordering.processor")
-        layout_model, layout_processor, det_model, det_processor = load_cache("layout.model", "layout.processor",
-                                                                              "detection.model",
-                                                                              "detection.processor")
+        layout_model, layout_processor, det_model, det_processor = load_cache(
+            "layout.model", "layout.processor", "detection.model", "detection.processor"
+        )
 
         _images = [Image.open(image.file) for image in images]
         line_predictions = batch_text_detection(_images, det_model, det_processor)
         layout_predictions = batch_layout_detection(
             _images, layout_model, layout_processor, line_predictions
         )
-        result = batch_ordering(_images, [
-            [
-                l.bbox for l in res.bboxes
-            ]
-            for res in layout_predictions
-        ], model, processor)
+        result = batch_ordering(
+            _images,
+            [[l.bbox for l in res.bboxes] for res in layout_predictions],
+            model,
+            processor,
+        )
         return {"data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # 运行 FastAPI 服务器需要使用 Uvicorn
 # 使用以下命令运行： uvicorn filename:app --reload --host 0.0.0.0 --port 3050

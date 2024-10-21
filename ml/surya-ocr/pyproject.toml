@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "surya-ocr-api"
+version = "0.1.0"
+description = ""
+authors = ["wener <wenermail@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.2"
+surya-ocr = "^0.6.6"
+tabled-pdf = "^0.1.1"
+uvicorn = "^0.32.0"
+python-multipart = "^0.0.12"
+python-dotenv = "^1.0.1"
+torch = "2.5.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+dev = "scripts:dev"

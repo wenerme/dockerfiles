@@ -8,6 +8,10 @@ SHELL:=env bash -O extglob -O globstar
 COLOR_INFO 	:= "\e[1;36m%s\e[0m\n"
 COLOR_WARN 	:= "\e[1;31m%s\e[0m\n"
 
+export NEXT_TELEMETRY_DISABLED=1
+export NUXT_TELEMETRY_DISABLED=1
+export DO_NOT_TRACK=1
+
 CI_COMMIT_BRANCH	?=$(shell git rev-parse --abbrev-ref HEAD)
 CI_COMMIT_TAG		?=$(shell git describe --tags --exact-match 2>/dev/null)
 CI_COMMIT_SHA		?=$(shell git rev-parse HEAD)
@@ -30,8 +34,11 @@ export CI_COMMIT_SHORT_SHA
 # for reproducible build
 export SOURCE_DATE_EPOCH=$(shell git log -1 --pretty=%ct)
 
+PKG_ROOT ?= $(shell pnpm node -e 'process.stdout.write(path.resolve(__dirname))')
+
 -include $(REPO_ROOT)/local.mk
--include package.mk
+-include $(REPO_ROOT)/ignored.mk
+-include $(PKG_ROOT)/package.mk
 
 info:
 	@echo "APP_NAME:            $(APP_NAME)"
@@ -53,6 +60,7 @@ info:
 	@! [ -e $(REPO_ROOT)/pnpm-lock.yaml ] || { \
 	 echo "PNPM:                $(shell pnpm -v)"; \
 	}
+	@realpath $(CURDIR) --relative-to $(REPO_ROOT)
 
 .PHONY: build dev test
 
@@ -64,15 +72,41 @@ dev: ## start dev server
 
 ifneq ($(wildcard next.config.*),)
 build:
-	$(EXEC) next build
+	pnpm next build
 dev:
-	$(EXEC) next dev
+	pnpm next dev
 else ifneq ($(wildcard vite.config.*),)
 build:
-	$(EXEC) vite build
+	pnpm vite build
 dev:
-	$(EXEC) vite dev
+	pnpm vite dev
 endif
+
+fmt: ## format code
+	pnpm prettier --cache --cache-strategy metadata --write ./src package.json $(wildcard *.ts postcss.config.* tailwind.config.* next.config.*)
 
 help: ## 帮助
 	@grep -E -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+ifneq ($(wildcard docker-bake.hcl),)
+DOCKER_BUILD_BAKE?=docker buildx bake
+
+image-ls:
+	@$(DOCKER_BUILD_BAKE) --print | jq -r '.target | .[] | .tags | .[]'
+image-push:
+	$(DOCKER_BUILD_BAKE) --push
+image-push-%:
+	$(DOCKER_BUILD_BAKE) --push $(*)
+image-build:
+	$(DOCKER_BUILD_BAKE) --load
+image-build-%:
+	$(DOCKER_BUILD_BAKE) --load $(*)
+
+DOCKER_RUN_FLAGS?=--rm -it -p 8080:80 --name $(APP_NAME)
+ifneq ($(wildcard .env.local),)
+	DOCKER_RUN_FLAGS:=$(DOCKER_RUN_FLAGS) -v $(PWD)/.env.local:/app/.env.local
+endif
+image-run: image-build
+	echo docker run --rm -it $(DOCKER_RUN_FLAGS) $(shell docker buildx bake --print | jq -r '.target | .[] | .tags | .[]' | head -n1)
+
+endif

@@ -1,4 +1,4 @@
-FROM wener/node:18
+FROM wener/node:22
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1

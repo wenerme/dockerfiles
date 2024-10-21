@@ -1,7 +1,7 @@
 ARG VERSION
 ARG ALPINE_RELEASE
 
-FROM gitea/act_runner:$VERSION as builder
+FROM gitea/act_runner:$VERSION AS builder
 
 FROM wener/builder:${ALPINE_RELEASE}
 
