@@ -18,5 +18,6 @@ function "tags" {
   result = [
     # "hub.docker.com/wener/${IMAGE_NAME}:${TAG}",
     "quay.io/wener/${IMAGE_NAME}:${TAG}",
+      notequal(VERSION, "") ? "quay.io/wener/${IMAGE_NAME}:${VERSION}" : "",
   ]
 }
