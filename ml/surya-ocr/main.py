@@ -71,39 +71,53 @@ async def reset_cache():
 
 
 def load_cache(*keys: str) -> list:
-    results = []
+    def load(key: str):
+        if key not in _cache:
+            if key == "detection.model":
+                _cache[key] = surya.model.detection.model.load_model()
+            elif key == "detection.processor":
+                _cache[key] = surya.model.detection.model.load_processor()
+            elif key == "recognition.model":
+                _cache[key] = surya.model.recognition.model.load_model()
+            elif key == "recognition.processor":
+                _cache[key] = surya.model.recognition.processor.load_processor()
+            elif key == "ordering.model":
+                _cache[key] = surya.model.ordering.model.load_model()
+            elif key == "ordering.processor":
+                _cache[key] = surya.model.ordering.processor.load_processor()
+            elif key == "layout.model":
+                _cache[key] = surya.model.detection.model.load_model(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
+            elif key == "layout.processor":
+                _cache[key] = surya.model.detection.model.load_processor(
+                    checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
+            elif key == "table_rec.model":
+                _cache[key] = surya.model.table_rec.model.load_model()
+            elif key == "table_rec.processor":
+                _cache[key] = surya.model.table_rec.processor.load_processor()
+            elif key == "tabled.detection.model":
+                # from tabled.inference.models import load_detection_models
+                _cache[key] = [
+                    load("detection.model"),
+                    load("detection.processor"),
+                    load("layout.model"),
+                    load("layout.processor"),
+                ]
+
+            elif key == "tabled.recognition.model":
+                # from tabled.inference.models import load_recognition_models
+                _cache[key] = [
+                    load("table_rec.model"),
+                    load("table_rec.processor"),
+                    load("recognition.model"),
+                    load("recognition.processor"),
+                ]
+            else:
+                raise ValueError(f"Unknown key: {key}")
+        #
+        return _cache[key]
 
     with _cache_lock:
-        for key in keys:
-            if key in _cache:
-                results.append(_cache[key])
-            else:
-                if key == "detection.model":
-                    _cache[key] = surya.model.detection.model.load_model()
-                elif key == "detection.processor":
-                    _cache[key] = surya.model.detection.model.load_processor()
-                elif key == "recognition.model":
-                    _cache[key] = surya.model.recognition.model.load_model()
-                elif key == "recognition.processor":
-                    _cache[key] = surya.model.recognition.processor.load_processor()
-                elif key == "ordering.model":
-                    _cache[key] = surya.model.ordering.model.load_model()
-                elif key == "ordering.processor":
-                    _cache[key] = surya.model.ordering.processor.load_processor()
-                elif key == "layout.model":
-                    _cache[key] = surya.model.detection.model.load_model(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
-                elif key == "layout.processor":
-                    _cache[key] = surya.model.detection.model.load_processor(
-                        checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
-                elif key == "table_rec.model":
-                    _cache[key] = surya.model.table_rec.model.load_model()
-                elif key == "table_rec.processor":
-                    _cache[key] = surya.model.table_rec.processor.load_processor()
-                else:
-                    raise ValueError(f"Unknown key: {key}")
-
-                results.append(_cache[key])
-    return results
+        return [load(key) for key in keys]
 
 
 # 定义 OCR 处理的 API 路由
@@ -328,7 +342,7 @@ async def tabled(images: list[UploadFile] = File(...)):
     from tabled.fileinput import load_pdfs_images
     from tabled.formats import csv_format, html_format
 
-    det_models, rec_models = load_cache("detection.model", "recognition.model")
+    det_models, rec_models = load_cache("tabled.detection.model", "tabled.recognition.model")
 
     tmpdir = load_images_dir(images)
 
@@ -340,6 +354,7 @@ async def tabled(images: list[UploadFile] = File(...)):
             text_lines,
             det_models,
             rec_models,
+            skip_detection=False,
             detect_boxes=True,
         )
 
@@ -371,6 +386,7 @@ async def tabled(images: list[UploadFile] = File(...)):
             ]
         }
     except Exception as e:
+        logger.exception(f"Error processing table: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)

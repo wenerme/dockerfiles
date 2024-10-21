@@ -31,3 +31,7 @@ push:
 setup:
 	python3 -m venv venv
 	. venv/bin/activate && pip install -r requirements.txt
+
+docker-clean:
+	-docker rmi quay.io/wener/surya-ocr
+	docker images -f "dangling=true" -q | xargs --no-run-if-empty docker rmi
