@@ -1,4 +1,5 @@
-FROM wener/base
+ARG ALPINE_RELEASE
+FROM wener/base:${ALPINE_RELEASE}
 
 RUN apk add --no-cache alpine-sdk git bash-completion sudo ccache
 
@@ -13,7 +14,8 @@ RUN adduser -HDh /build builder \
 	&& chmod g+w /build /var/cache/distfiles
 
 RUN cp /root/.bashrc /etc/profile
-COPY inputrc /etc/inputrc
+
+COPY rootfs /
 
 USER builder
 

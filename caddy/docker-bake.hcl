@@ -8,6 +8,10 @@ target "base" {
   dockerfile = "Dockerfile"
   platforms = ["linux/amd64", "linux/arm64"]
   pull       = true
+  args = {
+    VERSION        = VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
+  }
 }
 
 group "default" {
@@ -18,10 +22,12 @@ target "caddy" {
   inherits = ["base"]
   context = "caddy"
   tags = tags("latest")
-  args = {
-    VERSION = VERSION
-    ALPINE_RELEASE = ALPINE_RELEASE
-  }
+}
+
+target "full" {
+  inherits = ["base"]
+  context = "full"
+  tags = tags("full")
 }
 
 target "docker-proxy" {
@@ -29,7 +35,7 @@ target "docker-proxy" {
   context = "docker-proxy"
   tags = tags("docker-proxy")
   args = {
-    VERSION = VERSION
+    VERSION        = VERSION
     ALPINE_RELEASE = ALPINE_RELEASE
   }
 }

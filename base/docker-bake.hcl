@@ -2,21 +2,10 @@
 #  default = "latest"
 #}
 
-variable LATEST {
-  default = false
-}
-
-variable "ALPINE_RELEASE" {
-  default = "3.17.2"
-}
-
-variable "ALPINE_VERSION" {
-  default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
-}
-
-variable "MAJOR_VERSION" {
-  default = "${split(".", ALPINE_RELEASE)[0]}"
-}
+variable LATEST { default = false }
+variable "ALPINE_RELEASE" { default = "3.17.2" }
+variable "ALPINE_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}" }
+variable "MAJOR_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}" }
 
 group "default" {
   targets = ["openrc","app"]
@@ -45,6 +34,13 @@ target "openrc" {
   inherits = ["base"]
   context = "openrc"
   tags = tags("openrc")
+}
+
+target "builder" {
+  inherits = ["base"]
+  context = "builder"
+  platforms = ["linux/arm64"]
+  tags = tags("builder")
 }
 
 target "app" {

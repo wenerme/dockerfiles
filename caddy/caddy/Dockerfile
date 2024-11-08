@@ -1,11 +1,13 @@
 ARG VERSION=2.8.4
-ARG ALPINE_RELEASE
+ARG ALPINE_RELEASE=3.20.3
 
 FROM caddy:${VERSION}-builder AS builder
 
+# https://caddyserver.com/docs/modules/
 RUN xcaddy build \
     --with github.com/caddy-dns/acmedns \
-    --with github.com/caddy-dns/powerdns
+    --with github.com/caddy-dns/powerdns \
+    --with github.com/sagikazarmark/caddy-fs-s3
 
 FROM wener/base:${ALPINE_RELEASE}
 
