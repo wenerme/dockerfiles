@@ -11,7 +11,7 @@ fastapi = "^0.115.2"
 surya-ocr = "^0.6.6"
 tabled-pdf = "^0.1.1"
 uvicorn = "^0.32.0"
-python-multipart = "^0.0.12"
+python-multipart = "^0.0.18"
 python-dotenv = "^1.0.1"
 torch = "2.5.0"
 
