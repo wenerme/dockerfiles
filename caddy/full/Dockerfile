@@ -11,14 +11,16 @@ RUN --mount=type=cache,target=/root/go \
     --with github.com/caddy-dns/cloudflare \
     --with github.com/caddy-dns/linode \
     --with github.com/caddy-dns/alidns \
-    --with github.com/sagikazarmark/caddy-fs-s3 \
-    --with github.com/lucaslorentz/caddy-docker-proxy/v2 \
-    --with github.com/yroc92/postgres-storage \
-    --with github.com/mholt/caddy-dynamicdns \
-    --with github.com/mholt/caddy-l4 \
     --with github.com/darkweak/souin/plugins/caddy \
     --with github.com/darkweak/storages/badger/caddy \
-    --with github.com/darkweak/storages/redis/caddy
+    --with github.com/darkweak/storages/redis/caddy \
+    --with github.com/lucaslorentz/caddy-docker-proxy/v2 \
+    --with github.com/mholt/caddy-dynamicdns \
+    --with github.com/mholt/caddy-l4 \
+    --with github.com/mholt/caddy-ratelimit \
+    --with github.com/mholt/caddy-webdav \
+    --with github.com/sagikazarmark/caddy-fs-s3 \
+    --with github.com/yroc92/postgres-storage
 
 FROM wener/base:${ALPINE_RELEASE}
 
