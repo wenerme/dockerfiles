@@ -11,10 +11,11 @@ RUN apk --no-cache add \
     php82 \
     # Base package exclude cgi,litespeed,apache2,doc
     php82-{bcmath,bz2,calendar,common,ctype,curl,dev,dba,dom,embed,enchant,exif,fileinfo,fpm,ftp,gd,gettext,gmp,iconv,imap,intl,json,ldap,mbstring,mysqli,mysqlnd,odbc,opcache,openssl,pcntl,pdo,pdo_dblib,pdo_mysql,pdo_odbc,pdo_pgsql,pdo_sqlite,pear,pgsql,phar,phpdbg,posix,pspell,session,shmop,simplexml,snmp,soap,sockets,sodium,sqlite3,sysvmsg,sysvsem,sysvshm,tidy,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib} \
-    php82-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd} \
+    php82-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd,grpc} \
     make
 
 RUN ln -s $(which php82) /usr/bin/php || true
+RUN ln -s $(which php-fpm82) /usr/bin/php-fpm || true
 
 # www-data 组已经存在
 RUN set -x adduser -u 82 -D -S -G www-data www-data

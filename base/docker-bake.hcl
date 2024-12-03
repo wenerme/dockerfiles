@@ -8,16 +8,16 @@ variable "ALPINE_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}.${split(
 variable "MAJOR_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}" }
 
 group "default" {
-  targets = ["openrc","app"]
+  targets = ["openrc", "app"]
 }
 
 function "tags" {
   params = [name]
   result = [
-    "docker.io/wener/base:${ALPINE_RELEASE}-${name}","quay.io/wener/base:${ALPINE_RELEASE}-${name}",
-    "docker.io/wener/base:${ALPINE_VERSION}-${name}","quay.io/wener/base:${ALPINE_VERSION}-${name}",
-    "docker.io/wener/base:${MAJOR_VERSION}-${name}","quay.io/wener/base:${MAJOR_VERSION}-${name}",
-    "docker.io/wener/base:${name}","quay.io/wener/base:${name}",
+    "docker.io/wener/base:${ALPINE_RELEASE}-${name}", "quay.io/wener/base:${ALPINE_RELEASE}-${name}",
+    "docker.io/wener/base:${ALPINE_VERSION}-${name}", "quay.io/wener/base:${ALPINE_VERSION}-${name}",
+    "docker.io/wener/base:${MAJOR_VERSION}-${name}", "quay.io/wener/base:${MAJOR_VERSION}-${name}",
+    "docker.io/wener/base:${name}", "quay.io/wener/base:${name}",
   ]
 }
 
@@ -39,7 +39,7 @@ target "openrc" {
 target "builder" {
   inherits = ["base"]
   context = "builder"
-  platforms = ["linux/arm64"]
+  platforms = ["linux/amd64"]
   tags = tags("builder")
 }
 
@@ -48,6 +48,6 @@ target "app" {
   context = "app"
   tags = tags("app")
   contexts = {
-    "wener/base:${ALPINE_RELEASE}-openrc":"target:openrc"
+    "wener/base:${ALPINE_RELEASE}-openrc" : "target:openrc"
   }
 }

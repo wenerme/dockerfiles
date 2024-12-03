@@ -1,11 +1,11 @@
 ARG ALPINE_RELEASE
 FROM wener/base:${ALPINE_RELEASE}
 
-RUN apk add --no-cache alpine-sdk git bash-completion sudo ccache
+RUN apk add --no-cache alpine-sdk git git-lfs openssh-client bash-completion sudo ccache
 
 # uid 1000
 RUN adduser -HDh /build builder \
-	&& echo "builder  ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+	&& echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 	&& addgroup builder builder \
 	&& addgroup builder abuild \
 	&& addgroup builder ping \
