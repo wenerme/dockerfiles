@@ -1,4 +1,8 @@
-export VERSION=1.0.13
+REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
+-include $(REPO_ROOT)/build.mk
+
+export ALPINE_RELEASE
+export VERSION=1.1.38
 push:
 	docker buildx bake --push
 

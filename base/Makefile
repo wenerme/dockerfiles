@@ -4,6 +4,8 @@ REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 #ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r)
 export ALPINE_RELEASE
 
+push:
+
 #print:
 #	docker buildx bake --print
 #

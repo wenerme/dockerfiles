@@ -1,10 +1,11 @@
 variable "IMAGE_NAME" { default = "bun" }
 variable "VERSION" { default = "" }
+variable "ALPINE_RELEASE" { default = "" }
 
 
 target "base" {
   dockerfile = "Dockerfile"
-  platforms  = ["linux/amd64"]
+  platforms  = ["linux/amd64","linux/arm64"]
   pull       = true
 }
 
@@ -12,7 +13,10 @@ target "default" {
   inherits = ["base"]
   context  = "bun"
   tags     = tags("latest")
-  args     = { BUN_VERSION = VERSION }
+  args     = {
+    BUN_VERSION = VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
+  }
 }
 
 function "tags" {
