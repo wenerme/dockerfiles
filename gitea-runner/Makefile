@@ -4,7 +4,6 @@ REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 # https://hub.docker.com/r/gitea/act_runner/tags
 # https://gitea.com/gitea/act_runner
 export VERSION=0.2.11
-export ALPINE_RELEASE
 
 push:
 	docker buildx bake --push

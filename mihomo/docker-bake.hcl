@@ -2,6 +2,9 @@ variable "IMAGE_NAME" {
   default = "mihomo"
 }
 variable "VERSION" { default = "1.17.0" }
+variable "ALPINE_RELEASE" { default = "" }
+variable "ALPINE_VERSION" { default = "" }
+
 
 group "default" {
   targets = ["mihomo", "compatible"]
@@ -13,6 +16,8 @@ target "base" {
   pull       = true
   args       = {
     VERSION = VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
+    ALPINE_VERSION = ALPINE_VERSION
   }
 }
 

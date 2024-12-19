@@ -7,10 +7,11 @@ FROM caddy:${VERSION}-builder AS builder
 RUN --mount=type=cache,target=/root/go \
     xcaddy build \
     --with github.com/caddy-dns/acmedns \
-    --with github.com/caddy-dns/powerdns \
+    --with github.com/caddy-dns/alidns \
     --with github.com/caddy-dns/cloudflare \
     --with github.com/caddy-dns/linode \
-    --with github.com/caddy-dns/alidns \
+    --with github.com/caddy-dns/powerdns \
+    --with github.com/caddyserver/transform-encoder \
     --with github.com/darkweak/souin/plugins/caddy \
     --with github.com/darkweak/storages/badger/caddy \
     --with github.com/darkweak/storages/redis/caddy \

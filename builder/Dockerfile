@@ -1,6 +1,11 @@
-FROM wener/app:ssh
+ARG ALPINE_RELEASE
+FROM wener/app:${ALPINE_RELEASE}-ssh
 
-RUN apk add --no-cache docker git make openssh docker-cli-buildx jq file curl ca-certificates libstdc++ libgcc alpine-sdk  musl-dev gcc pkgconf
+RUN apk add --no-cache  \
+    git make openssh jq file curl ca-certificates \
+    docker docker-cli-buildx \
+    libstdc++ libgcc alpine-sdk musl-dev gcc pkgconf
+
 RUN docker buildx use default  \
     && docker buildx install
 

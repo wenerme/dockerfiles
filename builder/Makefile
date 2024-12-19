@@ -1,10 +1,7 @@
 REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 -include $(REPO_ROOT)/build.mk
 
-VERSION:=$(ALPINE_RELEASE)
-export ALPINE_RELEASE
-export ALPINE_VERSION
-export VERSION
+export VERSION:=$(ALPINE_RELEASE)
 
 push:
 	docker buildx bake --push

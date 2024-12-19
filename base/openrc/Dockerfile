@@ -24,8 +24,8 @@ RUN apk add --no-cache openrc su-exec ca-certificates wait4ports \
              /etc/init.d/modules-load \
              /etc/init.d/modloop \
     # Can't do cgroups
-    && sed -i 's/\tcgroup_add_service/\t#cgroup_add_service/g' /lib/rc/sh/openrc-run.sh \
-    && sed -i 's/VSERVER/DOCKER/Ig' /lib/rc/sh/init.sh \
+    && sed -i 's/\tcgroup_add_service/\t#cgroup_add_service/g' /usr/libexec/rc/sh/openrc-run.sh \
+    && sed -i 's/VSERVER/DOCKER/Ig' /usr/libexec/rc/sh/init.sh \
     # avoid clean_run
     && sed -i 's/VSERVER/DOCKER/Ig' /etc/init.d/bootmisc
 

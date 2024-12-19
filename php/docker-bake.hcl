@@ -9,65 +9,65 @@ group "default" {
     // "81", // 3.19 only
     "82",
     "83",
-    // "84",
+    "84",
   ]
 }
 
 target "base" {
   dockerfile = "Dockerfile"
-  platforms  = ["linux/amd64", "linux/arm64"]
+  platforms = ["linux/amd64", "linux/arm64"]
   pull       = true
-  args       = {
+  args = {
     ALPINE_RELEASE = ALPINE_RELEASE
     ALPINE_VERSION = ALPINE_VERSION
   }
 }
 
 target "7" {
-  inherits   = ["base"]
+  inherits = ["base"]
   context    = "."
   dockerfile = "7/Dockerfile"
-  tags       = tags("7")
+  tags = tags("7")
 }
 target "81" {
-  inherits   = ["base"]
+  inherits = ["base"]
   context    = "."
   dockerfile = "8.1/Dockerfile"
-  tags       = tags("8.1")
+  tags = tags("8.1")
 }
 
 target "82" {
-  inherits   = ["base"]
+  inherits = ["base"]
   context    = "."
   dockerfile = "8.2/Dockerfile"
-  tags       = tags("8.2")
+  tags = tags("8.2")
 }
 
 target "83" {
-  inherits   = ["base"]
+  inherits = ["base"]
   context    = "."
   dockerfile = "8.3/Dockerfile"
-  tags       = tags("8.3")
+  tags = tags("8.3")
 }
 
 target "84" {
-  inherits   = ["base"]
+  inherits = ["base"]
   context    = "."
   dockerfile = "8.4/Dockerfile"
-  tags       = tags("8.4")
+  tags = tags("8.4")
 }
 
 target "8" {
-  inherits   = ["base"]
+  inherits = ["base"]
   context    = "."
   dockerfile = "8/Dockerfile"
-  tags       = tags("8")
+  tags = tags("8")
 }
 
 target "7-composer" {
   inherits = ["base"]
-  context  = "7-composer"
-  tags     = tags("7-composer")
+  context = "7-composer"
+  tags = tags("7-composer")
   contexts = {
     "wener/php:7" : "target:7",
   }
