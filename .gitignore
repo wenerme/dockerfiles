@@ -26,3 +26,4 @@ ignored
 *.tar.gz
 *ignored*
 local.mk
+local.just

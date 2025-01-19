@@ -8,12 +8,14 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 indent_size = 2
-indent_style = space
+indent_style = tab
 
-[{Makefile,*.mk,*.go}]
+[{Makefile,*.mk}]
 indent_size = 4
 indent_style = tab
 
+[{justfile,.justfile,*.just}]
+indent_size = 2
+
 [*.py]
 indent_size = 4
-indent_style = space
