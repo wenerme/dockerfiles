@@ -2,7 +2,7 @@ REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 -include $(REPO_ROOT)/build.mk
 
 # https://github.com/oven-sh/bun/releases
-export VERSION=1.1.40
+export VERSION=1.2
 push:
 	docker buildx bake --push
 
