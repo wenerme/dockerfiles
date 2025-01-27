@@ -8,13 +8,18 @@ SOURCE_DATE_EPOCH?=$(shell git log -1 --pretty=%ct)
 COLOR_INFO 	:= "\e[1;36m%s\e[0m\n"
 COLOR_WARN 	:= "\e[1;31m%s\e[0m\n"
 
-IMAGE_NAME?:=$(shell basename $(CURDIR))
-IMAGE_NAME:=$(or $(IMAGE_NAME),$(shell realpath $(CURDIR) --relative-to $(REPO_ROOT)))
+IMAGE_NAME	?=$(shell basename $(CURDIR))
+IMAGE_NAME	:=$(or $(IMAGE_NAME),$(shell realpath $(CURDIR) --relative-to $(REPO_ROOT)))
+
+-include $(REPO_ROOT)/.env
 
 # 3.20.0
-export ALPINE_RELEASE := $(or $(ALPINE_RELEASE),$(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r))
+ALPINE_RELEASE ?= $(or $(ALPINE_RELEASE),$(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r))
 # 3.20
-export ALPINE_VERSION := $(or $(ALPINE_VERSION),$(shell echo $(ALPINE_RELEASE) | cut -d. -f1,2))
+ALPINE_VERSION ?= $(or $(ALPINE_VERSION),$(shell echo $(ALPINE_RELEASE) | cut -d. -f1,2))
+
+export ALPINE_RELEASE
+export ALPINE_VERSION
 
 # if tty set progress=plain by env
 DOCKER_BUILD_PROGRESS?=auto
