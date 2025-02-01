@@ -5,7 +5,7 @@ FROM caddy:${VERSION}-builder AS builder
 
 # https://caddyserver.com/docs/modules/
 RUN --mount=type=cache,target=/root/go \
-    xcaddy build \
+    GOPROXY=https://goproxy.io,direct xcaddy build \
     --with github.com/caddy-dns/acmedns \
     --with github.com/caddy-dns/alidns \
     --with github.com/caddy-dns/cloudflare \
