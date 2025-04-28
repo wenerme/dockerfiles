@@ -1,4 +1,5 @@
-FROM wener/base
+ARG ALPINE_RELEASE
+FROM wener/base:${ALPINE_RELEASE}
 
 # https://github.com/fatedier/frp/releases
 ARG VERSION
@@ -8,7 +9,7 @@ RUN apk add --no-cache inotify-tools
 RUN test -n "$VERSION" \
     && apk add frp  \
     && echo Building ${VERSION} \
-    && curl -LO https://mirror.ghproxy.com/github.com/fatedier/frp/releases/download/v${VERSION}/frp_${VERSION}_linux_amd64.tar.gz \
+    && curl -LO https://github.com/fatedier/frp/releases/download/v${VERSION}/frp_${VERSION}_linux_amd64.tar.gz \
     && tar -zxvf frp_${VERSION}_linux_amd64.tar.gz \
     && mv frp_${VERSION}_linux_amd64/frps frp_${VERSION}_linux_amd64/frpc /usr/bin/ \
     && rm -rf frp_${VERSION}_linux_amd64*

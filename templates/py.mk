@@ -22,14 +22,17 @@ run\:%:
 
 else ifneq ("$(wildcard requirements.txt)","")
 
-install:
+install: ## install requirements
 	pip install -r requirements.txt
-freeze:
+freeze: ## freeze requirements
 	pip freeze > requirements.txt
-outdated:
+outdated: ## show outdated packages
 	pip list --outdated
-setup:
+setup: ## setup venv
 	python3 -m venv venv
 	. venv/bin/activate && pip install -r requirements.txt
 
 endif
+
+help: ## show help message
+	@grep -E -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

@@ -2,6 +2,8 @@ variable "TAG" {
   default = "latest"
 }
 variable "VERSION" {default="" }
+variable "ALPINE_RELEASE" { default = "" }
+variable "ALPINE_VERSION" { default = "" }
 
 group "default" {
   targets = ["frp","frps","frpc"]
@@ -16,6 +18,7 @@ target "frp" {
   platforms = ["linux/amd64"]
   pull = true
   args = {
+		ALPINE_RELEASE = ALPINE_RELEASE
     VERSION = VERSION
   }
 }
