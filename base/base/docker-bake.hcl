@@ -9,7 +9,8 @@ variable "ALPINE_VERSION" {
   default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
 }
 variable "ALPINE_MIRROR" {
-  default = "https://mirrors.tuna.tsinghua.edu.cn/alpine"
+  default = "https://mirrors.aliyun.com/alpine" // high lag but stable
+  # default = "https://mirrors.tuna.tsinghua.edu.cn/alpine"
   #  default = "https://mirrors.sjtug.sjtu.edu.cn/alpine"
 }
 

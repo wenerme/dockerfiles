@@ -4,7 +4,4 @@ REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 export VERSION:=$(ALPINE_RELEASE)
 
 push:
-	docker buildx bake --push
-
 print:
-	docker buildx bake --print
