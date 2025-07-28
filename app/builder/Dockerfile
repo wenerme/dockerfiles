@@ -1,4 +1,5 @@
-FROM wener/app
+ARG ALPINE_RELEASE
+FROM wener/app:${ALPINE_RELEASE}
 
 RUN apk add --no-cache alpine-sdk cmake git bash-completion
 

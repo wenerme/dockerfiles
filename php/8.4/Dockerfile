@@ -10,7 +10,8 @@ RUN apk --no-cache add \
     php84 \
     # Base package exclude cgi,litespeed,apache2,doc
     php84-{bcmath,bz2,calendar,common,ctype,curl,dev,dba,dom,embed,enchant,exif,fileinfo,fpm,ftp,gd,gettext,gmp,iconv,imap,intl,json,ldap,mbstring,mysqli,mysqlnd,odbc,opcache,openssl,pcntl,pdo,pdo_dblib,pdo_mysql,pdo_odbc,pdo_pgsql,pdo_sqlite,pear,pgsql,phar,phpdbg,posix,session,shmop,simplexml,snmp,soap,sockets,sodium,sqlite3,sysvmsg,sysvsem,sysvshm,tidy,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib} \
-    php84-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd,grpc} \
+    php84-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd,grpc,imagick} \
+    ghostscript imagemagick \
     make
 
 RUN ln -s $(which php84) /usr/bin/php || true
