@@ -17,8 +17,8 @@ target "dante" {
 	tags = tags("latest")
 
 	dockerfile = "Dockerfile"
-	#platforms = ["linux/amd64", "linux/arm64"]
-	platforms = ["linux/amd64"]
+	platforms = ["linux/amd64", "linux/arm64"]
+	# platforms = ["linux/amd64"]
 	pull = true
 	args = {
 		ALPINE_RELEASE = ALPINE_RELEASE

@@ -13,6 +13,11 @@ IMAGE_NAME	:=$(or $(IMAGE_NAME),$(shell realpath $(CURDIR) --relative-to $(REPO_
 
 -include $(REPO_ROOT)/.env
 
+# Export DOCKER_CONFIG if .docker directory exists in repo root
+ifneq ($(wildcard $(REPO_ROOT)/.docker),)
+export DOCKER_CONFIG = $(REPO_ROOT)/.docker
+endif
+
 # 3.20.0
 ALPINE_RELEASE ?= $(or $(ALPINE_RELEASE),$(shell curl -sf https://alpinelinux.org/releases.json | jq '.release_branches[1].releases[0].version' -r))
 # 3.20
