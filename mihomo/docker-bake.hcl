@@ -6,7 +6,7 @@ variable "ALPINE_RELEASE" { default = "" }
 variable "GO_VERSION" { default = "1.25" }
 variable "MIHOMO_REPO" { default = "https://github.com/wenerme/mihomo.git" }
 variable "MIHOMO_BRANCH" { default = "develop" }
-variable "MIHOMO_REV" { default = "" }
+variable "MIHOMO_REV" { default = "fb5d1f3dae0317d625df9ea1a8394cc4491b87dc" }
 
 group "default" {
   targets = ["mihomo"]

@@ -1,5 +1,6 @@
 variable "IMAGE_NAME" { default = "caddy" }
 variable "VERSION" { default = "2.8.4" }
+variable "REV" { default = "0" }
 variable "ALPINE_RELEASE" { default = "3.20.0" }
 variable "DEV" { default = "" }
 
@@ -15,7 +16,7 @@ target "base" {
 }
 
 group "default" {
-  targets = ["caddy"]
+  targets = ["caddy", "full", "docker-proxy"]
 }
 
 target "caddy" {
@@ -44,7 +45,7 @@ function "tags" {
   params = [name]
   result = [
     "docker.io/wener/${IMAGE_NAME}:${name}", "quay.io/wener/${IMAGE_NAME}:${name}",
-      notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
-      notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
+      notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}-r${REV}" : "",
+      notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}-r${REV}" : "",
   ]
 }

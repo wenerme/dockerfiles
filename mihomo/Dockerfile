@@ -11,7 +11,11 @@ ARG MIHOMO_REV=
 
 RUN apk add --no-cache git
 WORKDIR /src
-RUN echo "rev: ${MIHOMO_REV}" && git clone --depth 1 --branch ${MIHOMO_BRANCH} ${MIHOMO_REPO} .
+RUN if [ -n "${MIHOMO_REV}" ]; then \
+      git clone ${MIHOMO_REPO} . && git checkout ${MIHOMO_REV}; \
+    else \
+      git clone --depth 1 --branch ${MIHOMO_BRANCH} ${MIHOMO_REPO} .; \
+    fi
 
 # GOAMD64=v1 for maximum compatibility (J1900 etc.)
 # Crypto acceleration (AES-NI) is runtime-detected regardless of GOAMD64 level

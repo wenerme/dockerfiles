@@ -25,14 +25,14 @@ RUN --mount=type=cache,id=apk-pg-build-$TARGETARCH$TARGETVARIANT,sharing=locked,
 ENV PATH="/usr/lib/ccache/bin:${PATH}"
 
 # ── supabase wrappers ─────────────────────────────────────────
-FROM build AS supabase_wrappers
+FROM build AS wrappers
 
 ARG PG_VERSION=18
 ARG TARGETARCH
 ARG TARGETVARIANT
 ARG WRAPPERS_REPO=https://github.com/wenerme/wrappers.git
 ARG WRAPPERS_BRANCH=develop
-ARG WRAPPERS_REV=49bdb7baadc796fbfc3fae85c4b7883c3314a04c
+ARG WRAPPERS_REV=ddf5a2d6850ec47fcee2a1a9b1c1582e5eb1141a
 
 RUN --mount=type=cache,id=cargo-registry-$TARGETARCH,target=/root/.cargo/registry \
     --mount=type=cache,id=cargo-git-$TARGETARCH,target=/root/.cargo/git \
@@ -349,7 +349,6 @@ RUN apk add libsodium
 RUN printf '#!/bin/sh\nset -eu\nKEY_FILE="${PGDATA}/pgsodium_root.key"\nif [ ! -f "$KEY_FILE" ]; then\n  head -c 32 /dev/urandom | od -A n -t x1 | tr -d " \\n" > "$KEY_FILE"\n  chmod 600 "$KEY_FILE"\nfi\ncat "$KEY_FILE"\n' \
     > /usr/local/bin/pgsodium_getkey.sh && chmod +x /usr/local/bin/pgsodium_getkey.sh
 
-COPY --from=supabase_wrappers /tmp/install/usr/local/ /usr/local/
 COPY --from=pgvector        /tmp/install/usr/local/ /usr/local/
 COPY --from=pg_cron         /tmp/install/usr/local/ /usr/local/
 COPY --from=pg_tle          /tmp/install/usr/local/ /usr/local/
@@ -367,6 +366,7 @@ COPY --from=pgsodium        /tmp/install/usr/local/ /usr/local/
 COPY --from=vault           /tmp/install/usr/local/ /usr/local/
 COPY --from=pg_wodekit      /tmp/install/usr/local/ /usr/local/
 COPY --from=duckdb_ext      /tmp/install/duckdb-extensions/ /usr/local/lib/duckdb/extensions/
+COPY --from=wrappers 				/tmp/install/usr/local/ /usr/local/
 
 # pgsodium/vault default config — appended on first initdb run
 RUN printf '#!/bin/sh\necho "pgsodium.getkey_script = '"'"'/usr/local/bin/pgsodium_getkey.sh'"'"'" >> "$PGDATA/postgresql.conf"\necho "vault.getkey_script = '"'"'/usr/local/bin/pgsodium_getkey.sh'"'"'" >> "$PGDATA/postgresql.conf"\n' \

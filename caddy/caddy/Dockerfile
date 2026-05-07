@@ -9,7 +9,8 @@ FROM caddy:${VERSION}-builder AS builder
 RUN --mount=type=cache,target=/root/go \
     xcaddy build \
     --with github.com/caddy-dns/acmedns \
-    --with github.com/sagikazarmark/caddy-fs-s3
+    --with github.com/sagikazarmark/caddy-fs-s3 \
+    --with github.com/mholt/caddy-webdav
 
 FROM wener/base:${ALPINE_RELEASE}
 
