@@ -14,7 +14,7 @@ h11==0.14.0
 huggingface-hub==0.26.0
 humanfriendly==10.0
 idna==3.10
-Jinja2==3.1.4
+Jinja2==3.1.6
 joblib==1.4.2
 MarkupSafe==3.0.1
 mpmath==1.3.0
