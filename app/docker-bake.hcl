@@ -26,6 +26,9 @@ target "app" {
 	inherits = ["base"]
 	context = "app"
 	tags = tags("app")
+	contexts = {
+		"wener/base:${ALPINE_RELEASE}-openrc" : "docker-image://quay.io/wener/base:${ALPINE_RELEASE}-openrc"
+	}
 }
 
 target "workspace" {

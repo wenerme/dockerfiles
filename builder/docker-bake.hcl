@@ -10,6 +10,9 @@ target "base" {
   args       = {
     ALPINE_RELEASE = ALPINE_RELEASE
   }
+  contexts = {
+    "wener/base:${ALPINE_RELEASE}" = "docker-image://quay.io/wener/base:${ALPINE_RELEASE}"
+  }
 }
 
 target "default" {

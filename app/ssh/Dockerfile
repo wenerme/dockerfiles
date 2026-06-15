@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 ARG ALPINE_RELEASE
 FROM wener/app:${ALPINE_RELEASE}
 

@@ -29,3 +29,5 @@ local.mk
 local.just
 .docker/
 *.local.md
+.agents
+pnpm-lock.yaml

@@ -12,6 +12,9 @@ target "base" {
     ALPINE_VERSION = ALPINE_VERSION
     VERSION        = VERSION
   }
+  contexts = {
+    "wener/builder:${ALPINE_RELEASE}" = "docker-image://quay.io/wener/builder:${ALPINE_RELEASE}"
+  }
 }
 
 target "default" {

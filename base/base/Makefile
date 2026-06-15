@@ -11,15 +11,15 @@ ALPINE_RELEASE ?= $(shell curl -sf https://alpinelinux.org/releases.json | jq '.
 export ALPINE_RELEASE
 
 info:
-	docker buildx bake --print
+	$(DOCKER_BUILD_BAKE) --print
 build: dl
-	docker buildx bake
+	$(DOCKER_BUILD_BAKE)
 push: dl
 	echo Building $(ALPINE_RELEASE)
-	docker buildx bake --push
+	$(DOCKER_BUILD_BAKE) --push
 
 push-latest:
-	TAG=latest ALPINE_RELEASE=$(ALPINE_RELEASE) docker buildx bake --push
+	TAG=latest ALPINE_RELEASE=$(ALPINE_RELEASE) $(DOCKER_BUILD_BAKE) --push
 
 #build: image tag
 #image:

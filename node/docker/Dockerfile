@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 ARG VERSION
 FROM wener/node:${VERSION}
 
