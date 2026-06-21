@@ -1,8 +1,7 @@
 REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 -include $(REPO_ROOT)/build.mk
 
-export GO_VERSION ?= 1.26.4
-export ALPINE_VERSION ?= 3.24
+export VERSION ?= 24.17.0
 export REV ?= 0
 
 push:

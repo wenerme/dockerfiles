@@ -1,5 +1,5 @@
 variable "IMAGE_NAME" { default = "go-builder" }
-variable "GO_VERSION" { default = "1.26" }
+variable "GO_VERSION" { default = "1.26.4" }
 variable "ALPINE_VERSION" { default = "3.24" }
 variable "REV" { default = "0" }
 
@@ -48,7 +48,7 @@ target "base" {
 
 target "go-builder" {
   inherits = ["base"]
-  tags     = tags("latest", GO_VERSION, ALPINE_VERSION)
+  tags     = tags("latest", GO_VERSION, "1.26", ALPINE_VERSION)
 }
 
 target "go-builder-1-25" {
@@ -57,21 +57,41 @@ target "go-builder-1-25" {
     GO_VERSION     = GO_125_VERSION
     ALPINE_VERSION = GO_125_ALPINE_VERSION
   }
-  tags = tags("1.25", GO_125_VERSION, GO_125_ALPINE_VERSION)
+  tags = tags("1.25", GO_125_VERSION, "1.25", GO_125_ALPINE_VERSION)
 }
 
 function "tags" {
-  params = [name, go_version, alpine_version]
+  params = [name, go_version, go_series, alpine_version]
   result = distinct(compact([
     "docker.io/wener/${IMAGE_NAME}:${name}",
     "quay.io/wener/${IMAGE_NAME}:${name}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${name}",
+    "docker.io/wener/${IMAGE_NAME}:${go_series}",
+    "quay.io/wener/${IMAGE_NAME}:${go_series}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${go_series}",
+    "docker.io/wener/${IMAGE_NAME}:go${go_version}",
+    "quay.io/wener/${IMAGE_NAME}:go${go_version}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:go${go_version}",
     "docker.io/wener/${IMAGE_NAME}:${go_version}",
     "quay.io/wener/${IMAGE_NAME}:${go_version}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${go_version}",
+    "docker.io/wener/${IMAGE_NAME}:${go_series}-r${REV}",
+    "quay.io/wener/${IMAGE_NAME}:${go_series}-r${REV}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${go_series}-r${REV}",
+    "docker.io/wener/${IMAGE_NAME}:go${go_version}-r${REV}",
+    "quay.io/wener/${IMAGE_NAME}:go${go_version}-r${REV}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:go${go_version}-r${REV}",
     "docker.io/wener/${IMAGE_NAME}:${go_version}-r${REV}",
     "quay.io/wener/${IMAGE_NAME}:${go_version}-r${REV}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${go_version}-r${REV}",
     "docker.io/wener/${IMAGE_NAME}:${go_version}-alpine-${alpine_version}-r${REV}",
     "quay.io/wener/${IMAGE_NAME}:${go_version}-alpine-${alpine_version}-r${REV}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${go_version}-alpine-${alpine_version}-r${REV}",
     notequal("latest", name) ? "docker.io/wener/${IMAGE_NAME}:${name}-alpine-${alpine_version}-r${REV}" : "",
     notequal("latest", name) ? "quay.io/wener/${IMAGE_NAME}:${name}-alpine-${alpine_version}-r${REV}" : "",
+    notequal("latest", name) ? "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${name}-alpine-${alpine_version}-r${REV}" : "",
+    "docker.io/wener/${IMAGE_NAME}:go${go_version}-alpine-${alpine_version}-r${REV}",
+    "quay.io/wener/${IMAGE_NAME}:go${go_version}-alpine-${alpine_version}-r${REV}",
+    "ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:go${go_version}-alpine-${alpine_version}-r${REV}",
   ]))
 }
