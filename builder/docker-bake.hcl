@@ -1,5 +1,6 @@
 variable "IMAGE_NAME" { default = "builder" }
 variable "VERSION" { default = "" }
+variable "REV" { default = "0" }
 variable "DEV" { default = "" }
 variable "ALPINE_RELEASE" { default = "3.19.1" }
 
@@ -27,5 +28,7 @@ function "tags" {
     "docker.io/wener/${IMAGE_NAME}:${name}", "quay.io/wener/${IMAGE_NAME}:${name}",
     notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
     notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
+    notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}-r${REV}" : "",
+    notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}-r${REV}" : "",
   ]
 }
