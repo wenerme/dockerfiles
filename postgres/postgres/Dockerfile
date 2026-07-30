@@ -1,15 +1,19 @@
 # syntax=docker/dockerfile:1
 
 ARG PG_VERSION=18
+ARG PG_IMAGE_VERSION=18.4
+ARG PG_ALPINE_VERSION=3.24
 
 # ── base build stage ────────────────────────────────────────────
-FROM postgres:${PG_VERSION}-alpine AS build
+FROM postgres:${PG_IMAGE_VERSION}-alpine${PG_ALPINE_VERSION} AS build
 
+ARG PG_IMAGE_VERSION=18.4
+ARG PG_ALPINE_VERSION=3.24
 ARG TARGETARCH
 ARG TARGETVARIANT
 
 # samurai = ninjia-build
-RUN --mount=type=cache,id=apk-pg-build-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/etc/apk/cache \
+RUN --mount=type=cache,id=apk-pg-build-$PG_IMAGE_VERSION-alpine$PG_ALPINE_VERSION-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/etc/apk/cache \
     apk add \
 			build-base clang-dev cmake flex g++ git samurai ccache \
 			curl-dev libcurl \
@@ -33,17 +37,28 @@ ARG TARGETVARIANT
 ARG WRAPPERS_REPO=https://github.com/wenerme/wrappers.git
 ARG WRAPPERS_BRANCH=develop
 ARG WRAPPERS_REV=ddf5a2d6850ec47fcee2a1a9b1c1582e5eb1141a
+ARG PGRX_VERSION=0.19.1
 
-RUN --mount=type=cache,id=cargo-registry-$TARGETARCH,target=/root/.cargo/registry \
-    --mount=type=cache,id=cargo-git-$TARGETARCH,target=/root/.cargo/git \
-    cargo install --locked cargo-pgrx --version 0.16.1
+RUN --mount=type=cache,id=cargo-registry-wrappers-$TARGETARCH,target=/root/.cargo/registry \
+    --mount=type=cache,id=cargo-git-wrappers-$TARGETARCH,target=/root/.cargo/git \
+    cargo install --locked cargo-pgrx --version ${PGRX_VERSION}
 
 RUN cargo pgrx init --pg${PG_VERSION}=$(which pg_config)
 
 RUN echo "rev: ${WRAPPERS_REV}" && git clone --branch ${WRAPPERS_BRANCH} --depth 1 ${WRAPPERS_REPO} /tmp/wrappers
 
-RUN --mount=type=cache,id=cargo-registry-$TARGETARCH,target=/root/.cargo/registry \
-    --mount=type=cache,id=cargo-git-$TARGETARCH,target=/root/.cargo/git \
+RUN set -eux; \
+    cd /tmp/wrappers; \
+    find . -name Cargo.toml -exec sed -i \
+      -e "s/=0\\.16\\.1/${PGRX_VERSION}/g" \
+      -e "s/\"=0\\.16\\.1\"/\"${PGRX_VERSION}\"/g" \
+      -e "s/\"0\\.16\\.1\"/\"${PGRX_VERSION}\"/g" \
+      {} +; \
+    cargo update -p pgrx --precise ${PGRX_VERSION}; \
+    cargo update -p pgrx-tests --precise ${PGRX_VERSION}
+
+RUN --mount=type=cache,id=cargo-registry-wrappers-$TARGETARCH,target=/root/.cargo/registry \
+    --mount=type=cache,id=cargo-git-wrappers-$TARGETARCH,target=/root/.cargo/git \
     --mount=type=cache,id=cargo-target-wrappers-$TARGETARCH,target=/tmp/wrappers/target \
     cd /tmp/wrappers/wrappers && \
     cargo pgrx install --release --no-default-features \
@@ -71,7 +86,7 @@ RUN printf '%s\n' \
 RUN --mount=type=cache,id=ccache-duckdb-$TARGETARCH,target=/root/.ccache \
     set -eux; \
     cd /tmp/duckdb; \
-    EXTENSION_CONFIGS="/tmp/duckdb_ext_config.cmake" make release; \
+    EXTENSION_CONFIGS="/tmp/duckdb_ext_config.cmake" make -j1 release; \
     DUCKDB_VER=${DUCKDB_VERSION#v}; \
     PLATFORM="linux_${TARGETARCH}_musl"; \
     mkdir -p /tmp/install/duckdb-extensions/v${DUCKDB_VER}/${PLATFORM}; \
@@ -283,10 +298,11 @@ ARG TARGETVARIANT
 ARG PG_WODEKIT_REPO=https://github.com/wenerme/pg_wodekit.git
 ARG PG_WODEKIT_BRANCH=develop
 ARG PG_WODEKIT_REV=65fbc46b79dbce692a7ec8bbeb2f2ae5016cc4b4
+ARG PGRX_VERSION=0.19.1
 
-RUN --mount=type=cache,id=cargo-registry-$TARGETARCH,target=/root/.cargo/registry \
-    --mount=type=cache,id=cargo-git-$TARGETARCH,target=/root/.cargo/git \
-    cargo install --locked cargo-pgrx --version 0.16.1
+RUN --mount=type=cache,id=cargo-registry-pg-wodekit-$TARGETARCH,target=/root/.cargo/registry \
+    --mount=type=cache,id=cargo-git-pg-wodekit-$TARGETARCH,target=/root/.cargo/git \
+    cargo install --locked cargo-pgrx --version ${PGRX_VERSION}
 
 RUN cargo pgrx init --pg${PG_VERSION}=$(which pg_config)
 
@@ -294,8 +310,17 @@ RUN echo "rev: ${PG_WODEKIT_REV}" && \
     git clone --branch ${PG_WODEKIT_BRANCH} --depth 1 \
         ${PG_WODEKIT_REPO} /tmp/pg_wodekit
 
-RUN --mount=type=cache,id=cargo-registry-$TARGETARCH,target=/root/.cargo/registry \
-    --mount=type=cache,id=cargo-git-$TARGETARCH,target=/root/.cargo/git \
+RUN set -eux; \
+    cd /tmp/pg_wodekit; \
+    sed -i \
+      -e "s/pgrx = \"0\\.16\\.1\"/pgrx = \"${PGRX_VERSION}\"/g" \
+      -e "s/pgrx-tests = \"0\\.16\\.1\"/pgrx-tests = \"${PGRX_VERSION}\"/g" \
+      Cargo.toml; \
+    cargo update -p pgrx --precise ${PGRX_VERSION}; \
+    cargo update -p pgrx-tests --precise ${PGRX_VERSION}
+
+RUN --mount=type=cache,id=cargo-registry-pg-wodekit-$TARGETARCH,target=/root/.cargo/registry \
+    --mount=type=cache,id=cargo-git-pg-wodekit-$TARGETARCH,target=/root/.cargo/git \
     --mount=type=cache,id=cargo-target-pg_wodekit-$TARGETARCH,target=/tmp/pg_wodekit/target \
     cd /tmp/pg_wodekit && \
     cargo pgrx install --release --no-default-features \
@@ -338,7 +363,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
     make USE_PGXS=1 with_llvm=no install DESTDIR=/tmp/install
 
 # ── final image ─────────────────────────────────────────────────
-FROM postgres:${PG_VERSION}-alpine
+FROM postgres:${PG_IMAGE_VERSION}-alpine${PG_ALPINE_VERSION}
 
 ARG TARGETARCH
 ARG TARGETVARIANT
@@ -346,8 +371,12 @@ ARG TARGETVARIANT
 RUN apk add libsodium
 
 # pgsodium getkey script — auto-generates root key on first run
+# supabase_vault defaults to /usr/local/share/postgresql/extension/pgsodium_getkey,
+# so provide that path in the image for existing PGDATA where initdb scripts do not run.
 RUN printf '#!/bin/sh\nset -eu\nKEY_FILE="${PGDATA}/pgsodium_root.key"\nif [ ! -f "$KEY_FILE" ]; then\n  head -c 32 /dev/urandom | od -A n -t x1 | tr -d " \\n" > "$KEY_FILE"\n  chmod 600 "$KEY_FILE"\nfi\ncat "$KEY_FILE"\n' \
-    > /usr/local/bin/pgsodium_getkey.sh && chmod +x /usr/local/bin/pgsodium_getkey.sh
+    > /usr/local/bin/pgsodium_getkey.sh && chmod +x /usr/local/bin/pgsodium_getkey.sh && \
+    mkdir -p /usr/local/share/postgresql/extension && \
+    ln -sf /usr/local/bin/pgsodium_getkey.sh /usr/local/share/postgresql/extension/pgsodium_getkey
 
 COPY --from=pgvector        /tmp/install/usr/local/ /usr/local/
 COPY --from=pg_cron         /tmp/install/usr/local/ /usr/local/

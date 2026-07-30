@@ -1,9 +1,8 @@
-PKG ?= pdns
-VERSION ?= $(shell docker run --rm -it wener/base sh -c 'apk update >/dev/null;apk policy $(PKG) | sed "2!d"  | sed -r "s/^\s*([0-9.]+).*/\1/"')
-export VERSION
+REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
+-include $(REPO_ROOT)/build.mk
 
-print:
-	docker buildx bake --print
+export VERSION ?= 5.0.5
+export REV ?= 0
 
 push:
-	docker buildx bake --push
+print:

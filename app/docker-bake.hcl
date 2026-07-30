@@ -36,7 +36,7 @@ target "workspace" {
 	context = "workspace"
 	tags = tags("workspace")
 	contexts = {
-		"wener/ssh:${ALPINE_RELEASE}" : "target:ssh"
+		"wener/app:${ALPINE_RELEASE}-ssh" : "target:ssh"
 	}
 }
 

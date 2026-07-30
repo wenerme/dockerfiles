@@ -3,10 +3,13 @@ variable "TAG" {
 }
 
 variable "ALPINE_RELEASE" {
-  default = "3.18.0"
+  default = "3.24.1"
 }
 variable "ALPINE_VERSION" {
   default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
+}
+variable "REV" {
+  default = "0"
 }
 variable "ALPINE_MIRROR" {
 	# https://mirrors.alpinelinux.org/
@@ -22,12 +25,15 @@ group "default" {
 
 target "base" {
   dockerfile = "Dockerfile"
-  tags = [
-    "docker.io/wener/base:${ALPINE_RELEASE}", "quay.io/wener/base:${ALPINE_RELEASE}",
-    "docker.io/wener/base:${ALPINE_VERSION}", "quay.io/wener/base:${ALPINE_VERSION}",
+  tags = distinct(compact([
+    "docker.io/wener/base:${ALPINE_RELEASE}", "quay.io/wener/base:${ALPINE_RELEASE}", "ghcr.io/wenerme/dockerfiles/base:${ALPINE_RELEASE}",
+    "docker.io/wener/base:${ALPINE_VERSION}", "quay.io/wener/base:${ALPINE_VERSION}", "ghcr.io/wenerme/dockerfiles/base:${ALPINE_VERSION}",
+    "docker.io/wener/base:${ALPINE_RELEASE}-r${REV}", "quay.io/wener/base:${ALPINE_RELEASE}-r${REV}", "ghcr.io/wenerme/dockerfiles/base:${ALPINE_RELEASE}-r${REV}",
+    "docker.io/wener/base:${ALPINE_RELEASE}-alpine-${ALPINE_VERSION}-r${REV}", "quay.io/wener/base:${ALPINE_RELEASE}-alpine-${ALPINE_VERSION}-r${REV}", "ghcr.io/wenerme/dockerfiles/base:${ALPINE_RELEASE}-alpine-${ALPINE_VERSION}-r${REV}",
       notequal("", TAG) ? "docker.io/wener/base:${TAG}" : "",
       notequal("", TAG) ? "quay.io/wener/base:${TAG}" : "",
-  ]
+      notequal("", TAG) ? "ghcr.io/wenerme/dockerfiles/base:${TAG}" : "",
+  ]))
   platforms = [
     "linux/amd64", "linux/arm64",
     "linux/386", // "linux/arm/v7", "linux/arm/v6",

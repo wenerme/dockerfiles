@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG ALPINE_RELEASE
-FROM wener/ssh:${ALPINE_RELEASE}
+FROM wener/app:${ALPINE_RELEASE}-ssh
 
 # System dependencies
 RUN --mount=type=cache,target=/var/cache/apk apk add \
@@ -55,8 +55,11 @@ RUN --mount=type=cache,target=/var/cache/apk apk add \
     xz \
     yq-go \
     zip \
-    && npm add -g pnpm yarn \
     && curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
 
 # Claude Code - install globally via npm
-RUN npm add -g @anthropic-ai/claude-code
+RUN npm add -g --ignore-scripts \
+    pnpm \
+    yarn \
+    @anthropic-ai/claude-code  \
+    @earendil-works/pi-coding-agent
