@@ -1,11 +1,12 @@
 REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 -include $(REPO_ROOT)/build.mk
 
-PKG:=go
-export VERSION := $(shell docker run --rm -it wener/base:$(ALPINE_VERSION) sh -c 'apk update >/dev/null;apk policy $(PKG) | sed "2!d" | sed "s/[^0-9a-z.-]//g" | sed -r "s/-r[0-9]+$$//"')
+GO_PACKAGE_VERSION_INPUT := $(GO_PACKAGE_VERSION)
+override GO_PACKAGE_VERSION := $(or $(strip $(GO_PACKAGE_VERSION_INPUT)),1.26.3-r0)
+ifneq ($(shell printf '%s\n' '$(GO_PACKAGE_VERSION)' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+-r[0-9]+$$'),$(GO_PACKAGE_VERSION))
+$(error GO_PACKAGE_VERSION must be a non-empty major.minor.patch-rN APK version)
+endif
 
-push:
-	docker buildx bake --push
-
-print:
-	docker buildx bake --print
+export GO_PACKAGE_VERSION
+export ALPINE_RELEASE ?= 3.24.1
+export REV ?= 0

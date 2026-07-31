@@ -10,7 +10,7 @@ Images are published under these registry namespaces depending on the image fami
 - Quay: `quay.io/wener/<image>:<tag>`
 - GHCR: `ghcr.io/wenerme/dockerfiles/<image>:<tag>`
 
-Current scan: 37 image groups, 5 groups already declare GHCR tags in `docker-bake.hcl`.
+Current scan: 37 image groups, 4 groups already declare GHCR tags in `docker-bake.hcl`.
 
 ## Tagging
 
@@ -29,7 +29,7 @@ Generated from `docker-bake.hcl` files with `bun run readme:generate`.
 
 | Image | Directory | Default Targets | Version Variables | Registries | Base Images |
 |---|---|---|---|---|---|
-| `app` | [app](app/) | app, ssh | ALPINE_RELEASE=3.18.0<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/app`<br>`wener/app:${ALPINE_RELEASE}`<br>`wener/app:dns`<br>... |
+| `app` | [app](app/) | app, ssh | ALPINE_RELEASE=3.18.0<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/app`<br>`wener/app:${ALPINE_RELEASE}`<br>`wener/app:${ALPINE_RELEASE}-ssh`<br>... |
 | `base` | [base/base](base/base/) | base | REV=0<br>ALPINE_RELEASE=3.24.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay, GHCR | `scratch` |
 | `base` | [base](base/) | openrc, app | ALPINE_RELEASE=3.17.2<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `alpine`<br>`scratch`<br>`wener/base`<br>... |
 | `builder` | [builder](builder/) | base, default | REV=0<br>ALPINE_RELEASE=3.19.1 | Docker Hub, Quay | `wener/app:${ALPINE_RELEASE}-ssh`<br>`wener/base:${ALPINE_RELEASE}` |
@@ -43,8 +43,8 @@ Generated from `docker-bake.hcl` files with `bun run readme:generate`.
 | `docker` | [docker](docker/) | docker | - | Docker Hub, Quay | `wener/base` |
 | `frp` | [frp](frp/) | frp, frps, frpc | - | Docker Hub, Quay | `wener/base:${ALPINE_RELEASE}`<br>`wener/frp` |
 | `gitea-runner` | [gitea-runner](gitea-runner/) | base, default | REV=0<br>ALPINE_RELEASE=3.19.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/builder:${ALPINE_RELEASE}-r${BUILDER_REV}` |
-| `go-builder` | [go-builder](go-builder/) | go-builder | REV=0<br>ALPINE_VERSION=3.24<br>GO_VERSION=1.26.4 | Docker Hub, Quay, GHCR | `${GO_BASE_IMAGE}` |
-| `go` | [go](go/) | go | ALPINE_RELEASE=3.19.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/base:${ALPINE_RELEASE}`<br>`wener/base:armhf`<br>`wener/go`<br>... |
+| `go-builder` | [go-builder](go-builder/) | go-builder | REV=0<br>ALPINE_RELEASE=3.24.1 | Docker Hub, Quay | `${GO_BASE_IMAGE}` |
+| `go` | [go](go/) | go | REV=0<br>ALPINE_RELEASE=3.24.1 | Docker Hub, Quay | `wener/base:${ALPINE_RELEASE}`<br>`wener/base:armhf`<br>`wener/go`<br>... |
 | `httpd` | [httpd](httpd/) | httpd | - | Docker Hub, Quay | `wener/base` |
 | `java` | [java](java/) | 8, 8-builder, 8-ui, 17 | - | Docker Hub, Quay | `wener/base`<br>`wener/java`<br>`wener/java:8`<br>... |
 | `jenkins` | [jenkins](jenkins/) | agent | - | Docker Hub, Quay | `jenkins/ssh-agent:4.13.0-alpine-jdk17`<br>`jenkins:alpine`<br>`wener/jenkins` |
