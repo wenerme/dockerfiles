@@ -7,7 +7,7 @@ variable "ALPINE_RELEASE" {
 variable "ALPINE_VERSION" {
 	default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
 }
-variable "WORKSPACE_REV" { default = "2" }
+variable "WORKSPACE_REV" { default = "3" }
 
 group "default" {
 	targets = ["app", "ssh"]

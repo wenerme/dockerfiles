@@ -6,6 +6,8 @@ test -n "${admin_home}"
 admin_password="$(getent shadow admin | cut -d: -f2)"
 admin_shell="$(getent passwd admin | cut -d: -f7)"
 backup="$(mktemp -d)"
+ssh_backup="$(mktemp -d)"
+host_key_sentinel="$(mktemp)"
 fake_bin="$(mktemp -d)"
 rsync_log="$(mktemp)"
 export WORKSPACE_SETUP_RSYNC_LOG="${rsync_log}"
@@ -16,13 +18,17 @@ restore_home() {
   rm -rf "${admin_home}"
   install -d -m 0755 -o admin -g admin "${admin_home}"
   cp -a "${backup}/." "${admin_home}/"
-  rm -rf "${backup}" "${fake_bin}" "${rsync_log}"
+  rm -rf /etc/ssh
+  install -d -m 0755 /etc/ssh
+  cp -a "${ssh_backup}/." /etc/ssh/
+  rm -rf "${backup}" "${ssh_backup}" "${fake_bin}" "${rsync_log}" "${host_key_sentinel}"
 }
 trap restore_home EXIT
 
 if [ -d "${admin_home}" ]; then
   cp -a "${admin_home}/." "${backup}/"
 fi
+cp -a /etc/ssh/. "${ssh_backup}/"
 
 rm -rf "${admin_home}"
 install -d -m 0755 -o admin -g admin "${admin_home}"
@@ -47,6 +53,25 @@ rm -f \
   "${admin_home}/.bashrc" \
   "${admin_home}/.inputrc" \
   "${admin_home}/.profile"
+
+rm -rf /etc/ssh
+ln -s /tmp /etc/ssh
+if /usr/local/sbin/workspace-setup >/dev/null 2>&1; then
+  echo 'workspace-setup accepted a symlinked /etc/ssh directory' >&2
+  exit 1
+fi
+
+rm /etc/ssh
+install -d -m 0755 /etc/ssh
+cp -a "${ssh_backup}/." /etc/ssh/
+printf '%s\n' 'workspace-host-key-sentinel' > "${host_key_sentinel}"
+ln -s "${host_key_sentinel}" /etc/ssh/ssh_host_ed25519_key
+if /usr/local/sbin/workspace-setup >/dev/null 2>&1; then
+  echo 'workspace-setup accepted a symlinked SSH host key' >&2
+  exit 1
+fi
+test "$(cat "${host_key_sentinel}")" = workspace-host-key-sentinel
+rm /etc/ssh/ssh_host_ed25519_key
 
 cat > "${fake_bin}/install" <<'EOF'
 #!/bin/sh

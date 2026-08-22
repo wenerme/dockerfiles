@@ -1,25 +1,12 @@
 # Workspace
 
-`wener/app:workspace` 是通用 Alpine 开发工作区。可变构建输入位于同目录或 `app/`，Dockerfile 只编排安装步骤：
+`wener/app:workspace` 是基于 `wener/app:<alpine>-ssh` 的 Alpine 开发与远程工作区镜像。Dockerfile 中的 APK 清单是系统工具的唯一来源，构建时安装当前 Alpine 仓库可用版本。
 
-- `../docker-bake.hcl`：OpenRC base manifest digest 和 Workspace revision tag。
-- `apk-packages.lock`：61 个精确 APK package revision。
-- `package.json` 和 `package-lock.json`：pnpm、Yarn、Pi 和完整 npm 依赖闭包。
-- `claude-code.env`：Claude Code 版本、发布地址和 amd64/arm64 SHA-256。
+镜像包含 Docker CLI/Buildx/Compose、GitHub/GitLab CLI、Go、Node/npm、Bun、Python/uv、SQLite、PostgreSQL/MariaDB 客户端、网络诊断、终端和文件处理工具；额外从 Alpine edge 安装 zellij 与 DuckDB。pnpm、Yarn、Claude Code 和 Pi 通过 npm 全局安装。
 
-`WORKSPACE_REV` 位于 `../docker-bake.hcl`，是发布 tag 的显式 revision 边界。任一锁定输入变化后，在发布前递增它。
+镜像也提供可持久化的远程工作区初始化：
 
-包含 Docker CLI/Buildx/Compose、GitHub/GitLab CLI、Go、Node/npm、Bun、Python/uv、SQLite、PostgreSQL/MariaDB 客户端、网络诊断、终端工具和常用文件处理工具。
-
-不包含项目测试框架、DuckDB edge/testing 包、持久化账号初始化、SSH host key 管理或任何业务 workspace rootfs。下游项目通过自身依赖安装测试和项目专用工具。
-
-本地构建或发布必须使用 Makefile：
-
-```bash
-cd app
-make print
-make load:workspace
-DOCKER_BUILD_PROGRESS=plain make push:workspace
-```
-
-更新 npm 工具时，先更新 `package.json`，再生成 `package-lock.json`；构建阶段始终使用 `npm ci --ignore-scripts`。更新 Claude Code 时，同时更新 `claude-code.env` 的版本和两个架构摘要。更新任意锁定输入后，递增 `WORKSPACE_REV`，然后重新执行 `make load:workspace` 验证。
+- OpenRC 在 sshd 前运行 `workspace-setup`。
+- 初始化 admin 的 Bash 配置和 SSH 目录，不覆盖已有文件。
+- sshd 仅允许 admin 使用 public-key 登录；禁用密码、交互式认证和 root 登录。
+- 启动时为缺失的 SSH host key 生成 ed25519、ECDSA 和 RSA key，并保留已存在的 key。

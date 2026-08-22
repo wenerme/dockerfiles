@@ -41,6 +41,11 @@ if [ -e "${authorized_keys}" ]; then
   su-exec admin chmod 0600 "${authorized_keys}"
 fi
 
+require_directory_or_absent /etc/ssh
+for key_type in ed25519 ecdsa rsa; do
+  require_regular_file_or_absent "/etc/ssh/ssh_host_${key_type}_key"
+  require_regular_file_or_absent "/etc/ssh/ssh_host_${key_type}_key.pub"
+done
 install -d -m 0755 /etc/ssh
 rsync -a --ignore-existing --no-owner --no-group \
   /usr/share/workspace/rootfs/etc/ssh/ /etc/ssh/
@@ -50,20 +55,24 @@ generate_host_key() {
   key_type="$1"
   shift
   key="${host_key_dir}/ssh_host_${key_type}_key"
+  public_key="${key}.pub"
 
-  if [ ! -s "${key}" ]; then
-    tmp_key="${key}.tmp.$$"
-    rm -f "${tmp_key}" "${tmp_key}.pub"
-    ssh-keygen -q -t "${key_type}" -N '' -f "${tmp_key}" "$@"
-    mv "${tmp_key}" "${key}"
-    mv "${tmp_key}.pub" "${key}.pub"
+  require_regular_file_or_absent "${key}"
+  require_regular_file_or_absent "${public_key}"
+
+  if [ ! -e "${key}" ]; then
+    tmp_dir="$(mktemp -d "${host_key_dir}/.workspace-key.XXXXXX")"
+    ssh-keygen -q -t "${key_type}" -N '' -f "${tmp_dir}/key" "$@"
+    mv "${tmp_dir}/key" "${key}"
+    rm -f "${tmp_dir}/key.pub"
+    rmdir "${tmp_dir}"
   fi
 
-  tmp_public_key="${key}.pub.tmp.$$"
+  tmp_public_key="$(mktemp "${host_key_dir}/.workspace-key.${key_type}.pub.XXXXXX")"
   ssh-keygen -y -f "${key}" > "${tmp_public_key}"
-  mv "${tmp_public_key}" "${key}.pub"
+  mv "${tmp_public_key}" "${public_key}"
   chmod 0600 "${key}"
-  chmod 0644 "${key}.pub"
+  chmod 0644 "${public_key}"
 }
 
 generate_host_key ed25519
