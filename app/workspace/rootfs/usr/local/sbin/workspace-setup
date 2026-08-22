@@ -1,0 +1,71 @@
+#!/bin/sh
+set -eu
+
+admin_home="$(getent passwd admin | cut -d: -f6)"
+test -n "${admin_home}"
+
+fail_unsafe_path() {
+  printf 'workspace-setup: unsafe persistent path: %s\n' "$1" >&2
+  exit 1
+}
+
+require_directory_or_absent() {
+  path="$1"
+  if [ -L "${path}" ] || { [ -e "${path}" ] && [ ! -d "${path}" ]; }; then
+    fail_unsafe_path "${path}"
+  fi
+}
+
+require_regular_file_or_absent() {
+  path="$1"
+  if [ -L "${path}" ] || { [ -e "${path}" ] && [ ! -f "${path}" ]; }; then
+    fail_unsafe_path "${path}"
+  fi
+}
+
+# Keep admin unlocked for public-key auth without assigning a usable password.
+usermod -p x admin
+usermod -s /bin/bash admin
+require_directory_or_absent "${admin_home}"
+su-exec admin install -d -m 0755 "${admin_home}"
+
+ssh_dir="${admin_home}/.ssh"
+require_directory_or_absent "${ssh_dir}"
+su-exec admin rsync -a --ignore-existing --no-owner --no-group \
+  /usr/share/workspace/rootfs/home/admin/ "${admin_home}/"
+su-exec admin install -d -m 0700 "${ssh_dir}"
+
+authorized_keys="${ssh_dir}/authorized_keys"
+require_regular_file_or_absent "${authorized_keys}"
+if [ -e "${authorized_keys}" ]; then
+  su-exec admin chmod 0600 "${authorized_keys}"
+fi
+
+install -d -m 0755 /etc/ssh
+rsync -a --ignore-existing --no-owner --no-group \
+  /usr/share/workspace/rootfs/etc/ssh/ /etc/ssh/
+host_key_dir=/etc/ssh
+
+generate_host_key() {
+  key_type="$1"
+  shift
+  key="${host_key_dir}/ssh_host_${key_type}_key"
+
+  if [ ! -s "${key}" ]; then
+    tmp_key="${key}.tmp.$$"
+    rm -f "${tmp_key}" "${tmp_key}.pub"
+    ssh-keygen -q -t "${key_type}" -N '' -f "${tmp_key}" "$@"
+    mv "${tmp_key}" "${key}"
+    mv "${tmp_key}.pub" "${key}.pub"
+  fi
+
+  tmp_public_key="${key}.pub.tmp.$$"
+  ssh-keygen -y -f "${key}" > "${tmp_public_key}"
+  mv "${tmp_public_key}" "${key}.pub"
+  chmod 0600 "${key}"
+  chmod 0644 "${key}.pub"
+}
+
+generate_host_key ed25519
+generate_host_key ecdsa -b 521
+generate_host_key rsa -b 3072

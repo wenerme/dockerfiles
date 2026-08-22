@@ -2,11 +2,12 @@ variable "IMAGE_NAME" { default = "app" }
 variable "TAG" { default = "latest" }
 
 variable "ALPINE_RELEASE" {
-	default = "3.18.0"
+	default = "3.24.1"
 }
 variable "ALPINE_VERSION" {
 	default = "${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}"
 }
+variable "WORKSPACE_REV" { default = "2" }
 
 group "default" {
 	targets = ["app", "ssh"]
@@ -34,7 +35,7 @@ target "app" {
 target "workspace" {
 	inherits = ["base"]
 	context = "workspace"
-	tags = tags("workspace")
+	tags = workspace_tags()
 	contexts = {
 		"wener/app:${ALPINE_RELEASE}-ssh" : "target:ssh"
 	}
@@ -61,4 +62,12 @@ function "tags" {
 		"docker.io/wener/${IMAGE_NAME}:${ALPINE_VERSION}", "quay.io/wener/${IMAGE_NAME}:${ALPINE_VERSION}",
 		"docker.io/wener/${IMAGE_NAME}", "quay.io/wener/${IMAGE_NAME}",
 	]
+}
+
+function "workspace_tags" {
+	params = []
+	result = concat(tags("workspace"), [
+		"docker.io/wener/${IMAGE_NAME}:${ALPINE_RELEASE}-workspace-r${WORKSPACE_REV}",
+		"quay.io/wener/${IMAGE_NAME}:${ALPINE_RELEASE}-workspace-r${WORKSPACE_REV}",
+	])
 }

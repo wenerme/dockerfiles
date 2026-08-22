@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+
+description="Prepares the workspace admin account for SSH public-key authentication"
+
+depend() {
+  before sshd
+}
+
+start() {
+  ebegin "Preparing workspace admin account"
+  /usr/local/sbin/workspace-setup
+  eend $?
+}

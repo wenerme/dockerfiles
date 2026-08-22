@@ -1,4 +1,4 @@
-ARG ALPINE_RELEASE
+ARG ALPINE_RELEASE=3.24.1
 FROM wener/base:${ALPINE_RELEASE}-openrc
 
 # syslog for service logging

@@ -1,0 +1,53 @@
+# Complete paths without case sensitivity and show ambiguous matches immediately.
+set completion-ignore-case on
+set show-all-if-ambiguous on
+set mark-symlinked-directories on
+
+# Keep completion output compact and informative.
+set match-hidden-files off
+set page-completions off
+set completion-query-items 200
+set visible-stats on
+set colored-stats on
+set colored-completion-prefix on
+set menu-complete-display-prefix on
+set skip-completed-text on
+
+# Avoid terminal noise and preserve multiline paste as one editing operation.
+set bell-style none
+set enable-bracketed-paste on
+
+# Search history using the text already entered as a prefix.
+"\eOA": history-search-backward
+"\e[A": history-search-backward
+"\eOB": history-search-forward
+"\e[B": history-search-forward
+
+# Allow UTF-8 input and output.
+set meta-flag on
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# Word movement and deletion.
+"\e[3;3~": kill-word
+"\eOd": backward-word
+"\eOc": forward-word
+
+# Linux console keys.
+"\e[1~": beginning-of-line
+"\e[4~": end-of-line
+"\e[5~": beginning-of-history
+"\e[6~": end-of-history
+"\e[3~": delete-char
+"\e[2~": quoted-insert
+
+# rxvt keys.
+"\e[7~": beginning-of-line
+"\e[8~": end-of-line
+
+# xterm and FreeBSD console keys.
+"\eOH": beginning-of-line
+"\eOF": end-of-line
+"\e[H": beginning-of-line
+"\e[F": end-of-line

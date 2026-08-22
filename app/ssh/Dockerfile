@@ -1,4 +1,4 @@
-ARG ALPINE_RELEASE
+ARG ALPINE_RELEASE=3.24.1
 FROM wener/app:${ALPINE_RELEASE}
 
 # sshd for op
