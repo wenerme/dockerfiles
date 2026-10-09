@@ -10,7 +10,7 @@ Images are published under these registry namespaces depending on the image fami
 - Quay: `quay.io/wener/<image>:<tag>`
 - GHCR: `ghcr.io/wenerme/dockerfiles/<image>:<tag>`
 
-Current scan: 37 image groups, 4 groups already declare GHCR tags in `docker-bake.hcl`.
+Current scan: 38 image groups, 4 groups already declare GHCR tags in `docker-bake.hcl`.
 
 ## Tagging
 
@@ -29,6 +29,7 @@ Generated from `docker-bake.hcl` files with `bun run readme:generate`.
 
 | Image | Directory | Default Targets | Version Variables | Registries | Base Images |
 |---|---|---|---|---|---|
+| `agent` | [agent](agent/) | agent | REV=0<br>ALPINE_RELEASE=3.24.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/base:${ALPINE_RELEASE}` |
 | `app` | [app](app/) | app, ssh | ALPINE_RELEASE=3.18.0<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/app`<br>`wener/app:${ALPINE_RELEASE}`<br>`wener/app:${ALPINE_RELEASE}-ssh`<br>... |
 | `base` | [base/base](base/base/) | base | REV=0<br>ALPINE_RELEASE=3.24.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay, GHCR | `scratch` |
 | `base` | [base](base/) | openrc, app | ALPINE_RELEASE=3.17.2<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `alpine`<br>`scratch`<br>`wener/base`<br>... |
