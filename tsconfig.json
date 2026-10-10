@@ -3,13 +3,21 @@
     "lib": [
       "esnext"
     ],
+    "types": [
+      "bun",
+      "node"
+    ],
     "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext"
   },
   "include": [
-    "src"
+    "scripts/dockerfiles.ts",
+    "scripts/scan-postgres-versions.ts",
+    "scripts/lib/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -31,3 +31,8 @@ local.just
 *.local.md
 .agents
 pnpm-lock.yaml
+__pycache__/
+local/
+.claude/
+.agents/
+*.local.conf

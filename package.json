@@ -4,14 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "scan:images": "bun scripts/dockerfiles.ts scan",
-    "scan:images:json": "bun scripts/dockerfiles.ts scan --json",
-    "scan:postgres": "bun scripts/scan-postgres-versions.ts",
-    "readme:generate": "bun scripts/dockerfiles.ts readme",
-    "rev:bump": "bun scripts/dockerfiles.ts rev:bump",
-    "base:check": "bun scripts/dockerfiles.ts base:check",
-    "ghcr:prepare": "bun scripts/dockerfiles.ts ghcr:prepare",
-    "typecheck": "tsc --noEmit --pretty false -p tsconfig.scripts.json"
+    "typecheck": "tsc --pretty false",
+    "test": "bun test ./scripts/lib"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

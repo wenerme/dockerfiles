@@ -1,0 +1,78 @@
+# 镜像版本与依赖的统一入口；.github/workflows/ghcr.yml 据此发布 GHCR。
+# 修改 version 后推送 master：缺失的 canonical tag 按依赖顺序构建，已发布的 tag 保持不变。
+# 其它镜像仍使用各自的 Bake 配置，README 会另外列出它们。
+schema: 1
+registry: ghcr.io/wenerme/dockerfiles
+source: https://github.com/wenerme/dockerfiles
+
+images:
+  - name: base
+    variants:
+      - name: default
+        build:
+          dir: base/base
+          target: base
+          # 构建前下载 Alpine minirootfs
+          prepare: dl
+          variables:
+            alpine: ALPINE_RELEASE
+            revision: REV
+        version:
+          scheme: alpine
+          alpine: "3.24.1"
+          revision: 0
+
+  - name: agent
+    variants:
+      - name: default
+        build:
+          dir: agent
+          target: agent
+          variables:
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: alpine
+          revision: 0
+
+  - name: pdns
+    variants:
+      - name: default
+        build:
+          dir: pdns
+          target: pdns
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app
+          app: "5.0.5"
+          revision: 0
+
+  - name: node-builder
+    variants:
+      - name: default
+        build:
+          dir: node-builder
+          target: node-builder
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "24.17.0"
+          revision: 0
