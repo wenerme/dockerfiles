@@ -132,8 +132,6 @@ Docker Hub 和 Quay 仍通过各目录的 `make push` 在本地发布。
 
 ## Version Maintenance
 
-Revision bump helpers are intentionally explicit:
-
 manifest 管理的镜像直接维护 `version` 字段：`alpine` → `3.24.1-r0`，`app` → `5.0.5-r0`，`app-alpine` → `24.17.0-alpine-3.24.1-r0`。Alpine 可以沿内部 base 继承。默认 variant 不加前缀，其它 variant 使用 `<variant>-<version>`。
 
 现有 Bake/Make 的默认值没有自动回写。`just manifest-bake` 将 manifest 版本、canonical GHCR 标签、OCI labels 和内部父镜像引用解析为完整 JSON；它是配置预览，不执行构建。`just status` 的 `BAKE TAG=generated` 表示该 canonical 标签需要生成配置，`native` 表示现有 Bake 已声明。
@@ -150,7 +148,7 @@ bun scripts/dockerfiles.ts base:check postgres --write
 bun scripts/dockerfiles.ts base:check postgres --write --bump
 ```
 
-`base:check` stores digests in `.github/image-base-digests.json`. Missing digest state is treated as a baseline, not a reason to bump; a changed existing digest is the signal to bump. This keeps scheduled checks idempotent.
+`base:check` 把上游 base 镜像 digest 记录在 `.github/image-base-digests.json`（首次运行时创建）。没有记录时只建立基线，不递增 revision；已记录的 digest 发生变化才会递增。
 
 ## Notes
 
