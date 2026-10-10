@@ -1,4 +1,4 @@
-ARG VERSION=2.0.0
+ARG VERSION=5.0.0
 ARG ALPINE_RELEASE=3.24.1
 ARG BUILDER_REV=0
 
@@ -25,6 +25,10 @@ RUN set -eux; \
     ln -s /usr/local/bin/gitea-runner /usr/local/bin/act_runner; \
     rm -f "/tmp/${file}" /tmp/checksums.txt /tmp/checksum; \
     gitea-runner --version
+
+# 与 CI 仓库 packageManager 对齐，避免每个新容器首个 job 重新下载 pnpm。
+ARG PNPM_VERSION=12.3.4
+RUN npm install -g "pnpm@${PNPM_VERSION}" && npm cache clean --force && pnpm --version
 
 COPY run.sh /usr/local/bin/run.sh
 RUN chmod +x /usr/local/bin/run.sh

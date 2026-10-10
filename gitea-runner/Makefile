@@ -3,8 +3,8 @@ REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 # https://hub.docker.com/r/gitea/act_runner/tags
 # https://gitea.com/gitea/act_runner
-export VERSION=2.0.0
-export REV ?= 0
+export VERSION=5.0.0
+export REV ?= 1
 
 push:
 print:
