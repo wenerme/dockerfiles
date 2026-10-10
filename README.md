@@ -37,7 +37,7 @@ Prefer revisioned tags for CI and downstream base images when available.
 |---|---|---|---|---|---|---|
 | `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.1-r0` | 3.24.1 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.1-r0` |
 | `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.1-r0` |
-| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.5-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.5-r0` |
+| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r0` |
 | `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.1-r0` |
 
 ### 依赖关系
@@ -46,7 +46,7 @@ Prefer revisioned tags for CI and downstream base images when available.
 flowchart LR
     i0["base.default<br/>3.24.1-r0"]
     i1["agent.default<br/>3.24.1-r0"]
-    i2["pdns.default<br/>5.0.5-r0"]
+    i2["pdns.default<br/>5.0.7-r0"]
     i3["node-builder.default<br/>24.17.0-alpine-3.24.1-r0"]
     i0 --> i1
     i0 --> i2

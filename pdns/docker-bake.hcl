@@ -1,5 +1,5 @@
 variable "IMAGE_NAME" { default = "pdns" }
-variable "VERSION" { default = "5.0.5" }
+variable "VERSION" { default = "5.0.7" }
 variable "ALPINE_RELEASE" { default = "3.24.1" }
 variable "ALPINE_VERSION" { default = "3.24" }
 variable "REV" { default = "0" }

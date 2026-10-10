@@ -1,7 +1,7 @@
 ARG ALPINE_RELEASE=3.24.1
 FROM wener/base:${ALPINE_RELEASE}
 
-ARG VERSION=5.0.5
+ARG VERSION=5.0.7
 
 RUN set -eux; \
     apk add --no-cache \

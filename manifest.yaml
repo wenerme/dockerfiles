@@ -55,7 +55,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app
-          app: "5.0.5"
+          app: "5.0.7"
           revision: 0
 
   - name: node-builder
