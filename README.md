@@ -55,44 +55,44 @@ flowchart LR
 
 ### 尚未迁移的 Bake 镜像清单
 
-已跟踪的 Bake 配置共 38 组，manifest 管理 4 个 variant；其余 34 组列在下面。变量是 Bake 文件中的声明默认值，Makefile 或环境变量可能覆盖它们，不能作为已发布版本或运行时版本。
+已跟踪的 Bake 配置共 38 组，manifest 管理 4 个 variant；其余 34 组列在下面。Variants 是默认镜像之外的 Bake target，Base 只列出父镜像仓库。
 
-| Image | Directory | Default Targets | Version Variables | Registries | Base Images |
-|---|---|---|---|---|---|
-| `app` | [app](app/) | app, ssh | ALPINE_RELEASE=3.24.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]}<br>WORKSPACE_REV=3 | Docker Hub, Quay | `wener/app`<br>`wener/app:3.24.1`<br>`wener/app:3.24.1-ssh`<br>... |
-| `base` | [base](base/) | openrc, app | ALPINE_RELEASE=3.17.2<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `alpine`<br>`scratch`<br>`wener/base`<br>... |
-| `builder` | [builder](builder/) | base, default | REV=0<br>ALPINE_RELEASE=3.19.1 | Docker Hub, Quay | `wener/app:3.19.1-ssh`<br>`wener/base:3.19.1` |
-| `bun` | [bun](bun/) | base, default | - | Docker Hub, Quay | `oven/bun:${BUN_VERSION}-alpine`<br>`wener/base:${ALPINE_RELEASE}` |
-| `caddy` | [caddy](caddy/) | caddy, full, docker-proxy | VERSION=2.8.4<br>REV=0<br>ALPINE_RELEASE=3.20.0 | Docker Hub, Quay | `caddy:2.8.4-builder`<br>`wener/base`<br>`wener/base:3.20.0`<br>... |
-| `chromium` | [chromium](chromium/) | base, default | ALPINE_RELEASE=3.18.3 | Docker Hub, Quay | `wener/xvfb:3.18.3` |
-| `continue-server` | [continue-server](continue-server/) | base, default | - | Docker Hub, Quay | `wener/base` |
-| `dante` | [dante](dante/) | dante | - | Docker Hub, Quay | `wener/base` |
-| `debian` | [debian](debian/) | bookworm-backports | - | Docker Hub, Quay | `debian:${VERSION}`<br>`wener/debian` |
-| `dnsmasq` | [dnsmasq](dnsmasq/) | base, default | - | Docker Hub, Quay | `wener/base` |
-| `docker` | [docker](docker/) | docker | - | Docker Hub, Quay | `wener/base` |
-| `frp` | [frp](frp/) | frp, frps, frpc | - | Docker Hub, Quay | `wener/base:${ALPINE_RELEASE}`<br>`wener/frp` |
-| `gitea-runner` | [gitea-runner](gitea-runner/) | base, default | REV=0<br>ALPINE_RELEASE=3.19.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/builder:3.19.1-r0` |
-| `go-builder` | [go-builder](go-builder/) | go-builder | REV=0<br>ALPINE_RELEASE=3.24.1<br>GO_PACKAGE_VERSION=1.26.3-r0 | Docker Hub, Quay | `wener/go:1.26.3-r0-alpine-3.24.1-r0` |
-| `go` | [go](go/) | go | REV=0<br>ALPINE_RELEASE=3.24.1<br>GO_PACKAGE_VERSION=1.26.3-r0 | Docker Hub, Quay | `wener/base:3.24.1`<br>`wener/base:armhf`<br>`wener/go:$VERSION` |
-| `httpd` | [httpd](httpd/) | httpd | - | Docker Hub, Quay | `wener/base` |
-| `java` | [java](java/) | 8, 8-builder, 8-ui, 17 | - | Docker Hub, Quay | `wener/base`<br>`wener/java`<br>`wener/java:8`<br>... |
-| `jenkins` | [jenkins](jenkins/) | agent | - | Docker Hub, Quay | `jenkins/ssh-agent:4.13.0-alpine-jdk17`<br>`jenkins:alpine`<br>`wener/jenkins` |
-| `juicefs` | [juicefs](juicefs/) | juicefs | ALPINE_RELEASE=3.18.3 | Docker Hub, Quay | `wener/base:3.18.3` |
-| `mihomo` | [mihomo](mihomo/) | mihomo | GO_VERSION=1.25 | Docker Hub, Quay | `golang:1.25-alpine`<br>`wener/base:${ALPINE_RELEASE}` |
-| `ml` | [ml](ml/) | pytorch | - | Quay | `python:$PYTHON_VERSION`<br>`quay.io/wener/pytorch:2.5.0-py3.12` |
-| `surya-ocr` | [ml/surya-ocr](ml/surya-ocr/) | base | - | Quay | `quay.io/wener/pytorch:2.5.0-py3.12` |
-| `nginx` | [nginx](nginx/) | nginx | ALPINE_RELEASE=3.18.3 | Docker Hub, Quay | `wener/base:3.18.3` |
-| `node` | [node](node/) | node, docker | ALPINE_RELEASE=3.19.1<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/base:3.19.1`<br>`wener/node:${VERSION}` |
-| `php` | [php](php/) | 81, 82, 83, 84 | ALPINE_RELEASE=3.18.3<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/base:3.10`<br>`wener/base:3.8`<br>`wener/nginx`<br>... |
-| `postgres` | [postgres](postgres/) | postgres | PG_VERSION=18.4<br>PG_REVISION=0 | Docker Hub, Quay, GHCR | `postgres:18.4-alpine3.24` |
-| `samba` | [samba](samba/) | samba | ALPINE_RELEASE=3.18.2<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/app:3.18.2` |
-| `sing-box` | [sing-box](sing-box/) | sing-box | ALPINE_RELEASE=3.18.3 | Docker Hub, Quay | `wener/base:3.18.3` |
-| `sni-rev-proxy` | [sni-rev-proxy](sni-rev-proxy/) | default | - | Docker Hub, Quay | `wener/base` |
-| `next-standalone` | [templates/next-standalone](templates/next-standalone/) | web | - | - | `wener/node:22` |
-| `tinyproxy` | [tinyproxy](tinyproxy/) | tinyproxy | - | Docker Hub, Quay | `wener/base:${ALPINE_RELEASE}` |
-| `ubuntu` | [ubuntu](ubuntu/) | jammy, focal, bionic, ml | - | Docker Hub, Quay | `scratch`<br>`ubuntu:$VERSION`<br>`wener/ubuntu`<br>... |
-| `xray` | [xray](xray/) | xray | - | Docker Hub, Quay | `ghcr.wener.me/xtls/xray-core:${VERSION}`<br>`wener/base:${ALPINE_RELEASE}` |
-| `xvfb` | [xvfb](xvfb/) | base, default | ALPINE_RELEASE=3.18.2<br>ALPINE_VERSION=${split(".", ALPINE_RELEASE)[0]}.${split(".", ALPINE_RELEASE)[1]} | Docker Hub, Quay | `wener/app:3.18.2` |
+| Image | Variants | Base |
+|---|---|---|
+| [app](app/) | ssh | `wener/base` |
+| [base](base/) | openrc, app | `alpine`<br>`wener/base` |
+| [builder](builder/) | - | `wener/app`<br>`wener/base` |
+| [bun](bun/) | - | `oven/bun`<br>`wener/base` |
+| [caddy](caddy/) | full, docker-proxy | `caddy`<br>`wener/base` |
+| [chromium](chromium/) | - | `wener/xvfb` |
+| [continue-server](continue-server/) | - | `wener/base` |
+| [dante](dante/) | - | `wener/base` |
+| [debian](debian/) | bookworm-backports | `debian` |
+| [dnsmasq](dnsmasq/) | - | `wener/base` |
+| [docker](docker/) | - | `wener/base` |
+| [frp](frp/) | frps, frpc | `wener/base` |
+| [gitea-runner](gitea-runner/) | - | `wener/builder` |
+| [go-builder](go-builder/) | - | `wener/go` |
+| [go](go/) | - | `wener/base` |
+| [httpd](httpd/) | - | `wener/base` |
+| [java](java/) | 8, 8-builder, 8-ui, 17 | `wener/base` |
+| [jenkins](jenkins/) | agent | `jenkins`<br>`jenkins/ssh-agent` |
+| [juicefs](juicefs/) | - | `wener/base` |
+| [mihomo](mihomo/) | - | `golang`<br>`wener/base` |
+| [ml](ml/) | pytorch | `python`<br>`quay.io/wener/pytorch` |
+| [surya-ocr](ml/surya-ocr/) | - | `quay.io/wener/pytorch` |
+| [nginx](nginx/) | - | `wener/base` |
+| [node](node/) | docker | `wener/base` |
+| [php](php/) | 81, 82, 83, 84 | `wener/base`<br>`wener/nginx` |
+| [postgres](postgres/) | - | `postgres` |
+| [samba](samba/) | - | `wener/app` |
+| [sing-box](sing-box/) | - | `wener/base` |
+| [sni-rev-proxy](sni-rev-proxy/) | - | `wener/base` |
+| [next-standalone](templates/next-standalone/) | web | `wener/node` |
+| [tinyproxy](tinyproxy/) | - | `wener/base` |
+| [ubuntu](ubuntu/) | jammy, focal, bionic, ml | `ubuntu` |
+| [xray](xray/) | - | `ghcr.wener.me/xtls/xray-core`<br>`wener/base` |
+| [xvfb](xvfb/) | - | `wener/app` |
 
 <!-- END GENERATED IMAGES -->
 
