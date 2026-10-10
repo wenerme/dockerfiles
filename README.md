@@ -55,7 +55,7 @@ flowchart LR
 
 ### 尚未迁移的 Bake 镜像清单
 
-已跟踪的 Bake 配置共 38 组，manifest 管理 4 个 variant；其余 34 组列在下面。Variants 是默认镜像之外的 Bake target，Base 只列出父镜像仓库。
+已跟踪的 Bake 配置共 40 组，manifest 管理 4 个 variant；其余 36 组列在下面。Variants 是默认镜像之外的 Bake target，Base 只列出父镜像仓库。
 
 | Image | Variants | Base |
 |---|---|---|
@@ -68,6 +68,7 @@ flowchart LR
 | [continue-server](continue-server/) | - | `wener/base` |
 | [dante](dante/) | - | `wener/base` |
 | [debian](debian/) | bookworm-backports | `debian` |
+| [dev](dev/) | - | `wener/node` |
 | [dnsmasq](dnsmasq/) | - | `wener/base` |
 | [docker](docker/) | - | `wener/base` |
 | [frp](frp/) | frps, frpc | `wener/base` |
@@ -78,6 +79,7 @@ flowchart LR
 | [java](java/) | 8, 8-builder, 8-ui, 17 | `wener/base` |
 | [jenkins](jenkins/) | agent | `jenkins`<br>`jenkins/ssh-agent` |
 | [juicefs](juicefs/) | - | `wener/base` |
+| [ligolo-ng](ligolo-ng/) | - | `golang`<br>`wener/base` |
 | [mihomo](mihomo/) | - | `golang`<br>`wener/base` |
 | [ml](ml/) | pytorch | `python`<br>`quay.io/wener/pytorch` |
 | [surya-ocr](ml/surya-ocr/) | - | `quay.io/wener/pytorch` |
