@@ -100,17 +100,18 @@ flowchart LR
 
 ## Development
 
-This repository uses Bun for scripts and [just](https://github.com/casey/just) for commands. Run `just` to list all recipes.
+This repository uses Bun for scripts and [just](https://github.com/casey/just) for commands. Run `just` to list all recipes. Repository tooling is one CLI, `dfcli` (`scripts/dfcli/main.ts`, built on commander and Bun Shell); `just dfcli --help` lists every command.
 
 ```bash
 bun install
-just check                 # typecheck, tests, manifest and README checks (same as CI)
+just check                 # bun check (typecheck), tests, manifest and README checks (same as CI)
 just status                # manifest variants and Bake target validation
 just status --remote       # also query GHCR canonical tags
 just plan base             # dependency-ordered build plan
 just publish-plan          # which GHCR tags CI would build
 just manifest-bake agent   # GHCR-only Bake JSON preview
 just readme                # regenerate the README generated region
+just dfcli scan            # any other dfcli command
 ```
 
 Useful build commands:
@@ -140,15 +141,18 @@ manifest 管理的镜像直接维护 `version` 字段：`alpine` → `3.24.1-r0`
 
 ```bash
 # Preview / write the next revision for one image group
-bun scripts/dockerfiles.ts rev:bump postgres
-bun scripts/dockerfiles.ts rev:bump postgres --write
+just dfcli rev bump postgres
+just dfcli rev bump postgres --write
 
 # Record upstream base image digests; bump only when a tracked digest changed
-bun scripts/dockerfiles.ts base:check postgres --write
-bun scripts/dockerfiles.ts base:check postgres --write --bump
+just dfcli base check postgres --write
+just dfcli base check postgres --write --bump
+
+# Compare postgres extension versions with upstream
+just postgres-versions
 ```
 
-`base:check` 把上游 base 镜像 digest 记录在 `.github/image-base-digests.json`（首次运行时创建）。没有记录时只建立基线，不递增 revision；已记录的 digest 发生变化才会递增。
+`base check` 把上游 base 镜像 digest 记录在 `.github/image-base-digests.json`（首次运行时创建）。没有记录时只建立基线，不递增 revision；已记录的 digest 发生变化才会递增。
 
 ## Notes
 

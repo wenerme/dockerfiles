@@ -1,9 +1,8 @@
-import { execFile, execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { promisify } from 'node:util';
 import { YAML } from 'bun';
+import { capture, lastErrorLine, run } from './repo.ts';
 
 export type VersionScheme = 'alpine' | 'app' | 'app-alpine';
 type VersionField = 'app' | 'alpine' | 'revision';
@@ -212,6 +211,13 @@ export function selectRelease(releases: Release[], selector: string): Release {
   return matches[0];
 }
 
+/** Selectors are image or image.variant IDs only; option-like input such as --push is rejected. */
+export function validateSelectors(selectors: string[]) {
+  for (const selector of selectors) {
+    if (!/^[a-z0-9][a-z0-9._-]*$/.test(selector)) throw new Error(`invalid image selector ${JSON.stringify(selector)}`);
+  }
+}
+
 export function planReleases(releases: Release[], selectors: string[]): Release[] {
   if (!selectors.length) return releases;
   const affected = new Set(selectors.map((selector) => selectRelease(releases, selector).id));
@@ -236,17 +242,21 @@ export function versionVariables(release: Release): Record<string, string> {
   return result;
 }
 
-export function inspectBake(root: string, release: Release): BakePrint {
+export async function inspectBake(root: string, release: Release): Promise<BakePrint> {
   const dir = path.resolve(root, release.build.dir);
   for (const file of ['Makefile', 'docker-bake.hcl']) {
     if (!existsSync(path.join(dir, file))) throw new Error(`${release.id}: missing ${release.build.dir}/${file}`);
   }
   const args = Object.entries(versionVariables(release)).map(([key, value]) => `${key}=${value}`);
-  const output = execFileSync('make', ['-s', '--no-print-directory', ...args,
-    `DOCKER_BUILD_BAKE=docker buildx bake ${release.build.target}`, 'print'], {
-    cwd: dir, encoding: 'utf8', timeout: 30_000, maxBuffer: 2 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  const bake = JSON.parse(output) as BakePrint;
+  // Make echoes nothing with -s; BuildKit progress goes to stderr, so stdout is the Bake JSON.
+  const result = await capture(['make', '-s', '--no-print-directory', ...args,
+    `DOCKER_BUILD_BAKE=docker buildx bake ${release.build.target}`, 'print'], { cwd: dir, timeoutMs: 30_000 });
+  if (result.timedOut) throw new Error(`${release.id}: make print timed out after 30s`);
+  if (result.exitCode !== 0) {
+    const detail = lastErrorLine(result.stderr);
+    throw new Error(`${release.id}: make print failed${detail ? `: ${detail}` : ''}`);
+  }
+  const bake = JSON.parse(result.stdout) as BakePrint;
   const target = bake.target?.[release.build.target];
   if (!target) throw new Error(`${release.id}: Bake target ${release.build.target} not found`);
   const context = target.context ?? '.';
@@ -329,23 +339,22 @@ export function executionBake(bake: BakePrint, dir: string): BakePrint {
   return copy;
 }
 
-export function prepareBuild(root: string, release: Release) {
+// Build logs go to stderr so stdout stays a clean result table.
+export async function prepareBuild(root: string, release: Release) {
   if (!release.build.prepare) return;
   const args = Object.entries(versionVariables(release)).map(([key, value]) => `${key}=${value}`);
-  execFileSync('make', ['--no-print-directory', ...args, release.build.prepare], {
-    cwd: path.resolve(root, release.build.dir), stdio: ['ignore', 2, 2], timeout: 30 * 60_000,
+  await run(['make', '--no-print-directory', ...args, release.build.prepare], {
+    cwd: path.resolve(root, release.build.dir), timeoutMs: 30 * 60_000,
   });
 }
 
-export function pushBake(root: string, release: Release, bake: BakePrint) {
+export async function pushBake(root: string, release: Release, bake: BakePrint) {
   const dir = path.resolve(root, release.build.dir);
   const temp = mkdtempSync(path.join(tmpdir(), 'dockerfiles-bake-'));
   try {
     const file = path.join(temp, 'docker-bake.json');
     writeFileSync(file, JSON.stringify(executionBake(bake, dir), null, 2));
-    execFileSync('docker', ['buildx', 'bake', '--file', file, '--push', release.build.target], {
-      cwd: dir, stdio: ['ignore', 2, 2], timeout: 4 * 60 * 60_000,
-    });
+    await run(['docker', 'buildx', 'bake', '--file', file, '--push', release.build.target], { cwd: dir, timeoutMs: 4 * 60 * 60_000 });
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -360,19 +369,16 @@ export function registryFailure(message: string): Publication {
 }
 
 export async function inspectPublication(ref: string): Promise<Publication> {
+  const result = await capture(['docker', 'buildx', 'imagetools', 'inspect', '--format', '{{json .}}', ref], { timeoutMs: 25_000 });
+  if (result.timedOut || result.exitCode === 127) return { state: 'error', detail: 'registry command unavailable or timed out' };
+  if (result.exitCode !== 0) return registryFailure(result.stderr);
   try {
-    const { stdout } = await promisify(execFile)('docker', ['buildx', 'imagetools', 'inspect', '--format', '{{json .}}', ref], {
-      encoding: 'utf8', timeout: 25_000, maxBuffer: 2 * 1024 * 1024,
-    });
-    const data = JSON.parse(stdout);
-    const digest = data?.manifest?.digest;
-    if (typeof digest !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(digest)) throw new Error('missing manifest digest');
-    return { state: 'published', digest };
-  } catch (error) {
-    const failure = error as Error & { stderr?: string; killed?: boolean; code?: string | number };
-    if (failure.killed || failure.code === 'ENOENT') return { state: 'error', detail: 'registry command unavailable or timed out' };
-    return registryFailure(failure.stderr ?? failure.message);
+    const digest = JSON.parse(result.stdout)?.manifest?.digest;
+    if (typeof digest === 'string' && /^sha256:[a-f0-9]{64}$/.test(digest)) return { state: 'published', digest };
+  } catch {
+    // fall through: unparsable output means the state is unknown
   }
+  return { state: 'error', detail: 'registry returned no manifest digest' };
 }
 
 export function graph(releases: Release[]): string {

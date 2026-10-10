@@ -4,16 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --pretty false",
-    "test": "bun test ./scripts/lib"
+    "typecheck": "bun check",
+    "test": "bun test ./scripts"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.14",
-    "@types/node": "^26.1.0",
-    "commander": "^15.0.0",
-    "semver": "^7.8.5",
-    "typescript": "^6.0.3",
-    "zx": "^8.8.5"
+    "@types/bun": "1.4.2",
+    "@types/node": "26.6.5",
+    "commander": "15.0.0",
+    "typescript": "7.0.2"
   },
-  "packageManager": "bun@1.3.14"
+  "packageManager": "bun@1.4.3"
 }

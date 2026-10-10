@@ -15,9 +15,7 @@
     "moduleResolution": "NodeNext"
   },
   "include": [
-    "scripts/dockerfiles.ts",
-    "scripts/scan-postgres-versions.ts",
-    "scripts/lib/*.ts"
+    "scripts/dfcli"
   ],
   "exclude": [
     "node_modules"

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import {
   executionBake, generatedBake, parseManifest, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
-  registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, versionVariables, type ImageManifest,
-} from './image-manifest.ts';
+  registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, validateSelectors, versionVariables, type ImageManifest,
+} from './manifest.ts';
 
 function sample(): ImageManifest {
   return {
@@ -153,6 +153,13 @@ describe('generated artifacts and publication states', () => {
     expect(parsePlatforms('linux/amd64, linux/arm64,linux/amd64')).toEqual(['linux/amd64', 'linux/arm64']);
     expect(() => parsePlatforms('linux/amd64;rm')).toThrow('unsupported platform');
     expect(() => parsePlatforms('windows/amd64')).toThrow('unsupported platform');
+  });
+
+  test('publish selectors must be image IDs, not options', () => {
+    expect(() => validateSelectors(['base', 'agent.default', 'node-builder'])).not.toThrow();
+    expect(() => validateSelectors(['--push'])).toThrow('invalid image selector');
+    expect(() => validateSelectors(['base;rm'])).toThrow('invalid image selector');
+    expect(() => validateSelectors([])).not.toThrow();
   });
 
   test('authentication and network failures cannot be presented as missing images', () => {

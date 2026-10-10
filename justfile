@@ -50,40 +50,45 @@ docker-setup:
 check:
     bun run typecheck
     bun run test
-    bun scripts/dockerfiles.ts manifest:check
-    bun scripts/dockerfiles.ts readme --check
+    bun scripts/dfcli/main.ts manifest check
+    bun scripts/dfcli/main.ts readme --check
+
+# Run any dfcli command: just dfcli --help
+[group('manifest')]
+dfcli *args:
+    bun scripts/dfcli/main.ts {{args}}
 
 # Show manifest variants; add --remote to query GHCR
 [group('manifest')]
 status *args:
-    bun scripts/dockerfiles.ts status {{args}}
+    bun scripts/dfcli/main.ts status {{args}}
 
 # Dependency-ordered build plan: just plan base
 [group('manifest')]
 plan *images:
-    bun scripts/dockerfiles.ts plan {{images}}
+    bun scripts/dfcli/main.ts plan {{images}}
 
 # Print the manifest dependency graph as Mermaid
 [group('manifest')]
 graph:
-    bun scripts/dockerfiles.ts graph
+    bun scripts/dfcli/main.ts graph
 
 # Regenerate the README generated region
 [group('manifest')]
 readme:
-    bun scripts/dockerfiles.ts readme
+    bun scripts/dfcli/main.ts readme
 
 # Print the GHCR-only Bake JSON for one variant: just manifest-bake agent
 [group('manifest')]
 manifest-bake image:
-    bun scripts/dockerfiles.ts manifest:bake {{image}}
+    bun scripts/dfcli/main.ts manifest bake {{image}}
 
 # Preview which GHCR tags would be built (publishing itself runs in CI)
 [group('manifest')]
 publish-plan *images:
-    bun scripts/dockerfiles.ts publish {{images}}
+    bun scripts/dfcli/main.ts publish {{images}}
 
 # Compare postgres extension versions with upstream
 [group('project')]
 postgres-versions:
-    bun scripts/scan-postgres-versions.ts
+    bun scripts/dfcli/main.ts postgres versions
