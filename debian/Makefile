@@ -1,5 +1,6 @@
+DOCKER_BUILD_BAKE ?= docker buildx bake
 
 print:
-	docker buildx bake --print
+	$(DOCKER_BUILD_BAKE) --print
 push:
-	docker buildx bake --push
+	$(DOCKER_BUILD_BAKE) --push

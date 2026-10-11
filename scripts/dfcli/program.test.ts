@@ -15,6 +15,7 @@ describe('dfcli command tree', () => {
   test('exposes the expected commands', () => {
     expect(commandPaths().sort()).toEqual([
       'base check', 'graph', 'manifest bake', 'manifest check', 'plan', 'postgres versions',
+      'project build', 'project info', 'project load', 'project print', 'project push',
       'publish', 'readme', 'rev bump', 'scan', 'status',
     ]);
   });

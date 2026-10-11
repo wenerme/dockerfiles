@@ -1,3 +1,4 @@
+DOCKER_BUILD_BAKE ?= docker buildx bake
 
 build:
 	pnpm next build
@@ -5,12 +6,14 @@ dev:
 	pnpm next dev
 
 ifneq (,$(wildcard docker-bake.hcl))
+image-build: build
+	$(DOCKER_BUILD_BAKE)
 image-load: build
-	docker buildx bake --load
+	$(DOCKER_BUILD_BAKE) --load
 image-push: build
-	docker buildx bake --push
+	$(DOCKER_BUILD_BAKE) --push
 image-ls:
-	docker buildx bake --print
+	$(DOCKER_BUILD_BAKE) --print
 endif
 
 deploy:
