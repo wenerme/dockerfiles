@@ -76,3 +76,97 @@ images:
           scheme: app-alpine
           app: "24.17.0"
           revision: 0
+
+  - name: go-builder
+    variants:
+      - name: default
+        build:
+          dir: go-builder
+          target: go-builder
+          variables:
+            app: GO_PACKAGE_VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        # The parent Go image has an independent revision and remains a published external input.
+        base:
+          ref: "quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0@sha256:e2abf60cd8c81a1705edd458c81047ceda81349ec06d90149058b5053a7a7350"
+          context: "wener/go:${app}-alpine-${alpine}-r0"
+          arg: GO_BASE_IMAGE
+        version:
+          scheme: app-alpine
+          app: "1.26.3-r0"
+          alpine: "3.24.1"
+          revision: 0
+
+  - name: nginx
+    variants:
+      - name: default
+        build:
+          dir: nginx
+          target: nginx
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "1.30.4-r1"
+          revision: 0
+
+  - name: php
+    variants:
+      - name: "8.2"
+        build:
+          dir: php
+          target: "82"
+          variables:
+            app: PHP82_VERSION
+            alpine: PHP82_ALPINE_RELEASE
+            revision: PHP82_REV
+        # PHP 8.2 stays on historical Alpine/nginx, independently of base.default.
+        base:
+          ref: "quay.io/wener/nginx:alpine-3.19.1@sha256:1da7b7845bed8cc54efb93d7289cb89c2bf87656159258a51ed7c0c3e1c449a5"
+          context: "wener/nginx:alpine-${alpine}"
+        version:
+          scheme: app-alpine
+          app: "8.2.26-r0"
+          alpine: "3.19.1"
+          revision: 0
+      - name: "8.3"
+        build:
+          dir: php
+          target: "83"
+          variables:
+            app: PHP83_VERSION
+            alpine: PHP83_ALPINE_RELEASE
+            revision: PHP83_REV
+        base:
+          image: nginx
+          variant: default
+          context: "wener/nginx:alpine-${alpine}"
+        version:
+          scheme: app-alpine
+          app: "8.3.35-r0"
+          alpine: "3.24.1"
+          revision: 0
+      - name: "8.4"
+        build:
+          dir: php
+          target: "84"
+          variables:
+            app: PHP84_VERSION
+            alpine: PHP84_ALPINE_RELEASE
+            revision: PHP84_REV
+        base:
+          image: nginx
+          variant: default
+          context: "wener/nginx:alpine-${alpine}"
+        version:
+          scheme: app-alpine
+          app: "8.4.26-r0"
+          alpine: "3.24.1"
+          revision: 0

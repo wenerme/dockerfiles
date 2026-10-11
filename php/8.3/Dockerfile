@@ -1,5 +1,7 @@
-ARG ALPINE_RELEASE
+ARG ALPINE_RELEASE=3.24.1
 FROM wener/nginx:alpine-${ALPINE_RELEASE}
+
+ARG PHP_VERSION=8.3.35-r0
 
 RUN apk add icu-data-full # for replacing iconv
 
@@ -7,7 +9,7 @@ RUN apk add icu-data-full # for replacing iconv
 # for composer
 # apk add php83-{openssl,phar,iconv,mbstring,curl} gnu-libiconv
 RUN apk --no-cache add \
-    php83 \
+    php83=${PHP_VERSION} \
     # Base package exclude cgi,litespeed,apache2,doc
     php83-{bcmath,bz2,calendar,common,ctype,curl,dev,dba,dom,embed,enchant,exif,fileinfo,fpm,ftp,gd,gettext,gmp,iconv,imap,intl,json,ldap,mbstring,mysqli,mysqlnd,odbc,opcache,openssl,pcntl,pdo,pdo_dblib,pdo_mysql,pdo_odbc,pdo_pgsql,pdo_sqlite,pear,pgsql,phar,phpdbg,posix,pspell,session,shmop,simplexml,snmp,soap,sockets,sodium,sqlite3,sysvmsg,sysvsem,sysvshm,tidy,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib} \
     php83-pecl-{redis,yaml,uuid,protobuf,igbinary,zstd,grpc} \

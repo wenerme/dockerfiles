@@ -12,7 +12,14 @@ variable "GO_PACKAGE_VERSION" {
 }
 variable "ALPINE_RELEASE" { default = "3.24.1" }
 variable "REV" { default = "0" }
-variable "GO_BASE_IMAGE" { default = "wener/go:${GO_PACKAGE_VERSION}-alpine-${ALPINE_RELEASE}-r${REV}" }
+variable "GO_BASE_REV" {
+  default = "0"
+  validation {
+    condition = can(regex("^(0|[1-9][0-9]*)$", GO_BASE_REV))
+    error_message = "GO_BASE_REV must be a nonnegative integer."
+  }
+}
+variable "GO_BASE_IMAGE" { default = "wener/go:${GO_PACKAGE_VERSION}-alpine-${ALPINE_RELEASE}-r${GO_BASE_REV}" }
 
 variable "PROTOC_VERSION" { default = "35.1" }
 variable "BUF_VERSION" { default = "v1.71.0" }

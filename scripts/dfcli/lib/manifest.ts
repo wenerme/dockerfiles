@@ -11,6 +11,7 @@ export interface Dependency {
   variant?: string;
   ref?: string;
   context: string;
+  arg?: string;
 }
 export interface ManifestVariant {
   name: string;
@@ -81,19 +82,21 @@ const alpineVersion = /^\d+\.\d+\.\d+$/;
 const appVersion = /^[0-9][a-zA-Z0-9_.-]*$/;
 
 function dependency(value: unknown, label: string): Dependency {
-  const item = object(value, label, ['image', 'variant', 'ref', 'context']);
+  const item = object(value, label, ['image', 'variant', 'ref', 'context', 'arg']);
+  const arg = item.arg === undefined ? undefined : text(item.arg, `${label}.arg`, /^[A-Z][A-Z0-9_]*$/);
   const context = text(item.context, `${label}.context`);
   if (/\$\{(?!alpine\}|app\})/.test(context) || /[\s|`]/.test(context)) {
     throw new Error(`${label}.context: only \${alpine} and \${app} substitutions are supported`);
   }
   if (item.ref !== undefined) {
     if (item.image !== undefined || item.variant !== undefined) throw new Error(`${label}: use ref or image/variant`);
-    return { ref: text(item.ref, `${label}.ref`, /^[a-zA-Z0-9_./:@-]+$/), context };
+    return { ref: text(item.ref, `${label}.ref`, /^[a-zA-Z0-9_./:@-]+$/), context, arg };
   }
   return {
     image: text(item.image, `${label}.image`, slug),
     variant: text(item.variant ?? 'default', `${label}.variant`, slug),
     context,
+    arg,
   };
 }
 
@@ -220,7 +223,11 @@ export function validateSelectors(selectors: string[]) {
 
 export function planReleases(releases: Release[], selectors: string[]): Release[] {
   if (!selectors.length) return releases;
-  const affected = new Set(selectors.map((selector) => selectRelease(releases, selector).id));
+  const affected = new Set(selectors.flatMap((selector) => {
+    const matches = releases.filter((release) => release.image === selector || release.id === selector);
+    if (!matches.length) throw new Error(`unknown image ${selector}`);
+    return matches.map((release) => release.id);
+  }));
   for (const release of releases) {
     if (release.dependencies.some((id) => affected.has(id))) affected.add(release.id);
   }
@@ -275,6 +282,7 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
   const source = bake.target?.[release.build.target];
   if (!source) throw new Error(`${release.id}: Bake target not found`);
   const contexts = { ...source.contexts };
+  const args = { ...source.args, ...versionVariables(release) };
   for (const dep of [release.base, ...release.inputs].filter((item): item is Dependency => Boolean(item))) {
     const key = dep.context.replace(/\$\{(alpine|app)\}/g, (_, field: string) => {
       const value = field === 'alpine' ? release.alpine : release.version.app;
@@ -284,6 +292,7 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
     const ref = dep.ref ?? releases.find((item) => item.id === internalId(dep))?.ref;
     if (!ref) throw new Error(`${release.id}: dependency ref not resolved`);
     contexts[key] = `docker-image://${ref}`;
+    if (dep.arg) args[dep.arg] = key;
   }
   if (options.revision !== undefined && !/^[a-f0-9]{7,40}$/.test(options.revision)) {
     throw new Error(`${release.id}: invalid source revision`);
@@ -298,7 +307,7 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
     group: { default: { targets: [release.build.target] } },
     target: { [release.build.target]: {
       ...source,
-      args: { ...source.args, ...versionVariables(release) },
+      args,
       contexts,
       labels,
       tags: [release.ref],
@@ -389,20 +398,6 @@ export function graph(releases: Release[]): string {
     for (const dep of release.dependencies) lines.push(`    ${ids.get(dep)} --> ${ids.get(release.id)}`);
   }
   return lines.join('\n');
-}
-
-export function renderManifestTable(releases: Release[]): string {
-  const rows = releases.map((release) => {
-    const base = release.base ? internalId(release.base) ?? release.base.ref : 'scratch / Alpine minirootfs';
-    return `| \`${release.id}\` | [${release.build.dir}](${release.build.dir}/) · \`${release.build.target}\` | ${release.version.scheme} | \`${release.tag}\` | ${release.alpine ?? '—'} | \`${base}\` | \`${release.ref}\` |`;
-  });
-  return [
-    '### Manifest 管理的目标版本', '',
-    '来自 `manifest.yaml`。下表是期望发布的版本，不表示已经发布；用 `just status --remote` 查询 GHCR。', '',
-    '| Variant | Build | 策略 | 目标版本 | Alpine | Base | GHCR canonical ref |',
-    '|---|---|---|---|---|---|---|', ...rows, '',
-    '### 依赖关系', '', '```mermaid', graph(releases), '```',
-  ].join('\n');
 }
 
 export function replaceReadmeRegion(source: string, body: string): string {

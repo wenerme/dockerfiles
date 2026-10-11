@@ -54,6 +54,31 @@ describe('version and dependency resolution', () => {
     expect(() => resolveManifest(conflict)).toThrow('conflicts with base');
   });
 
+  test('image-family plans include every variant while single-target commands stay unambiguous', () => {
+    const manifest = sample();
+    manifest.images[1].variants.push({ ...manifest.images[1].variants[0], name: 'python' });
+    const releases = resolveManifest(manifest);
+    expect(planReleases(releases, ['agent']).map((release) => release.id)).toEqual(['base.default', 'agent.default', 'agent.python']);
+    expect(planReleases(releases, ['agent.python']).map((release) => release.id)).toEqual(['base.default', 'agent.python']);
+    expect(() => selectRelease(releases, 'agent')).toThrow('ambiguous');
+    expect(() => planReleases(releases, ['missing'])).toThrow('unknown image');
+  });
+
+  test('historical variants with an explicit external base retain their Alpine branch', () => {
+    const manifest = sample();
+    const legacy = manifest.images[1].variants[0];
+    legacy.base = { ref: 'quay.io/wener/nginx:alpine-3.19.1', context: 'wener/nginx:alpine-${alpine}' };
+    legacy.version.alpine = '3.19.1';
+    manifest.images[0].variants[0].version.alpine = '3.24.2';
+    const releases = resolveManifest(manifest);
+    const release = selectRelease(releases, 'agent');
+    expect(release.alpine).toBe('3.19.1');
+    expect(release.dependencies).toEqual([]);
+    expect(planReleases(releases, ['base']).map((release) => release.id)).not.toContain('agent.default');
+    const bake = generatedBake({ target: { agent: {} } }, release, releases);
+    expect(bake.target!.agent.contexts!['wener/nginx:alpine-3.19.1']).toBe('docker-image://quay.io/wener/nginx:alpine-3.19.1');
+  });
+
   test('diamond graph produces ordered, deduplicated affected nodes and prerequisites', () => {
     const manifest = sample();
     manifest.images[3].variants[0].base = { image: 'agent', variant: 'default', context: 'wener/agent:${alpine}' };
@@ -109,6 +134,17 @@ describe('generated artifacts and publication states', () => {
     expect(bake.target!.agent.args!.REV).toBe('7');
     expect(bake.target!.agent.args!.ALPINE_MIRROR).toBe('mirror');
     expect(source.target.agent.tags).toEqual(['docker.io/wener/agent:latest']);
+  });
+
+  test('dependency ARG bindings override ambient parent image args and keep the pinned context', () => {
+    const manifest = sample();
+    const variant = manifest.images[1].variants[0];
+    variant.base!.arg = 'GO_BASE_IMAGE';
+    const releases = resolveManifest(manifest);
+    const release = selectRelease(releases, 'agent');
+    const bake = generatedBake({ target: { agent: { args: { GO_BASE_IMAGE: 'unexpected/parent:latest' } } } }, release, releases);
+    expect(bake.target!.agent.args!.GO_BASE_IMAGE).toBe('wener/base:3.24.1');
+    expect(bake.target!.agent.contexts!['wener/base:3.24.1']).toBe('docker-image://ghcr.io/wenerme/dockerfiles/base:3.24.1-r2');
   });
 
   test('Bake preview adds OCI labels, platform override and only the selected target', () => {

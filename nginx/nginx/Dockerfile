@@ -1,8 +1,10 @@
-ARG ALPINE_RELEASE
+ARG ALPINE_RELEASE=3.24.1
 FROM wener/base:${ALPINE_RELEASE}
 
+ARG VERSION=1.30.4-r1
+
 RUN apk --no-cache add \
-        nginx \
+        nginx=${VERSION} \
         nginx-mod-stream nginx-mod-stream-js \
         nginx-mod-devel-kit \
         nginx-mod-http-{acme,brotli,cache-purge,dav-ext,echo,fancyindex,headers-more,js,lua,lua-upstream,set-misc,vts,zstd} \

@@ -1,7 +1,8 @@
 variable "TAG" { default = "latest" }
-variable "VERSION" { default = "" }
+variable "VERSION" { default = "1.30.4-r1" }
+variable "REV" { default = "0" }
 variable "IMAGE_NAME" { default = "nginx" }
-variable "ALPINE_RELEASE" { default = "3.18.3" }
+variable "ALPINE_RELEASE" { default = "3.24.1" }
 
 group "default" {
   targets = ["nginx"]
@@ -16,6 +17,7 @@ target "nginx" {
   pull       = true
   args       = {
     ALPINE_RELEASE = ALPINE_RELEASE
+    VERSION = VERSION
   }
 }
 
@@ -24,6 +26,8 @@ function "tags" {
   result = [
     "docker.io/wener/nginx:${name}", "quay.io/wener/nginx:${name}",
     "docker.io/wener/nginx:alpine-${ALPINE_RELEASE}", "quay.io/wener/nginx:alpine-${ALPINE_RELEASE}",
+    "docker.io/wener/${IMAGE_NAME}:${VERSION}-alpine-${ALPINE_RELEASE}-r${REV}",
+    "quay.io/wener/${IMAGE_NAME}:${VERSION}-alpine-${ALPINE_RELEASE}-r${REV}",
     notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
     notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
   ]

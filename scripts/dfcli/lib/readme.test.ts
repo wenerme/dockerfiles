@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { parseFromImages, parseTargets, type ImageInfo } from './bake-scan.ts';
-import { imageRepository, summarizeBase, summarizeVariants } from './readme.ts';
+import { loadReleases, regionEnd, regionStart } from './manifest.ts';
+import { generateReadme, imageRepository, summarizeBase, summarizeVariants, syncReadmes } from './readme.ts';
+import { root } from './repo.ts';
 
 function image(bake: string, overrides: Partial<ImageInfo> = {}): ImageInfo {
   return {
@@ -42,5 +47,66 @@ describe('README base column', () => {
     expect(summarizeBase(info)).toBe('`wener/app`<br>`wener/base`');
     expect(summarizeBase(info, 'wener/app')).toBe('`wener/base`');
     expect(summarizeBase(image(''))).toBe('-');
+  });
+});
+
+describe('bilingual README generation', () => {
+  const releases = loadReleases(root);
+  const images = [image('', { name: 'extra', dir: 'extra' })];
+
+  test('both languages show the same image data without a dependency diagram', () => {
+    const english = generateReadme(images, releases);
+    const chinese = generateReadme(images, releases, 'zh-CN');
+    expect(english).not.toMatch(/\p{Script=Han}/u);
+    expect(chinese).toContain('其他 Bake 镜像组');
+    expect(english).toContain('Additional Bake Image Groups');
+    for (const output of [english, chinese]) {
+      expect(output).not.toContain('mermaid');
+      expect(output).not.toContain('flowchart');
+      for (const release of releases) expect(output).toContain(release.ref);
+    }
+    const rows = (output: string) => output.split('\n').filter((line) => /^\| (?:`|\[)/.test(line));
+    expect(rows(english)).toEqual(rows(chinese));
+  });
+
+  test('updates both documents, preserves handwritten text and checks either language without writing', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'dfcli-readme-'));
+    const files = ['README.md', 'README.zh-CN.md'];
+    const original = `# Handwritten introduction\n\n${regionStart}\n\n\`\`\`mermaid\nold graph\n\`\`\`\n\n${regionEnd}\n\nHandwritten footer\n`;
+    try {
+      for (const file of files) writeFileSync(path.join(dir, file), original);
+      expect(() => syncReadmes(dir, images, releases, { check: true })).toThrow('README.md, README.zh-CN.md');
+      for (const file of files) expect(readFileSync(path.join(dir, file), 'utf8')).toBe(original);
+      expect(syncReadmes(dir, images, releases)).toEqual(files.map((file) => ({ file, state: 'updated' })));
+      for (const file of files) {
+        const content = readFileSync(path.join(dir, file), 'utf8');
+        expect(content).toStartWith('# Handwritten introduction\n\n');
+        expect(content).toEndWith('\n\nHandwritten footer\n');
+        expect(content).not.toContain('mermaid');
+      }
+      expect(syncReadmes(dir, images, releases, { check: true })).toEqual(files.map((file) => ({ file, state: 'checked' })));
+      expect(syncReadmes(dir, images, releases)).toEqual(files.map((file) => ({ file, state: 'unchanged' })));
+      const english = readFileSync(path.join(dir, files[0]), 'utf8');
+      const staleChinese = readFileSync(path.join(dir, files[1]), 'utf8').replace('### Manifest 发布目标', '### Outdated heading');
+      writeFileSync(path.join(dir, files[1]), staleChinese);
+      expect(() => syncReadmes(dir, images, releases, { check: true })).toThrow('README.zh-CN.md generated region is out of date');
+      expect(readFileSync(path.join(dir, files[0]), 'utf8')).toBe(english);
+      expect(readFileSync(path.join(dir, files[1]), 'utf8')).toBe(staleChinese);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('invalid markers in the second document fail before the first is changed', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'dfcli-readme-'));
+    const english = `${regionStart}\nold\n${regionEnd}`;
+    try {
+      writeFileSync(path.join(dir, 'README.md'), english);
+      writeFileSync(path.join(dir, 'README.zh-CN.md'), '# Missing markers');
+      expect(() => syncReadmes(dir, images, releases)).toThrow('exactly one');
+      expect(readFileSync(path.join(dir, 'README.md'), 'utf8')).toBe(english);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

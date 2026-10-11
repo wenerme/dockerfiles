@@ -1,17 +1,15 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { Command } from 'commander';
 import { scanImages, type ImageInfo } from '../lib/bake-scan.ts';
-import { loadReleases, replaceReadmeRegion } from '../lib/manifest.ts';
-import { generateReadme } from '../lib/readme.ts';
-import { rel, root } from '../lib/repo.ts';
+import { loadReleases } from '../lib/manifest.ts';
+import { syncReadmes } from '../lib/readme.ts';
+import { root } from '../lib/repo.ts';
 
 function summarizeTargets(info: ImageInfo) {
   const targets = info.defaultTargets.length ? info.defaultTargets : info.targets.map((target) => target.name);
   return targets.length ? targets.join(', ') : '-';
 }
 
-/** Repository-wide inventory: Bake scan and the generated README region. */
+/** Repository-wide inventory: Bake scan and the generated README regions. */
 export function registerRepoCommands(program: Command) {
   program
     .command('scan')
@@ -30,16 +28,12 @@ export function registerRepoCommands(program: Command) {
 
   program
     .command('readme')
-    .description('Update the generated README region from manifest and tracked Bake metadata')
-    .option('--check', 'fail if the generated region is out of date; do not write')
+    .description('Update the generated English and Chinese README regions from manifest and tracked Bake metadata')
+    .option('--check', 'fail if either generated region is out of date; do not write')
     .action(async (options: { check?: boolean }) => {
       const images = await scanImages();
-      const out = path.join(root, 'README.md');
-      const before = readFileSync(out, 'utf8');
-      const after = replaceReadmeRegion(before, generateReadme(images, loadReleases(root)));
-      if (options.check && before !== after) throw new Error('README generated region is out of date; run just readme');
-      if (!options.check && before !== after) writeFileSync(out, after);
-      const state = options.check ? 'checked' : before === after ? 'unchanged' : 'updated';
-      console.log(`${state} ${rel(out)} generated region (${images.length} image groups)`);
+      for (const { file, state } of syncReadmes(root, images, loadReleases(root), options)) {
+        console.log(`${state} ${file} generated region (${images.length} image groups)`);
+      }
     });
 }

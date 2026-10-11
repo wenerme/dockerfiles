@@ -1,61 +1,55 @@
 # Dockerfiles
 
-A curated collection of Alpine-oriented container images maintained by Wener.
+English | [Chinese](README.zh-CN.md)
+
+Container image definitions, build configuration, and release tooling maintained by Wener. Most images use Alpine Linux.
 
 ## Registries
 
-Images are published under these registry namespaces depending on the image family and migration status:
+Registry namespaces vary by image family:
 
 - Docker Hub: `docker.io/wener/<image>:<tag>`
 - Quay: `quay.io/wener/<image>:<tag>`
 - GHCR: `ghcr.io/wenerme/dockerfiles/<image>:<tag>`
 
-`manifest.yaml` 是版本与依赖管理入口，当前覆盖四个 variant。其余镜像继续使用各目录 Bake。实时配置和 GHCR 状态可运行 `just status --remote` 查看。
+[manifest.yaml](manifest.yaml) defines versions and build dependencies for the GHCR publishing workflow. Other Bake image groups use the configuration in their respective directories. `just status --remote` reports the managed variants and their GHCR publication status.
 
-## Tagging
+## Tags
 
-Common tag patterns:
+| Pattern | Meaning | Example |
+|---|---|---|
+| `latest` | Moving tag for the default variant, where published | `latest` |
+| `<version>` | Upstream application or runtime version | `24.17.0` |
+| `<version>-r<N>` | Build revision for an upstream version | `5.0.7-r0` |
+| `<version>-alpine-<alpine>-r<N>` | Application version, Alpine release, and build revision | `24.17.0-alpine-3.24.1-r0` |
 
-- `latest`: moving tag for the default published variant.
-- `<version>`: upstream or runtime version, such as `2.0.0`, `24.17.0`, or `18.4`.
-- `<version>-r<N>`: rebuild revision for the same upstream version, such as `2.0.0-r0`.
-- `<version>-alpine-<alpine>-r<N>`: version plus Alpine base, useful for repeatable consumption.
-
-Prefer revisioned tags for CI and downstream base images when available.
+Manifest variants use a canonical tag ending in `-r<N>`. Nondefault variants add a `<variant>-` prefix, for example `openrc-3.24.1-r0`. Existing canonical tags are skipped by the publishing workflow; a new build requires a version or revision change.
 
 ## Image Index
 
-下面区块通过 `just readme` 生成；区块之外的正文保留手工编辑。
+The index is generated from `manifest.yaml` and Git-tracked Bake configuration. `just readme` updates the generated sections in both language versions; text outside the markers is maintained manually.
 
 <!-- BEGIN GENERATED IMAGES -->
 
-### Manifest 管理的目标版本
+### Manifest Release Targets
 
-来自 `manifest.yaml`。下表是期望发布的版本，不表示已经发布；用 `just status --remote` 查询 GHCR。
+Desired versions from `manifest.yaml`. Publication status is available through `just status --remote`.
 
-| Variant | Build | 策略 | 目标版本 | Alpine | Base | GHCR canonical ref |
+| Variant | Build | Version scheme | Target version | Alpine | Base | GHCR canonical ref |
 |---|---|---|---|---|---|---|
 | `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.1-r0` | 3.24.1 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.1-r0` |
 | `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.1-r0` |
 | `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r0` |
 | `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.1-r0` |
+| `go-builder.default` | [go-builder](go-builder/) · `go-builder` | app-alpine | `1.26.3-r0-alpine-3.24.1-r0` | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0@sha256:e2abf60cd8c81a1705edd458c81047ceda81349ec06d90149058b5053a7a7350` | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` |
+| `nginx.default` | [nginx](nginx/) · `nginx` | app-alpine | `1.30.4-r1-alpine-3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.1-r0` |
+| `php.8.2` | [php](php/) · `82` | app-alpine | `8.2-8.2.26-r0-alpine-3.19.1-r0` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1@sha256:1da7b7845bed8cc54efb93d7289cb89c2bf87656159258a51ed7c0c3e1c449a5` | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` |
+| `php.8.3` | [php](php/) · `83` | app-alpine | `8.3-8.3.35-r0-alpine-3.24.1-r0` | 3.24.1 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.35-r0-alpine-3.24.1-r0` |
+| `php.8.4` | [php](php/) · `84` | app-alpine | `8.4-8.4.26-r0-alpine-3.24.1-r0` | 3.24.1 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.26-r0-alpine-3.24.1-r0` |
 
-### 依赖关系
+### Additional Bake Image Groups
 
-```mermaid
-flowchart LR
-    i0["base.default<br/>3.24.1-r0"]
-    i1["agent.default<br/>3.24.1-r0"]
-    i2["pdns.default<br/>5.0.7-r0"]
-    i3["node-builder.default<br/>24.17.0-alpine-3.24.1-r0"]
-    i0 --> i1
-    i0 --> i2
-    i0 --> i3
-```
-
-### 尚未迁移的 Bake 镜像清单
-
-已跟踪的 Bake 配置共 40 组，manifest 管理 4 个 variant；其余 36 组列在下面。Variants 是默认镜像之外的 Bake target，Base 只列出父镜像仓库。
+40 tracked Bake groups and 9 manifest variants. The 33 groups below are not managed by the manifest. Variants lists nondefault Bake targets; Base lists parent image repositories.
 
 | Image | Variants | Base |
 |---|---|---|
@@ -73,7 +67,6 @@ flowchart LR
 | [docker](docker/) | - | `wener/base` |
 | [frp](frp/) | frps, frpc | `wener/base` |
 | [gitea-runner](gitea-runner/) | - | `wener/builder` |
-| [go-builder](go-builder/) | - | `wener/go` |
 | [go](go/) | - | `wener/base` |
 | [httpd](httpd/) | - | `wener/base` |
 | [java](java/) | 8, 8-builder, 8-ui, 17 | `wener/base` |
@@ -83,9 +76,7 @@ flowchart LR
 | [mihomo](mihomo/) | - | `golang`<br>`wener/base` |
 | [ml](ml/) | pytorch | `python`<br>`quay.io/wener/pytorch` |
 | [surya-ocr](ml/surya-ocr/) | - | `quay.io/wener/pytorch` |
-| [nginx](nginx/) | - | `wener/base` |
 | [node](node/) | docker | `wener/base` |
-| [php](php/) | 81, 82, 83, 84 | `wener/base`<br>`wener/nginx` |
 | [postgres](postgres/) | - | `postgres` |
 | [samba](samba/) | - | `wener/app` |
 | [sing-box](sing-box/) | - | `wener/base` |
@@ -100,62 +91,97 @@ flowchart LR
 
 ## Development
 
-This repository uses Bun for scripts and [just](https://github.com/casey/just) for commands. Run `just` to list all recipes. Repository tooling is one CLI, `dfcli` (`scripts/dfcli/main.ts`, built on commander and Bun Shell); `just dfcli --help` lists every command.
+Requirements: Bun, [just](https://github.com/casey/just) 1.58.0 or newer, and Docker with the Buildx plugin. The Bun version is declared in `package.json`; `just/common.just` enforces the minimum just version.
+
+Repository tooling is provided by `dfcli`, a commander CLI at `scripts/dfcli/main.ts`. `just` lists available recipes; `just dfcli --help` lists CLI commands.
 
 ```bash
-bun install
-just check                 # bun check (typecheck), tests, manifest and README checks (same as CI)
-just status                # manifest variants and Bake target validation
-just status --remote       # also query GHCR canonical tags
-just plan base             # dependency-ordered build plan
-just publish-plan          # which GHCR tags CI would build
-just manifest-bake agent   # GHCR-only Bake JSON preview
-just readme                # regenerate the README generated region
-just dfcli scan            # any other dfcli command
+bun install --frozen-lockfile
+just --jobs 3 check        # Run independent checks in parallel, with at most three recipes
+just status                # Manifest variants and Bake target validation
+just status --remote       # Include GHCR publication status
+just plan base             # Build order for affected variants and their prerequisites
+just publish-plan          # Preview which GHCR tags would be built
+just manifest-bake agent   # Print resolved GHCR-only Bake JSON
+just readme                # Regenerate the English and Chinese image indexes
+just dfcli scan             # List tracked Bake image groups
 ```
 
-Useful build commands:
+Directory Makefiles supply build variables and preparation steps. Reusable just recipes live in [`just/`](just/); image-directory justfiles import them and resolve the repository root from the shared file's location. Both root and directory commands run through Make and `build.mk`, including the repository Docker configuration. Bake-only directories use `build.mk` as their Makefile.
 
 ```bash
-# Inspect bake output for one image group
-cd gitea-runner && make -s print
+just print nginx           # Resolved Bake JSON from the directory Makefile
+just build nginx           # Build and load for the local architecture
+just push nginx --dry-run  # Preview Make commands without building or publishing
 
-# Build and push one image group
-cd gitea-runner && DOCKER_BUILD_PROGRESS=plain make push
+cd php
+just print 82              # Historical PHP 8.2 base
+just build 83              # Build and load PHP 8.3
+just push --dry-run 83     # Preview the PHP 8.3 publishing command
+# just push 83             # Publish configured Docker Hub/Quay tags
+```
+
+Image-specific Make goals (`image-build`, `image-load`, `image-push`, and `image-ls`) take precedence when present, preserving application preparation steps. Custom recipes must use `$(DOCKER_BUILD_BAKE)` to receive explicit targets and build/load options. Unsupported custom recipes fail before execution when those options are required.
+
+Shared settings enable lazy variable evaluation and list recipes when no recipe is selected. `just check` runs typechecking, tests, manifest validation, both README checks, and justfile syntax and formatting checks in parallel. `just just-fmt` formats all tracked justfiles and shared imports.
+
+`just bake` builds without loading; `just build` and `just load` load the local platform. Their `--dry-run` option, also available on `just push`, previews Make commands. Local publishing uses `make push` through the shared CLI. The equivalent Make commands are:
+
+```bash
+# Inspect the resolved Bake configuration for an image group
+cd gitea-runner
+make -s print
+
+# Build and push the tags configured for that group
+DOCKER_BUILD_PROGRESS=plain make push
 ```
 
 ## GitHub Actions
 
-- `.github/workflows/ci.yml`：PR 和 master push 时运行 typecheck、测试、manifest 校验、README 区块检查和 Bake target 解析，不构建镜像。
-- `.github/workflows/ghcr.yml`：`manifest.yaml` 变更推送到 master 后，按依赖顺序构建并推送 GHCR 上缺失的 canonical tag；已存在的 tag 不会重建，要重新发布就递增 `version.revision`。也可以手动触发，指定镜像、平台或 dry-run。
+| Workflow | Trigger | Behavior |
+|---|---|---|
+| [CI](.github/workflows/ci.yml) | Pull requests and pushes to `master` | Typecheck, tests, manifest validation, generated README and justfile checks, and managed Bake target resolution |
+| [Publish GHCR](.github/workflows/ghcr.yml) | Changes to `manifest.yaml` or the publishing workflow on `master`; manual dispatch | Build missing canonical GHCR tags in dependency order and skip existing tags |
 
-Docker Hub 和 Quay 仍通过各目录的 `make push` 在本地发布。
+Manual publishing accepts image selectors, a platform override, and a dry-run option. Docker Hub and Quay publishing uses each image directory's local `make push` command.
 
 ## Version Maintenance
 
-manifest 管理的镜像直接维护 `version` 字段：`alpine` → `3.24.1-r0`，`app` → `5.0.5-r0`，`app-alpine` → `24.17.0-alpine-3.24.1-r0`。Alpine 可以沿内部 base 继承。默认 variant 不加前缀，其它 variant 使用 `<variant>-<version>`。
+For manifest-managed variants, the `version` fields determine the canonical tag:
 
-现有 Bake/Make 的默认值没有自动回写。`just manifest-bake` 将 manifest 版本、canonical GHCR 标签、OCI labels 和内部父镜像引用解析为完整 JSON；它是配置预览，不执行构建。`just status` 的 `BAKE TAG=generated` 表示该 canonical 标签需要生成配置，`native` 表示现有 Bake 已声明。
+| Scheme | Version fields | Example |
+|---|---|---|
+| `alpine` | Alpine release and revision | `3.24.1-r0` |
+| `app` | Application version and revision | `5.0.7-r0` |
+| `app-alpine` | Application version, Alpine release, and revision | `24.17.0-alpine-3.24.1-r0` |
 
-以下旧命令仍然修改各镜像 Bake，用于尚未迁移的镜像。`just plan` 只计算构建依赖顺序，不自动递增下游 revision；周期更新与 revision 传播留待后续接入。
+Alpine versions can be inherited from an internal base variant. `just plan` calculates the build order; downstream revisions are maintained explicitly.
+
+`just manifest-bake <image>` resolves manifest versions, the canonical GHCR tag, OCI labels, and parent image contexts into Bake JSON. It prints configuration without building. Bake and Make defaults remain independently maintained. In `just status`, `BAKE TAG=generated` means the canonical tag is supplied by generated configuration; `native` means the directory's Bake configuration already declares it.
+
+Managed application versions can include an Alpine package revision, such as `1.30.4-r1`. PHP 8.2 uses a pinned historical nginx image on Alpine 3.19.1; PHP 8.3 and 8.4 use the managed nginx variant on Alpine 3.24.1. Each PHP variant has its own version, Alpine release, and build revision. Legacy targets `7`, `81`, `8`, and `7-composer` remain outside automatic publishing. PHP 8.1's manual target also uses Alpine 3.19.1.
+
+`just plan php` and `just publish-plan php` select all managed PHP variants. Commands requiring one target, such as `just manifest-bake php.8.2`, use an explicit variant selector.
+
+For image groups outside the manifest, the maintenance commands update their Bake revision defaults:
 
 ```bash
-# Preview / write the next revision for one image group
+# Preview or write the next revision
 just dfcli rev bump postgres
 just dfcli rev bump postgres --write
 
-# Record upstream base image digests; bump only when a tracked digest changed
+# Record upstream base digests; bump when a recorded digest changes
 just dfcli base check postgres --write
 just dfcli base check postgres --write --bump
 
-# Compare postgres extension versions with upstream
+# Compare PostgreSQL extension versions with upstream
 just postgres-versions
 ```
 
-`base check` 把上游 base 镜像 digest 记录在 `.github/image-base-digests.json`（首次运行时创建）。没有记录时只建立基线，不递增 revision；已记录的 digest 发生变化才会递增。
+`base check` stores upstream image digests in `.github/image-base-digests.json`. The first observation establishes a baseline; later digest changes can trigger a revision bump with `--bump`.
 
-## Notes
+## Build Details
 
-- Most image groups target `linux/amd64` and `linux/arm64`.
-- Docker Hub can be noisy or rate-limited; Quay is often used as a stable build input via bake `contexts`.
-- GHCR is available for image groups that declare `ghcr.io/wenerme/dockerfiles/...` tags and when the active Docker config has GHCR credentials.
+- Most image groups target `linux/amd64` and `linux/arm64`; platform lists are defined by their Bake targets.
+- Some Bake targets map parent images to Quay through named `contexts`.
+- GHCR publishing uses the repository's GitHub Actions token and records OCI source, version, and revision metadata.

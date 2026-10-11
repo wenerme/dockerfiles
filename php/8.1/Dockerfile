@@ -1,4 +1,4 @@
-ARG ALPINE_RELEASE
+ARG ALPINE_RELEASE=3.19.1
 FROM wener/nginx:alpine-${ALPINE_RELEASE}
 
 RUN apk add icu-data-full # for replacing iconv
