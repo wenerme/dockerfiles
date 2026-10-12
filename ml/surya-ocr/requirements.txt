@@ -51,6 +51,6 @@ torch==2.5.0
 tqdm==4.66.5
 transformers==4.45.2
 typing_extensions==4.12.2
-urllib3==2.2.3
+urllib3==2.8.0
 uvicorn==0.32.0
 wcwidth==0.2.13
