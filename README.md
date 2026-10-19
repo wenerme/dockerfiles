@@ -37,15 +37,15 @@ Desired versions from `manifest.yaml`. Publication status is available through `
 
 | Variant | Build | Version scheme | Target version | Alpine | Base | GHCR canonical ref |
 |---|---|---|---|---|---|---|
-| `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.1-r0` | 3.24.1 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.1-r0` |
-| `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.1-r0` |
-| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r0` |
-| `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.1-r0` |
+| `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.2-r0` | 3.24.2 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.2-r0` |
+| `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.2-r0` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.2-r0` |
+| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r1` |
+| `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.2-r0` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.2-r0` |
 | `go-builder.default` | [go-builder](go-builder/) · `go-builder` | app-alpine | `1.26.3-r0-alpine-3.24.1-r0` | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0@sha256:e2abf60cd8c81a1705edd458c81047ceda81349ec06d90149058b5053a7a7350` | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` |
-| `nginx.default` | [nginx](nginx/) · `nginx` | app-alpine | `1.30.4-r1-alpine-3.24.1-r0` | 3.24.1 | `base.default` | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.1-r0` |
+| `nginx.default` | [nginx](nginx/) · `nginx` | app-alpine | `1.30.4-r1-alpine-3.24.2-r0` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.2-r0` |
 | `php.8.2` | [php](php/) · `82` | app-alpine | `8.2-8.2.26-r0-alpine-3.19.1-r0` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1@sha256:1da7b7845bed8cc54efb93d7289cb89c2bf87656159258a51ed7c0c3e1c449a5` | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` |
-| `php.8.3` | [php](php/) · `83` | app-alpine | `8.3-8.3.35-r0-alpine-3.24.1-r0` | 3.24.1 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.35-r0-alpine-3.24.1-r0` |
-| `php.8.4` | [php](php/) · `84` | app-alpine | `8.4-8.4.26-r0-alpine-3.24.1-r0` | 3.24.1 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.26-r0-alpine-3.24.1-r0` |
+| `php.8.3` | [php](php/) · `83` | app-alpine | `8.3-8.3.35-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.35-r0-alpine-3.24.2-r0` |
+| `php.8.4` | [php](php/) · `84` | app-alpine | `8.4-8.4.26-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.26-r0-alpine-3.24.2-r0` |
 
 ### Additional Bake Image Groups
 
@@ -162,7 +162,7 @@ Alpine versions can be inherited from an internal base variant. `just plan` calc
 
 `just manifest-bake <image>` resolves manifest versions, the canonical GHCR tag, OCI labels, and parent image contexts into Bake JSON. It prints configuration without building. Bake and Make defaults remain independently maintained. In `just status`, `BAKE TAG=generated` means the canonical tag is supplied by generated configuration; `native` means the directory's Bake configuration already declares it.
 
-Managed application versions can include an Alpine package revision, such as `1.30.4-r1`. PHP 8.2 uses a pinned historical nginx image on Alpine 3.19.1; PHP 8.3 and 8.4 use the managed nginx variant on Alpine 3.24.1. Each PHP variant has its own version, Alpine release, and build revision. Legacy targets `7`, `81`, `8`, and `7-composer` remain outside automatic publishing. PHP 8.1's manual target also uses Alpine 3.19.1.
+Managed application versions can include an Alpine package revision, such as `1.30.4-r1`. PHP 8.2 uses a pinned historical nginx image on Alpine 3.19.1 and is not actively maintained. PHP 8.3 and 8.4 inherit Alpine from base through the managed nginx variant. Each PHP variant has its own version and build revision. Legacy targets `7`, `81`, `8`, and `7-composer` remain outside automatic publishing. PHP 8.1's manual target also uses Alpine 3.19.1.
 
 `just plan php` and `just publish-plan php` select all managed PHP variants. Commands requiring one target, such as `just manifest-bake php.8.2`, use an explicit variant selector.
 
