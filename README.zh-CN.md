@@ -142,8 +142,9 @@ DOCKER_BUILD_PROGRESS=plain make push
 |---|---|---|
 | [CI](.github/workflows/ci.yml) | Pull request 和推送到 `master` | 类型检查、测试、manifest 校验、README 生成区块与 justfile 检查，以及受管理 Bake target 的解析 |
 | [Publish GHCR](.github/workflows/ghcr.yml) | `master` 上的 `manifest.yaml` 或发布工作流变更；手动触发 | 按依赖顺序构建 GHCR 上缺失的 canonical 标签，跳过已有标签 |
+| [Publish GHCR](.github/workflows/ghcr.yml)（验证） | 修改 `manifest.yaml`、发布工作流或 `scripts/dfcli` 的 pull request | 构建同样缺失的标签，只推送到 runner 上的本地 registry；下游使用同一次运行中构建的父镜像 |
 
-手动发布支持镜像选择器、平台覆盖和 dry-run。Docker Hub 与 Quay 的发布使用各镜像目录中的本地 `make push` 命令。
+版本变更通过 pull request 提交：验证运行构建全部缺失标签，合并到 `master` 后正式发布。手动发布支持镜像选择器、平台覆盖和 dry-run。Docker Hub 与 Quay 的发布使用各镜像目录中的本地 `make push` 命令。
 
 ## 版本维护
 
@@ -155,7 +156,9 @@ DOCKER_BUILD_PROGRESS=plain make push
 | `app` | 应用版本和 revision | `5.0.7-r0` |
 | `app-alpine` | 应用版本、Alpine 发行版本和 revision | `24.17.0-alpine-3.24.1-r0` |
 
-Alpine 版本可以从内部基础变体继承。`just plan` 计算构建顺序，下游 revision 显式维护。
+Alpine 版本可以从内部基础变体继承。`just plan` 计算构建顺序。
+
+`just alpine-update` 读取 `alpinelinux.org/releases.json`，预览将每个显式 Alpine 版本升级到所在分支的最新补丁；`just alpine-update --write` 写入 `manifest.yaml` 与 README 生成区块。revision 沿依赖图传播：canonical 标签变化的变体从 `r0` 开始；父镜像变化但标签不变的变体（如 `pdns`）递增 revision。固定外部父镜像的变体和更新的 Alpine 分支只提示，不修改。
 
 `just manifest-bake <image>` 将 manifest 版本、canonical GHCR 标签、OCI labels 和父镜像 contexts 解析为 Bake JSON，仅输出配置。Bake 与 Make 的默认值仍单独维护。`just status` 中的 `BAKE TAG=generated` 表示 canonical 标签由生成配置提供，`native` 表示该目录的 Bake 配置已声明此标签。
 

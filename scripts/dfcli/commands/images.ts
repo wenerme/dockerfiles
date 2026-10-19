@@ -1,8 +1,8 @@
 import { writeFileSync } from 'node:fs';
 import type { Command } from 'commander';
 import {
-  generatedBake, graph, inspectBake, inspectPublication, loadReleases, parsePlatforms, planReleases, prepareBuild,
-  publishAction, pushBake, selectRelease, validateSelectors, type Publication,
+  generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef, parseLocalRegistry, parsePlatforms,
+  planReleases, prepareBuild, publishAction, pushBake, selectRelease, validateSelectors, type Publication,
 } from '../lib/manifest.ts';
 import { commandError, root, sourceRevision } from '../lib/repo.ts';
 
@@ -75,8 +75,13 @@ export function registerImageCommands(program: Command) {
     .argument('[images...]', 'image or variant IDs; omit for the whole manifest')
     .option('--push', 'build and push missing tags (intended for GitHub Actions)')
     .option('--platforms <list>', 'comma-separated platform override, e.g. linux/amd64')
-    .action(async (selectors: string[], options: { push?: boolean; platforms?: string }) => {
+    .option('--verify-registry <host:port>', 'build missing tags and push them to a local registry instead of GHCR (pull request checks)')
+    .action(async (selectors: string[], options: { push?: boolean; platforms?: string; verifyRegistry?: string }) => {
+      if (options.push && options.verifyRegistry) throw new Error('--push and --verify-registry are mutually exclusive');
       validateSelectors(selectors);
+      const verify = options.verifyRegistry ? parseLocalRegistry(options.verifyRegistry) : undefined;
+      // Parents built in this verification run are consumed from the local registry, not GHCR.
+      const localRefs = new Map<string, string>();
       const releases = loadReleases(root);
       const platforms = parsePlatforms(options.platforms);
       const revision = await sourceRevision();
@@ -89,17 +94,21 @@ export function registerImageCommands(program: Command) {
             results.push({ id: release.id, ref: release.ref, action: 'skip (published)' });
             continue;
           }
-          const bake = generatedBake(await inspectBake(root, release), release, releases, { platforms, revision });
-          if (!options.push) {
+          const target = verify ? localRef(release.ref, verify) : release.ref;
+          const bake = generatedBake(await inspectBake(root, release), release, releases, {
+            platforms, revision, ref: target, dependencyRefs: localRefs,
+          });
+          if (!options.push && !verify) {
             results.push({ id: release.id, ref: release.ref, action: 'would build' });
             continue;
           }
-          console.error(`==> ${release.id}: building ${release.ref}`);
+          console.error(`==> ${release.id}: building ${target}`);
           await prepareBuild(root, release);
           await pushBake(root, release, bake);
-          const published = await inspectPublication(release.ref);
-          if (published.state !== 'published') throw new Error(`pushed but registry reports ${published.state}`);
-          results.push({ id: release.id, ref: release.ref, action: 'built', digest: published.digest });
+          const published = await inspectPublication(target);
+          if (published.state !== 'published') throw new Error(`pushed but ${target} reports ${published.state}`);
+          if (verify) localRefs.set(release.id, target);
+          results.push({ id: release.id, ref: target, action: verify ? 'verified' : 'built', digest: published.digest });
         }
         current = undefined;
       } catch (error) {
@@ -111,7 +120,7 @@ export function registerImageCommands(program: Command) {
         if (process.env.GITHUB_STEP_SUMMARY) {
           const rows = results.map((item) => `| \`${item.id}\` | ${item.action} | \`${item.ref}\` | ${item.digest ? `\`${item.digest}\`` : '-'} |`);
           writeFileSync(process.env.GITHUB_STEP_SUMMARY, [
-            `### GHCR publish${options.push ? '' : ' (dry-run)'}`, '',
+            `### GHCR publish${options.push ? '' : verify ? ` (verify build, pushed to ${verify} only)` : ' (dry-run)'}`, '',
             '| Variant | Action | Ref | Digest |', '|---|---|---|---|', ...rows, '',
           ].join('\n'), { flag: 'a' });
         }

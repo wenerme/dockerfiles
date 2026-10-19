@@ -142,8 +142,9 @@ DOCKER_BUILD_PROGRESS=plain make push
 |---|---|---|
 | [CI](.github/workflows/ci.yml) | Pull requests and pushes to `master` | Typecheck, tests, manifest validation, generated README and justfile checks, and managed Bake target resolution |
 | [Publish GHCR](.github/workflows/ghcr.yml) | Changes to `manifest.yaml` or the publishing workflow on `master`; manual dispatch | Build missing canonical GHCR tags in dependency order and skip existing tags |
+| [Publish GHCR](.github/workflows/ghcr.yml) (verify) | Pull requests changing `manifest.yaml`, the publishing workflow, or `scripts/dfcli` | Build the same missing tags and push them only to a local registry on the runner; dependents use the parents built in the same run |
 
-Manual publishing accepts image selectors, a platform override, and a dry-run option. Docker Hub and Quay publishing uses each image directory's local `make push` command.
+Version changes go through a pull request: the verify run builds every missing tag, and merging to `master` publishes them. Manual publishing accepts image selectors, a platform override, and a dry-run option. Docker Hub and Quay publishing uses each image directory's local `make push` command.
 
 ## Version Maintenance
 
@@ -155,7 +156,9 @@ For manifest-managed variants, the `version` fields determine the canonical tag:
 | `app` | Application version and revision | `5.0.7-r0` |
 | `app-alpine` | Application version, Alpine release, and revision | `24.17.0-alpine-3.24.1-r0` |
 
-Alpine versions can be inherited from an internal base variant. `just plan` calculates the build order; downstream revisions are maintained explicitly.
+Alpine versions can be inherited from an internal base variant. `just plan` calculates the build order.
+
+`just alpine-update` reads `alpinelinux.org/releases.json` and previews moving each explicit Alpine version to the newest patch on its branch; `just alpine-update --write` applies it to `manifest.yaml` and the README regions. Revisions are propagated along the dependency graph: a variant whose canonical tag changes starts at `r0`, and a variant whose parent changed under an unchanged tag, such as `pdns`, gets its revision incremented. Variants pinned to an external parent image and newer Alpine branches are reported but not changed.
 
 `just manifest-bake <image>` resolves manifest versions, the canonical GHCR tag, OCI labels, and parent image contexts into Bake JSON. It prints configuration without building. Bake and Make defaults remain independently maintained. In `just status`, `BAKE TAG=generated` means the canonical tag is supplied by generated configuration; `native` means the directory's Bake configuration already declares it.
 

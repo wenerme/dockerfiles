@@ -276,6 +276,10 @@ export async function inspectBake(root: string, release: Release): Promise<BakeP
 export interface BakeOptions {
   platforms?: string[];
   revision?: string;
+  /** Push target instead of the canonical GHCR ref (verification builds). */
+  ref?: string;
+  /** Internal dependency ID -> image ref, for parents built earlier in the same verification run. */
+  dependencyRefs?: Map<string, string>;
 }
 
 export function generatedBake(bake: BakePrint, release: Release, releases: Release[], options: BakeOptions = {}): BakePrint {
@@ -289,7 +293,8 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
       if (!value) throw new Error(`${release.id}: context requires ${field}`);
       return value;
     });
-    const ref = dep.ref ?? releases.find((item) => item.id === internalId(dep))?.ref;
+    const id = internalId(dep);
+    const ref = dep.ref ?? (id && options.dependencyRefs?.get(id)) ?? releases.find((item) => item.id === id)?.ref;
     if (!ref) throw new Error(`${release.id}: dependency ref not resolved`);
     contexts[key] = `docker-image://${ref}`;
     if (dep.arg) args[dep.arg] = key;
@@ -310,7 +315,7 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
       args,
       contexts,
       labels,
-      tags: [release.ref],
+      tags: [options.ref ?? release.ref],
       ...(options.platforms?.length ? { platforms: options.platforms } : {}),
     } },
   };
@@ -325,6 +330,22 @@ export function parsePlatforms(value: string | undefined): string[] | undefined 
     if (!platformPattern.test(platform)) throw new Error(`unsupported platform ${platform}`);
   }
   return platforms;
+}
+
+/**
+ * Verification builds push to a throwaway registry on the runner, never to a shared one.
+ * Only loopback addresses are accepted, so a typo cannot redirect images elsewhere.
+ */
+export function parseLocalRegistry(value: string): string {
+  if (!/^(?:localhost|127\.0\.0\.1):\d{2,5}$/.test(value)) throw new Error(`verify registry must be localhost:<port>, got ${value}`);
+  return value;
+}
+
+/** Rewrite a canonical ref onto the local registry, keeping repository path and tag. */
+export function localRef(ref: string, registry: string): string {
+  const slash = ref.indexOf('/');
+  if (slash < 0) throw new Error(`invalid image ref ${ref}`);
+  return `${registry}${ref.slice(slash)}`;
 }
 
 /** Missing tags are built; existing canonical tags are immutable; unknown registry state stops publishing. */
