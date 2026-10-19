@@ -154,6 +154,50 @@ log "Testing entrypoint compatibility"
 EP=$(docker inspect --format='{{json .Config.Entrypoint}}' "$CONTAINER")
 if echo "$EP" | grep -q 'docker-entrypoint.sh'; then ok "entrypoint is docker-entrypoint.sh"; else fail "unexpected entrypoint: $EP"; fi
 
+# ── test: pgsodium/vault preload on a fresh PGDATA ──────────────
+# Preloading pgsodium without pgsodium.getkey_script must still start: the image
+# installs the getkey script at the default path. Runs as a non-root uid without
+# a passwd entry, like an EFS access point (owner forced, chown not allowed).
+log "Testing pgsodium/vault preload on fresh PGDATA (uid 1001, no getkey GUC)"
+SODIUM="pg-sodium-test-$$"
+SODIUM_VOL="pg-sodium-test-$$"
+docker volume create "$SODIUM_VOL" >/dev/null
+docker run --rm -v "$SODIUM_VOL:/v" --entrypoint chown "$IMAGE" 1001:1001 /v
+trap 'cleanup; docker rm -f "$SODIUM" &>/dev/null || true; docker volume rm -f "$SODIUM_VOL" &>/dev/null || true' EXIT
+docker run -d --name "$SODIUM" --user 1001:1001 \
+  -e POSTGRES_PASSWORD=test \
+  -v "$SODIUM_VOL:/var/lib/postgresql" \
+  "$IMAGE" \
+  postgres -c shared_preload_libraries=pgsodium,supabase_vault \
+  >/dev/null
+sodium_ready() {
+  for _ in $(seq 1 30); do
+    docker exec "$SODIUM" pg_isready -U postgres -q &>/dev/null && return 0
+    sleep 1
+  done
+  return 1
+}
+sodium_sql() { docker exec -i "$SODIUM" psql -U postgres -qAt -v ON_ERROR_STOP=1 "$@" 2>&1; }
+sodium_key_hash() { docker exec "$SODIUM" sh -c 'sha256sum "$PGDATA/pgsodium_root.key" | cut -c1-16'; }
+
+if sodium_ready; then
+  ok "fresh PGDATA starts with pgsodium preloaded"
+  KEY_MODE=$(docker exec "$SODIUM" sh -c 'stat -c "%a %u" "$PGDATA/pgsodium_root.key"')
+  if [[ "$KEY_MODE" == "600 1001" ]]; then ok "root key is 0600, owned by 1001"; else fail "root key mode/owner: $KEY_MODE"; fi
+  KEY_HASH=$(sodium_key_hash)
+  printf '%s\n' "CREATE EXTENSION pgsodium;" "CREATE EXTENSION supabase_vault CASCADE;" \
+    "SELECT vault.create_secret('probe-value', '_test_probe');" | sodium_sql >/dev/null \
+    && ok "vault.create_secret()" || fail "vault.create_secret()"
+  docker restart "$SODIUM" >/dev/null
+  if sodium_ready; then ok "restart with existing key"; else fail "restart with existing key"; fi
+  if [[ "$(sodium_key_hash)" == "$KEY_HASH" ]]; then ok "root key unchanged after restart"; else fail "root key changed after restart"; fi
+  DEC=$(sodium_sql -c "SELECT decrypted_secret = 'probe-value' FROM vault.decrypted_secrets WHERE name = '_test_probe';")
+  if [[ "$DEC" == "t" ]]; then ok "vault secret decrypts after restart"; else fail "vault decrypt after restart: $DEC"; fi
+else
+  fail "fresh PGDATA with pgsodium preloaded did not start"
+  docker logs "$SODIUM" 2>&1 | tail -10
+fi
+
 # ── summary ─────────────────────────────────────────────────────
 echo ""
 log "Results: $PASS passed, $FAIL failed"

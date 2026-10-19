@@ -370,12 +370,14 @@ ARG TARGETVARIANT
 
 RUN apk add libsodium
 
-# pgsodium getkey script — auto-generates root key on first run
-# supabase_vault defaults to /usr/local/share/postgresql/extension/pgsodium_getkey,
-# so provide that path in the image for existing PGDATA where initdb scripts do not run.
-RUN printf '#!/bin/sh\nset -eu\nKEY_FILE="${PGDATA}/pgsodium_root.key"\nif [ ! -f "$KEY_FILE" ]; then\n  head -c 32 /dev/urandom | od -A n -t x1 | tr -d " \\n" > "$KEY_FILE"\n  chmod 600 "$KEY_FILE"\nfi\ncat "$KEY_FILE"\n' \
-    > /usr/local/bin/pgsodium_getkey.sh && chmod +x /usr/local/bin/pgsodium_getkey.sh && \
-    mkdir -p /usr/local/share/postgresql/extension && \
+# pgsodium / supabase_vault getkey script — generates the root key on first run.
+# Both extensions default to $sharedir/extension/pgsodium_getkey when
+# pgsodium.getkey_script / vault.getkey_script are not set, and they check it while
+# loading shared_preload_libraries, before any /docker-entrypoint-initdb.d script
+# runs. Installing it at the default path lets a fresh PGDATA start with only
+# shared_preload_libraries=pgsodium; the explicit GUC still works for old setups.
+COPY --chmod=755 pgsodium_getkey.sh /usr/local/bin/pgsodium_getkey.sh
+RUN mkdir -p /usr/local/share/postgresql/extension && \
     ln -sf /usr/local/bin/pgsodium_getkey.sh /usr/local/share/postgresql/extension/pgsodium_getkey
 
 COPY --from=pgvector        /tmp/install/usr/local/ /usr/local/
@@ -397,6 +399,9 @@ COPY --from=pg_wodekit      /tmp/install/usr/local/ /usr/local/
 COPY --from=duckdb_ext      /tmp/install/duckdb-extensions/ /usr/local/lib/duckdb/extensions/
 COPY --from=wrappers 				/tmp/install/usr/local/ /usr/local/
 
-# pgsodium/vault default config — appended on first initdb run
+# pgsodium/vault explicit config — appended on first initdb run, so the conf keeps
+# working if the default path ever changes. It cannot help the very first start
+# when pgsodium is preloaded (the temp server loads it before initdb.d runs);
+# the default-path symlink above covers that case.
 RUN printf '#!/bin/sh\necho "pgsodium.getkey_script = '"'"'/usr/local/bin/pgsodium_getkey.sh'"'"'" >> "$PGDATA/postgresql.conf"\necho "vault.getkey_script = '"'"'/usr/local/bin/pgsodium_getkey.sh'"'"'" >> "$PGDATA/postgresql.conf"\n' \
     > /docker-entrypoint-initdb.d/00-pgsodium.sh && chmod +x /docker-entrypoint-initdb.d/00-pgsodium.sh
