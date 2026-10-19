@@ -19,7 +19,7 @@ images:
             revision: REV
         version:
           scheme: alpine
-          alpine: "3.24.1"
+          alpine: "3.24.2"
           revision: 0
 
   - name: agent
@@ -56,7 +56,7 @@ images:
         version:
           scheme: app
           app: "5.0.7"
-          revision: 0
+          revision: 1
 
   - name: node-builder
     variants:
@@ -127,7 +127,7 @@ images:
             app: PHP82_VERSION
             alpine: PHP82_ALPINE_RELEASE
             revision: PHP82_REV
-        # PHP 8.2 stays on historical Alpine/nginx, independently of base.default.
+        # PHP 8.2 stays on historical Alpine/nginx, independently of base.default; not actively maintained.
         base:
           ref: "quay.io/wener/nginx:alpine-3.19.1@sha256:1da7b7845bed8cc54efb93d7289cb89c2bf87656159258a51ed7c0c3e1c449a5"
           context: "wener/nginx:alpine-${alpine}"
@@ -136,6 +136,7 @@ images:
           app: "8.2.26-r0"
           alpine: "3.19.1"
           revision: 0
+      # PHP 8.3/8.4 inherit Alpine from base through nginx.
       - name: "8.3"
         build:
           dir: php
@@ -151,7 +152,6 @@ images:
         version:
           scheme: app-alpine
           app: "8.3.35-r0"
-          alpine: "3.24.1"
           revision: 0
       - name: "8.4"
         build:
@@ -168,5 +168,4 @@ images:
         version:
           scheme: app-alpine
           app: "8.4.26-r0"
-          alpine: "3.24.1"
           revision: 0
