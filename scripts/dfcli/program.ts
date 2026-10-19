@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { registerAlpineCommands } from './commands/alpine.ts';
 import { registerImageCommands } from './commands/images.ts';
 import { registerMaintainCommands } from './commands/maintain.ts';
 import { registerManifestCommands } from './commands/manifest.ts';
@@ -17,5 +18,6 @@ export function buildProgram() {
   registerRepoCommands(program);
   registerProjectCommands(program);
   registerMaintainCommands(program);
+  registerAlpineCommands(program);
   return program;
 }

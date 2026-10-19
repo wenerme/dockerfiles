@@ -137,6 +137,12 @@ manifest-bake image:
 publish-plan *images:
     bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} publish "$@"
 
+# Move manifest Alpine versions to the newest patch and propagate revisions: just alpine-update --write.
+[group('manifest')]
+[positional-arguments]
+alpine-update *args:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} alpine update "$@"
+
 # Compare postgres extension versions with upstream.
 [group('project')]
 postgres-versions:

@@ -2,6 +2,8 @@ name: Publish GHCR
 
 # Publishes manifest.yaml variants whose canonical tag is missing from GHCR.
 # Existing canonical tags are never rebuilt; bump version.revision to republish.
+# Pull requests build the same missing tags but push them only to a throwaway registry on the runner,
+# so a version change is verified before merging and master always matches what GHCR publishes.
 on:
   push:
     branches:
@@ -9,6 +11,11 @@ on:
     paths:
       - manifest.yaml
       - .github/workflows/ghcr.yml
+  pull_request:
+    paths:
+      - manifest.yaml
+      - .github/workflows/ghcr.yml
+      - scripts/dfcli/**
   workflow_dispatch:
     inputs:
       images:
@@ -25,19 +32,61 @@ on:
         type: boolean
         default: false
 
-permissions:
-  contents: read
-  packages: write
+# Jobs opt in to what they need; the pull request job never gets package write access.
+permissions: {}
 
 concurrency:
-  group: ghcr-publish
-  cancel-in-progress: false
+  # Verification runs are per pull request and replaceable; publishing is serialized and never cancelled.
+  group: ${{ github.event_name == 'pull_request' && format('ghcr-verify-{0}', github.ref) || 'ghcr-publish' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  publish:
-    name: Publish missing tags
+  verify:
+    name: Verify missing tags
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      # Verification target; bound to loopback so nothing outside the runner can read or write it.
+      - name: Start local registry
+        run: docker run -d --name registry -p 127.0.0.1:5000:5000 registry:3.0.0@sha256:6c5666b861f3505b116bb9aa9b25175e71210414bd010d92035ff64018f9457e
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          # BuildKit runs in a container; host networking lets it reach the local registry.
+          driver-opts: network=host
+
+      # Without GHCR credentials: public tags are checked anonymously and nothing is pushed to GHCR.
+      - name: Build missing tags into the local registry
+        run: bun scripts/dfcli/main.ts publish --verify-registry localhost:5000
+
+  publish:
+    name: Publish missing tags
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -82,7 +131,7 @@ jobs:
       - name: Publish
         shell: bash
         env:
-          IMAGES: ${{ steps.params.outputs.images }}
+          IMAGE_SELECTORS: ${{ steps.params.outputs.images }}
           PLATFORMS: ${{ steps.params.outputs.platforms }}
           DRY_RUN: ${{ steps.params.outputs.dry_run }}
         run: |
@@ -90,7 +139,7 @@ jobs:
           args=()
           if [ "$DRY_RUN" != "true" ]; then args+=(--push); fi
           if [ -n "$PLATFORMS" ]; then args+=(--platforms "$PLATFORMS"); fi
-          read -r -a images <<< "$IMAGES"
+          read -r -a images <<< "$IMAGE_SELECTORS"
           # Selectors are positional only; reject option-like input so it cannot become --push.
           for image in "${images[@]}"; do
             if [[ ! "$image" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then

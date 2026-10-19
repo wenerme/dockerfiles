@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  executionBake, generatedBake, parseManifest, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
+  executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
   registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, validateSelectors, versionVariables, type ImageManifest,
 } from './manifest.ts';
 
@@ -173,6 +173,27 @@ describe('generated artifacts and publication states', () => {
       base: 'docker-image://ghcr.io/wenerme/dockerfiles/base:3.24.1-r2', stage: 'target:other', files: '/repo/agent/rootfs',
     });
     expect(bake.target.agent.context).toBe('agent');
+  });
+
+  test('verification builds push to the local registry and consume parents built earlier in the run', () => {
+    const releases = resolveManifest(sample());
+    const agent = selectRelease(releases, 'agent');
+    const registry = parseLocalRegistry('localhost:5000');
+    const parent = localRef(selectRelease(releases, 'base').ref, registry);
+    expect(parent).toBe('localhost:5000/wenerme/dockerfiles/base:3.24.1-r2');
+    const bake = generatedBake({ target: { agent: {} } }, agent, releases, {
+      ref: localRef(agent.ref, registry), dependencyRefs: new Map([['base.default', parent]]),
+    });
+    expect(bake.target!.agent.tags).toEqual(['localhost:5000/wenerme/dockerfiles/agent:3.24.1-r7']);
+    expect(bake.target!.agent.contexts!['wener/base:3.24.1']).toBe(`docker-image://${parent}`);
+    // The published label still names the canonical version.
+    expect((bake.target!.agent.labels as Record<string, string>)['org.opencontainers.image.version']).toBe('3.24.1-r7');
+    // Without a locally built parent, the published GHCR parent is used.
+    expect(generatedBake({ target: { agent: {} } }, agent, releases, { dependencyRefs: new Map() }).target!.agent.contexts!['wener/base:3.24.1'])
+      .toBe('docker-image://ghcr.io/wenerme/dockerfiles/base:3.24.1-r2');
+    for (const value of ['ghcr.io', 'registry.example.com:5000', 'localhost', '0.0.0.0:5000', 'localhost:5000/x']) {
+      expect(() => parseLocalRegistry(value)).toThrow('localhost:<port>');
+    }
   });
 
   test('publish builds only missing tags and stops on unknown registry state', () => {
