@@ -161,12 +161,25 @@ SELECT partman.create_parent('public.events', 'created_at', 'native', 'daily');
 
 ### pgsodium & vault
 
-pgsodium auto-generates a root key on first run (`$PGDATA/pgsodium_root.key`).
+The image installs a getkey script at the default path that both extensions look for
+(`$sharedir/extension/pgsodium_getkey`), so `shared_preload_libraries=pgsodium,supabase_vault`
+works on a fresh `PGDATA` without extra settings. On first start it writes a random
+32-byte root key to `pgsodium_root.key` (mode 0600) in the data directory.
 
 ```sql
 CREATE EXTENSION pgsodium;
 CREATE EXTENSION supabase_vault;  -- requires pgsodium
 ```
+
+- Keep `pgsodium_root.key` with the data directory and back it up with it; `pg_dump` does not
+  include it. If it is lost or replaced, encrypted data cannot be decrypted.
+- The script never regenerates an existing key. A corrupt key file stops the server instead.
+- The data directory is taken from the postmaster's working directory, with `$PGDATA` as fallback.
+- Images built before this change (e.g. `18.3`, `18.3-r1`) lack the default path. When preloading
+  pgsodium on them, set it explicitly:
+  `-c pgsodium.getkey_script=/usr/local/bin/pgsodium_getkey.sh` (and `vault.getkey_script` for vault).
+- Running as a non-root uid (e.g. an EFS access point that forces the owner and forbids chown)
+  works: the entrypoint skips chown and uses nss_wrapper for initdb.
 
 ### supabase wrappers
 
