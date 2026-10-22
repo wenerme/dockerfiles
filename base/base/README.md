@@ -19,7 +19,7 @@
 
 - 从 rootfs 构建
 - 使用中国镜像
-  - 默认 aliyun
+  - 默认 TUNA（清华）
 - 添加实用工具
   - bash - 1.7 MB
   - curl - 网络诊断

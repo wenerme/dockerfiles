@@ -40,7 +40,7 @@ dl:
 			arm64) alpine_arch=aarch64 ;; \
 			386) alpine_arch=x86 ;; \
 		esac; \
-		url="https://mirrors.aliyun.com/alpine/v$${ALPINE_RELEASE%.*}/releases/$$alpine_arch/alpine-minirootfs-$(ALPINE_RELEASE)-$$alpine_arch.tar.gz"; \
+		url="https://mirrors.tuna.tsinghua.edu.cn/alpine/v$${ALPINE_RELEASE%.*}/releases/$$alpine_arch/alpine-minirootfs-$(ALPINE_RELEASE)-$$alpine_arch.tar.gz"; \
 		if [ -f "$$file" ]; then \
 			echo "Already exists: $$file"; \
 		else \
