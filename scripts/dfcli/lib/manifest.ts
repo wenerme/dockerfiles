@@ -477,6 +477,15 @@ export async function syncTags(repository: string, digest: string, targets: stri
   }));
 }
 
+/**
+ * Verification runs without registry credentials. GHCR answers an anonymous query for a package that does not
+ * exist yet with "unauthorized" instead of 404; since every package is public, that means "not published yet".
+ * Publishing is logged in and keeps the strict interpretation.
+ */
+export function anonymousPublication(publication: Publication): Publication {
+  return publication.state === 'inaccessible' ? { state: 'missing' } : publication;
+}
+
 /** Missing tags are built; existing canonical tags are immutable; unknown registry state stops publishing. */
 export function publishAction(publication: Publication): 'build' | 'skip' {
   if (publication.state === 'missing') return 'build';

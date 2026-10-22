@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  aliasRefs, executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parseNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
+  aliasRefs, anonymousPublication, executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parseNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
   registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, validateSelectors, versionVariables, type ImageManifest,
 } from './manifest.ts';
 
@@ -249,6 +249,13 @@ images:
     for (const value of ['wener', 'docker.io', 'docker.io/wener/php', 'docker.io/Wener', 'docker.io/wener;rm']) {
       expect(() => parseNamespace(value)).toThrow('<registry>/<namespace>');
     }
+  });
+
+  test('anonymous verification treats an unreadable new package as unpublished, other states unchanged', () => {
+    expect(anonymousPublication({ state: 'inaccessible', detail: 'registry authentication or permission required' })).toEqual({ state: 'missing' });
+    expect(publishAction(anonymousPublication({ state: 'inaccessible' }))).toBe('build');
+    expect(() => publishAction(anonymousPublication({ state: 'error' }))).toThrow('refusing to publish');
+    expect(anonymousPublication({ state: 'published', digest: `sha256:${'0'.repeat(64)}` }).state).toBe('published');
   });
 
   test('publish builds only missing tags and stops on unknown registry state', () => {

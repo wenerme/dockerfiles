@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import type { Command } from 'commander';
 import {
-  aliasRefs, generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef,
+  aliasRefs, anonymousPublication, generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef,
   parseLocalRegistry, parsePlatforms, planReleases, prepareBuild, publishAction, pushBake,
   selectRelease, syncTags, validateSelectors, type Publication, type TagSync,
 } from '../lib/manifest.ts';
@@ -101,7 +101,8 @@ export function registerImageCommands(program: Command) {
       try {
         for (const release of planReleases(releases, selectors)) {
           current = release.id;
-          const publication = await inspectPublication(release.ref);
+          const inspected = await inspectPublication(release.ref);
+          const publication = verify ? anonymousPublication(inspected) : inspected;
           if (publishAction(publication) === 'skip') {
             results.push({ id: release.id, ref: release.ref, action: 'skip (published)' });
             // Moving tags follow the published canonical tag; only a real publish writes to GHCR.
