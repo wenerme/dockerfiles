@@ -7,14 +7,17 @@ variable "ALPINE_VERSION" { default = "${split(".", ALPINE_RELEASE)[0]}.${split(
 // Historical variants keep their own Alpine branch, independently of the repository default.
 variable "PHP81_ALPINE_RELEASE" { default = "3.19.1" }
 variable "PHP82_ALPINE_RELEASE" { default = "3.19.1" }
-variable "PHP83_ALPINE_RELEASE" { default = "3.24.1" }
-variable "PHP84_ALPINE_RELEASE" { default = "3.24.1" }
+variable "PHP83_ALPINE_RELEASE" { default = "3.24.2" }
+variable "PHP84_ALPINE_RELEASE" { default = "3.24.2" }
+variable "PHP85_ALPINE_RELEASE" { default = "3.24.2" }
 variable "PHP82_VERSION" { default = "8.2.26-r0" }
-variable "PHP83_VERSION" { default = "8.3.35-r0" }
-variable "PHP84_VERSION" { default = "8.4.26-r0" }
+variable "PHP83_VERSION" { default = "8.3.36-r0" }
+variable "PHP84_VERSION" { default = "8.4.27-r0" }
+variable "PHP85_VERSION" { default = "8.5.12-r0" }
 variable "PHP82_REV" { default = "0" }
 variable "PHP83_REV" { default = "0" }
 variable "PHP84_REV" { default = "0" }
+variable "PHP85_REV" { default = "0" }
 
 group "default" {
 	targets = [
@@ -22,6 +25,7 @@ group "default" {
 		"82",
 		"83",
 		"84",
+		"85",
 	]
 }
 
@@ -88,6 +92,18 @@ target "84" {
 		ALPINE_RELEASE = PHP84_ALPINE_RELEASE
 		ALPINE_VERSION = "${split(".", PHP84_ALPINE_RELEASE)[0]}.${split(".", PHP84_ALPINE_RELEASE)[1]}"
 		PHP_VERSION = PHP84_VERSION
+	}
+}
+
+target "85" {
+	inherits = ["base"]
+	context    = "."
+	dockerfile = "8.5/Dockerfile"
+	tags = release_tags("8.5", PHP85_VERSION, PHP85_ALPINE_RELEASE, PHP85_REV)
+	args = {
+		ALPINE_RELEASE = PHP85_ALPINE_RELEASE
+		ALPINE_VERSION = "${split(".", PHP85_ALPINE_RELEASE)[0]}.${split(".", PHP85_ALPINE_RELEASE)[1]}"
+		PHP_VERSION = PHP85_VERSION
 	}
 }
 

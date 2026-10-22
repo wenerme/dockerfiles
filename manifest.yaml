@@ -20,7 +20,7 @@ images:
         version:
           scheme: alpine
           alpine: "3.24.2"
-          revision: 0
+          revision: 1
 
   - name: agent
     variants:
@@ -37,7 +37,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: alpine
-          revision: 0
+          revision: 1
 
   - name: pdns
     variants:
@@ -56,7 +56,7 @@ images:
         version:
           scheme: app
           app: "5.0.7"
-          revision: 1
+          revision: 2
 
   - name: node-builder
     variants:
@@ -75,7 +75,7 @@ images:
         version:
           scheme: app-alpine
           app: "24.17.0"
-          revision: 0
+          revision: 1
 
   - name: go-builder
     variants:
@@ -115,7 +115,7 @@ images:
         version:
           scheme: app-alpine
           app: "1.30.4-r1"
-          revision: 0
+          revision: 1
 
   - name: php
     variants:
@@ -136,7 +136,8 @@ images:
           app: "8.2.26-r0"
           alpine: "3.19.1"
           revision: 0
-      # PHP 8.3/8.4 inherit Alpine from base through nginx.
+        aliases: ["8.2", "8.2-alpine-${alpine}"]
+      # PHP 8.3+ inherit Alpine from base through nginx; short aliases move to each new canonical tag.
       - name: "8.3"
         build:
           dir: php
@@ -151,8 +152,9 @@ images:
           context: "wener/nginx:alpine-${alpine}"
         version:
           scheme: app-alpine
-          app: "8.3.35-r0"
+          app: "8.3.36-r0"
           revision: 0
+        aliases: ["8.3", "8.3-alpine-${alpine}"]
       - name: "8.4"
         build:
           dir: php
@@ -167,5 +169,23 @@ images:
           context: "wener/nginx:alpine-${alpine}"
         version:
           scheme: app-alpine
-          app: "8.4.26-r0"
+          app: "8.4.27-r0"
           revision: 0
+        aliases: ["8.4", "8.4-alpine-${alpine}"]
+      - name: "8.5"
+        build:
+          dir: php
+          target: "85"
+          variables:
+            app: PHP85_VERSION
+            alpine: PHP85_ALPINE_RELEASE
+            revision: PHP85_REV
+        base:
+          image: nginx
+          variant: default
+          context: "wener/nginx:alpine-${alpine}"
+        version:
+          scheme: app-alpine
+          app: "8.5.12-r0"
+          revision: 0
+        aliases: ["8.5", "8.5-alpine-${alpine}"]

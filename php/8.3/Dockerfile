@@ -1,7 +1,7 @@
-ARG ALPINE_RELEASE=3.24.1
+ARG ALPINE_RELEASE=3.24.2
 FROM wener/nginx:alpine-${ALPINE_RELEASE}
 
-ARG PHP_VERSION=8.3.35-r0
+ARG PHP_VERSION=8.3.36-r0
 
 RUN apk add icu-data-full # for replacing iconv
 
