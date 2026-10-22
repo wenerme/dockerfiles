@@ -37,19 +37,20 @@ Manifest 变体使用以 `-r<N>` 结尾的 canonical 标签。非默认变体增
 
 | 变体 | 构建 | 版本策略 | 目标版本 | Alpine | 基础镜像 | GHCR canonical 引用 |
 |---|---|---|---|---|---|---|
-| `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.2-r0` | 3.24.2 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.2-r0` |
-| `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.2-r0` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.2-r0` |
-| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r1` |
-| `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.2-r0` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.2-r0` |
+| `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.2-r1` | 3.24.2 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.2-r1` |
+| `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.2-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.2-r1` |
+| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r2` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r2` |
+| `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.2-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.2-r1` |
 | `go-builder.default` | [go-builder](go-builder/) · `go-builder` | app-alpine | `1.26.3-r0-alpine-3.24.1-r0` | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0@sha256:e2abf60cd8c81a1705edd458c81047ceda81349ec06d90149058b5053a7a7350` | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` |
-| `nginx.default` | [nginx](nginx/) · `nginx` | app-alpine | `1.30.4-r1-alpine-3.24.2-r0` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.2-r0` |
+| `nginx.default` | [nginx](nginx/) · `nginx` | app-alpine | `1.30.4-r1-alpine-3.24.2-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.2-r1` |
 | `php.8.2` | [php](php/) · `82` | app-alpine | `8.2-8.2.26-r0-alpine-3.19.1-r0` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1@sha256:1da7b7845bed8cc54efb93d7289cb89c2bf87656159258a51ed7c0c3e1c449a5` | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` |
-| `php.8.3` | [php](php/) · `83` | app-alpine | `8.3-8.3.35-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.35-r0-alpine-3.24.2-r0` |
-| `php.8.4` | [php](php/) · `84` | app-alpine | `8.4-8.4.26-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.26-r0-alpine-3.24.2-r0` |
+| `php.8.3` | [php](php/) · `83` | app-alpine | `8.3-8.3.36-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.2-r0` |
+| `php.8.4` | [php](php/) · `84` | app-alpine | `8.4-8.4.27-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.2-r0` |
+| `php.8.5` | [php](php/) · `85` | app-alpine | `8.5-8.5.12-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.2-r0` |
 
 ### 其他 Bake 镜像组
 
-共 40 个已跟踪的 Bake 镜像组，manifest 管理 9 个变体。下列 33 个镜像组尚未纳入 manifest。变体列出非默认的 Bake target，基础镜像仅列出父镜像仓库。
+共 40 个已跟踪的 Bake 镜像组，manifest 管理 10 个变体。下列 33 个镜像组尚未纳入 manifest。变体列出非默认的 Bake target，基础镜像仅列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
@@ -144,7 +145,9 @@ DOCKER_BUILD_PROGRESS=plain make push
 | [Publish GHCR](.github/workflows/ghcr.yml) | `master` 上的 `manifest.yaml` 或发布工作流变更；手动触发 | 按依赖顺序构建 GHCR 上缺失的 canonical 标签，跳过已有标签 |
 | [Publish GHCR](.github/workflows/ghcr.yml)（验证） | 修改 `manifest.yaml`、发布工作流或 `scripts/dfcli` 的 pull request | 构建同样缺失的标签，只推送到 runner 上的本地 registry；下游使用同一次运行中构建的父镜像 |
 
-版本变更通过 pull request 提交：验证运行构建全部缺失标签，合并到 `master` 后正式发布。手动发布支持镜像选择器、平台覆盖和 dry-run。Docker Hub 与 Quay 的发布使用各镜像目录中的本地 `make push` 命令。
+版本变更通过 pull request 提交：验证运行构建全部缺失标签，合并到 `master` 后正式发布。每次发布还会把变体的别名（如 `php:8.4`）指向其 canonical 标签。手动发布支持镜像选择器、平台覆盖和 dry-run。
+
+`just mirror <image> --to docker.io/wener` 预览将 GHCR 上已发布的 canonical 与别名标签复制到 Docker Hub 或 Quay，不重新构建；加 `--push` 后使用仓库 Docker 配置写入。未纳入 manifest 的镜像仍使用各镜像目录中的本地 `make push` 命令。
 
 ## 版本维护
 
@@ -160,9 +163,13 @@ Alpine 版本可以从内部基础变体继承。`just plan` 计算构建顺序�
 
 `just alpine-update` 读取 `alpinelinux.org/releases.json`，预览将每个显式 Alpine 版本升级到所在分支的最新补丁；`just alpine-update --write` 写入 `manifest.yaml` 与 README 生成区块。revision 沿依赖图传播：canonical 标签变化的变体从 `r0` 开始；父镜像变化但标签不变的变体（如 `pdns`）递增 revision。固定外部父镜像的变体和更新的 Alpine 分支只提示，不修改。
 
+`just bump <image>` 递增变体的 revision 并传播到所有下游；适用于版本不变但内容变化的情况。base 镜像构建时执行 `apk upgrade`，因此 `just bump base --write` 可以带上 minirootfs 发布之后的 Alpine 安全更新。
+
+变体中的 `aliases` 声明移动标签，例如 `"8.4"` 或 `"8.4-alpine-${alpine}"`。它们在 canonical 标签发布后更新，不能以 `-rN` 结尾，该后缀保留给 canonical 标签。
+
 `just manifest-bake <image>` 将 manifest 版本、canonical GHCR 标签、OCI labels 和父镜像 contexts 解析为 Bake JSON，仅输出配置。Bake 与 Make 的默认值仍单独维护。`just status` 中的 `BAKE TAG=generated` 表示 canonical 标签由生成配置提供，`native` 表示该目录的 Bake 配置已声明此标签。
 
-受管理的应用版本可以包含 Alpine 包修订，例如 `1.30.4-r1`。PHP 8.2 使用固定 digest 的历史 nginx 镜像，基于 Alpine 3.19.1，不主动维护。PHP 8.3 和 8.4 通过受管理的 nginx 变体继承 base 的 Alpine 版本。各 PHP 变体独立维护应用版本和构建 revision。旧 target `7`、`81`、`8` 和 `7-composer` 不参与自动发布，PHP 8.1 的手动 target 同样使用 Alpine 3.19.1。
+受管理的应用版本可以包含 Alpine 包修订，例如 `1.30.4-r1`。PHP 8.2 使用固定 digest 的历史 nginx 镜像，基于 Alpine 3.19.1，不主动维护。PHP 8.3、8.4 和 8.5 通过受管理的 nginx 变体继承 base 的 Alpine 版本。各 PHP 变体独立维护应用版本和构建 revision，别名 `<major.minor>` 与 `<major.minor>-alpine-<alpine>` 跟随其最新的 canonical 标签。旧 target `7`、`81`、`8` 和 `7-composer` 不参与自动发布，PHP 8.1 的手动 target 同样使用 Alpine 3.19.1。
 
 `just plan php` 与 `just publish-plan php` 选择全部受管理的 PHP 变体。要求单个 target 的命令使用显式选择器，例如 `just manifest-bake php.8.2`。
 

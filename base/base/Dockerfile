@@ -19,7 +19,9 @@ LABEL maintainer="wener@wener.me" \
 ADD alpine-minirootfs-${ALPINE_RELEASE}-${TARGETARCH}.tar.gz /
 RUN echo ${ALPINE_MIRROR}/v${ALPINE_VERSION}/main > /etc/apk/repositories; \
     echo ${ALPINE_MIRROR}/v${ALPINE_VERSION}/community >> /etc/apk/repositories; \
-    apk add -U --no-cache busybox-extras curl file nano libc6-compat gcompat bash;
+    # minirootfs packages are frozen at the Alpine release; upgrade so a revision rebuild picks up security fixes
+    apk upgrade -U --no-cache; \
+    apk add --no-cache busybox-extras curl file nano libc6-compat gcompat bash;
 
 SHELL [ "/bin/bash", "-c"]
 
