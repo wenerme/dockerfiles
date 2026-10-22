@@ -219,6 +219,31 @@ describe('generated artifacts and publication states', () => {
     expect(() => parseManifest(yaml)).toThrow('substitutions');
   });
 
+  test('external parent refs follow the variant version and docker tracks validate their options', () => {
+    const yaml = (base: string, track = '{ docker: debian, prefix: "13." }') => `schema: 1
+registry: ghcr.io/wenerme/dockerfiles
+source: https://github.com/wenerme/dockerfiles
+images:
+  - name: debian
+    variants:
+      - name: default
+        build: { dir: debian, target: debian, variables: { app: VERSION, revision: REV } }
+        base: ${base}
+        version: { scheme: app, app: "13.7", revision: 0 }
+        track: ${track}
+`;
+    const releases = resolveManifest(parseManifest(yaml('{ ref: "docker.io/library/debian:${app}", context: "debian:${app}" }')));
+    const debian = selectRelease(releases, 'debian');
+    expect(debian.base?.ref).toBe('docker.io/library/debian:13.7');
+    expect(debian.track).toEqual({ docker: 'debian', prefix: '13.' });
+    expect(generatedBake({ target: { debian: {} } }, debian, releases).target!.debian.contexts)
+      .toEqual({ 'debian:13.7': 'docker-image://docker.io/library/debian:13.7' });
+    expect(() => parseManifest(yaml('{ ref: "debian:${revision}", context: "debian" }'))).toThrow('substitutions');
+    expect(() => parseManifest(yaml('{ ref: "debian:{app}", context: "debian" }'))).toThrow('substitutions');
+    expect(() => parseManifest(yaml('{ ref: "debian:13", context: "debian" }', '{ apk: nginx, prefix: "1." }'))).toThrow('docker only');
+    expect(() => parseManifest(yaml('{ ref: "debian:13", context: "debian" }', '{ docker: debian, github: a/b }'))).toThrow('exactly one');
+  });
+
   test('sync target namespaces are registry/namespace pairs only', () => {
     expect(parseNamespace('docker.io/wener')).toBe('docker.io/wener');
     for (const value of ['wener', 'docker.io', 'docker.io/wener/php', 'docker.io/Wener', 'docker.io/wener;rm']) {

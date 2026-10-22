@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { Release } from './manifest.ts';
 import { repositoryState } from './regctl.ts';
-import { compareLoose, nodejsMuslVersion, parseApkIndex, releaseVersion, UpstreamResolver } from './upstream.ts';
+import { compareLoose, dockerHubVersion, nodejsMuslVersion, parseApkIndex, releaseVersion, UpstreamResolver } from './upstream.ts';
 
 describe('upstream versions', () => {
   test('loose order handles apk package releases and multi-digit segments', () => {
@@ -30,6 +30,18 @@ describe('upstream versions', () => {
     expect(nodejsMuslVersion(index, '24')).toBe('24.22.1');
     expect(nodejsMuslVersion(index, '22')).toBeUndefined();
     expect(() => nodejsMuslVersion({}, '24')).toThrow('expected a list');
+  });
+
+  test('Docker Hub tags match prefix and suffix exactly and need amd64 and arm64 images', () => {
+    const both = [{ architecture: 'amd64', os: 'linux' }, { architecture: 'arm64', os: 'linux' }];
+    const tags = [
+      { name: '13.7', images: both }, { name: '13.10', images: [{ architecture: 'amd64' }] }, { name: '13.6', images: both },
+      { name: '13.7-slim', images: both }, { name: '113.1', images: both }, { name: 'trixie-20261013', images: both },
+      { name: '1.4.4-alpine', images: both }, { name: '1.4.3-alpine', images: both }, { name: '1.4.5-alpine-rc', images: both },
+    ];
+    expect(dockerHubVersion(tags, '13.')).toBe('13.7');
+    expect(dockerHubVersion(tags, '1.', '-alpine')).toBe('1.4.4');
+    expect(dockerHubVersion(tags, '14.')).toBeUndefined();
   });
 
   test('lookups are cached per run and failures are reported per variant', async () => {
