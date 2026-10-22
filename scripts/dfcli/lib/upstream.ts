@@ -42,6 +42,20 @@ export function nodejsMuslVersion(index: unknown, major: string): string | undef
   return releases.sort(compareLoose).at(-1);
 }
 
+/** Docker Hub tag listing entry (hub.docker.com v2 API). */
+export interface HubTag { name: string; images?: { architecture?: string; os?: string }[] }
+
+/** Newest `<prefix>...<suffix>` tag with linux amd64 and arm64 images; the version is the tag without the suffix. */
+export function dockerHubVersion(tags: HubTag[], prefix = '', suffix = ''): string | undefined {
+  const versions = tags.filter((tag) => {
+    if (!tag.name.startsWith(prefix) || !tag.name.endsWith(suffix)) return false;
+    if (!/^\d+(?:\.\d+)*$/.test(tag.name.slice(0, tag.name.length - suffix.length))) return false;
+    const architectures = new Set((tag.images ?? []).filter((image) => (image.os ?? 'linux') === 'linux').map((image) => image.architecture));
+    return architectures.has('amd64') && architectures.has('arm64');
+  }).map((tag) => tag.name.slice(0, tag.name.length - suffix.length));
+  return versions.sort(compareLoose).at(-1);
+}
+
 export interface UpstreamResult { version?: string; error?: string }
 
 export interface UpstreamOptions {
@@ -116,6 +130,25 @@ export class UpstreamResolver {
     });
   }
 
+  docker(image: string, prefix = '', suffix = ''): Promise<string> {
+    return this.cached(`docker:${image}:${prefix}:${suffix}`, async () => {
+      const repository = image.includes('/') ? image : `library/${image}`;
+      // The name filter is a substring match; it keeps the listing small, exact matching happens in dockerHubVersion.
+      let url: string | null = `https://hub.docker.com/v2/repositories/${repository}/tags?page_size=100&name=${encodeURIComponent(prefix || suffix)}`;
+      const tags: HubTag[] = [];
+      // Read every page: the newest matching tag can be anywhere in the listing. The cap only guards against a loop.
+      for (let page = 0; url; page += 1) {
+        if (page >= 200) throw new Error(`docker ${image}: more than 200 pages of tags for ${prefix || suffix}; narrow the prefix`);
+        const body = await (await this.get(url)).json() as { results?: HubTag[]; next?: string | null };
+        tags.push(...(body.results ?? []));
+        url = body.next ?? null;
+      }
+      const version = dockerHubVersion(tags, prefix, suffix);
+      if (!version) throw new Error(`docker ${image}: no ${prefix}*${suffix} tag with linux amd64 and arm64 images`);
+      return version;
+    });
+  }
+
   async latest(track: Track, release: Release): Promise<UpstreamResult> {
     try {
       if (track.apk) {
@@ -124,6 +157,7 @@ export class UpstreamResolver {
       }
       if (track.github) return { version: await this.github(track.github) };
       if (track.nodejs) return { version: await this.nodejs(track.nodejs) };
+      if (track.docker) return { version: await this.docker(track.docker, track.prefix, track.suffix) };
       throw new Error('no track source');
     } catch (error) {
       return { error: error instanceof Error ? error.message : String(error) };

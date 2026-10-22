@@ -21,6 +21,12 @@ export interface Track {
   github?: string;
   /** Node.js major line, resolved from the unofficial musl builds that node-builder downloads. */
   nodejs?: string;
+  /** Docker Hub image whose tags carry the version, e.g. debian (official) or oven/bun. */
+  docker?: string;
+  /** docker only: the version must start with this, e.g. "13." keeps Debian on trixie. */
+  prefix?: string;
+  /** docker only: tag suffix after the version, e.g. "-alpine". */
+  suffix?: string;
   /** apk only: keep the -rN package release in the version (default true). */
   pkgrel?: boolean;
 }
@@ -111,7 +117,11 @@ function dependency(value: unknown, label: string): Dependency {
   }
   if (item.ref !== undefined) {
     if (item.image !== undefined || item.variant !== undefined) throw new Error(`${label}: use ref or image/variant`);
-    return { ref: text(item.ref, `${label}.ref`, /^[a-zA-Z0-9_./:@-]+$/), context, arg };
+    const ref = text(item.ref, `${label}.ref`, /^[a-zA-Z0-9_./:@${}-]+$/);
+    if (templateField.test(ref) || /[{}]/.test(ref.replace(/\$\{(?:alpine|app)\}/g, ''))) {
+      throw new Error(`${label}.ref: only \${alpine} and \${app} substitutions are supported`);
+    }
+    return { ref, context, arg };
   }
   return {
     image: text(item.image, `${label}.image`, slug),
@@ -122,14 +132,20 @@ function dependency(value: unknown, label: string): Dependency {
 }
 
 function track(value: unknown, label: string, scheme: string): Track {
-  const item = object(value, label, ['apk', 'github', 'nodejs', 'pkgrel']);
-  const sources = (['apk', 'github', 'nodejs'] as const).filter((key) => item[key] !== undefined);
-  if (sources.length !== 1) throw new Error(`${label}: set exactly one of apk, github, nodejs`);
+  const item = object(value, label, ['apk', 'github', 'nodejs', 'docker', 'pkgrel', 'prefix', 'suffix']);
+  const sources = (['apk', 'github', 'nodejs', 'docker'] as const).filter((key) => item[key] !== undefined);
+  if (sources.length !== 1) throw new Error(`${label}: set exactly one of apk, github, nodejs, docker`);
   if (scheme === 'alpine') throw new Error(`${label}: alpine scheme has no app version to track`);
   const result: Track = {};
   if (item.apk !== undefined) result.apk = text(item.apk, `${label}.apk`, /^[a-z0-9][a-z0-9_.+-]*$/);
   if (item.github !== undefined) result.github = text(item.github, `${label}.github`, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/);
   if (item.nodejs !== undefined) result.nodejs = text(String(item.nodejs), `${label}.nodejs`, /^\d+$/);
+  if (item.docker !== undefined) result.docker = text(item.docker, `${label}.docker`, /^[a-z0-9]+(?:[._-][a-z0-9]+)*(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)?$/);
+  for (const key of ['prefix', 'suffix'] as const) {
+    if (item[key] === undefined) continue;
+    if (!result.docker) throw new Error(`${label}.${key}: docker only`);
+    result[key] = text(item[key], `${label}.${key}`, /^[A-Za-z0-9_.-]+$/);
+  }
   if (item.pkgrel !== undefined) {
     if (typeof item.pkgrel !== 'boolean' || !result.apk) throw new Error(`${label}.pkgrel: boolean, apk only`);
     result.pkgrel = item.pkgrel;
@@ -245,8 +261,15 @@ export function resolveManifest(manifest: ImageManifest): Release[] {
       return alias;
     });
     const repository = `${manifest.registry}/${variant.image}`;
+    // External parent refs may follow the variant's own version, e.g. docker.io/library/debian:${app}.
+    const expandRef = (dep: Dependency): Dependency => dep.ref ? { ...dep, ref: dep.ref.replace(/\$\{(alpine|app)\}/g, (_, field: string) => {
+      const value = field === 'alpine' ? alpine : variant.version.app;
+      if (!value) throw new Error(`${id}: parent ref ${dep.ref} requires ${field}`);
+      return value;
+    }) } : dep;
     const release: Release = {
-      ...variant, id, alpine, tag, repository, ref: `${repository}:${tag}`, aliasTags, source: manifest.source, dependencies,
+      ...variant, base: variant.base && expandRef(variant.base), inputs: variant.inputs.map(expandRef),
+      id, alpine, tag, repository, ref: `${repository}:${tag}`, aliasTags, source: manifest.source, dependencies,
     };
     resolved.set(id, release);
     visiting.pop();
