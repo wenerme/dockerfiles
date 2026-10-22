@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { realpath } from 'node:fs/promises';
 import { $ } from 'bun';
-import { capture, commandError, root, run, trackedFiles } from './repo.ts';
+import { capture, commandError, root, run, trackedFiles, useRepositoryDockerConfig } from './repo.ts';
 
 describe('repo helpers', () => {
   test('root is the repository regardless of cwd', async () => {
@@ -26,6 +26,21 @@ describe('repo helpers', () => {
     expect((await capture(['sleep', '5'], { timeoutMs: 100 })).timedOut).toBe(true);
     const killed = await capture(['sh', '-c', 'kill -TERM $$'], { timeoutMs: 5_000 });
     expect(killed).toMatchObject({ timedOut: false, signal: 'SIGTERM' });
+  });
+
+  test('children see environment changes made after startup, e.g. the repository DOCKER_CONFIG', async () => {
+    const previous = process.env.DOCKER_CONFIG;
+    try {
+      useRepositoryDockerConfig();
+      const expected = process.env.DOCKER_CONFIG ?? '';
+      expect((await capture(['sh', '-c', 'printf %s "$DOCKER_CONFIG"'])).stdout).toBe(expected);
+      process.env.DFCLI_ENV_PROBE = 'live';
+      expect((await capture(['sh', '-c', 'printf %s "$DFCLI_ENV_PROBE"'])).stdout).toBe('live');
+      await expect(run(['sh', '-c', 'test "$DFCLI_ENV_PROBE" = live'], { timeoutMs: 5_000 })).resolves.toBeUndefined();
+    } finally {
+      delete process.env.DFCLI_ENV_PROBE;
+      if (previous === undefined) delete process.env.DOCKER_CONFIG; else process.env.DOCKER_CONFIG = previous;
+    }
   });
 
   test('run streams to stderr and throws on failure or timeout', async () => {
