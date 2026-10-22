@@ -13,8 +13,9 @@ variable "REV" {
 }
 variable "ALPINE_MIRROR" {
 	# https://mirrors.alpinelinux.org/
-  default = "https://mirrors.aliyun.com/alpine" // high lag but stable
-  # default = "https://mirrors.tuna.tsinghua.edu.cn/alpine"
+  # TUNA syncs within hours; aliyun lagged ~18h on the 2026-10-21 PHP security release
+  default = "https://mirrors.tuna.tsinghua.edu.cn/alpine"
+  # default = "https://mirrors.aliyun.com/alpine" // high lag but stable
   # default = "https://mirrors.sjtug.sjtu.edu.cn/alpine"
   # default = "https://dl-cdn.alpinelinux.org"
 }
