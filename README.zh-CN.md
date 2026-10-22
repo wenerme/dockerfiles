@@ -1,56 +1,65 @@
 # Dockerfiles
 
-[English](README.md) | 简体中文
+[English](README.md) | 中文
 
-由 Wener 维护的容器镜像定义、构建配置和发布工具。大多数镜像基于 Alpine Linux。
+Wener 维护的容器镜像，大多基于 Alpine Linux，提供 `linux/amd64` 和 `linux/arm64` 版本。
 
 ## 镜像仓库
 
-各镜像家族使用以下仓库命名空间：
+| 仓库 | 镜像地址 |
+|---|---|
+| GHCR | `ghcr.io/wenerme/dockerfiles/<image>:<tag>` |
+| Docker Hub | `docker.io/wener/<image>:<tag>` |
+| Quay | `quay.io/wener/<image>:<tag>` |
 
-- Docker Hub：`docker.io/wener/<image>:<tag>`
-- Quay：`quay.io/wener/<image>:<tag>`
-- GHCR：`ghcr.io/wenerme/dockerfiles/<image>:<tag>`
+[受管理镜像](#受管理镜像)发布到 GHCR，其中 PHP 也同步到 Docker Hub。[其他镜像](#其他镜像)从各自目录发布，通常推送到 Docker Hub 和 Quay。
 
-[manifest.yaml](manifest.yaml) 定义 GHCR 发布流程使用的版本和构建依赖。其他 Bake 镜像组使用各自目录中的配置。`just status --remote` 显示受管理的变体及其 GHCR 发布状态。
+```bash
+docker pull ghcr.io/wenerme/dockerfiles/php:8.4
+docker pull wener/php:8.4
+```
 
 ## 标签
 
-| 格式 | 含义 | 示例 |
+| 标签 | 含义 | 示例 |
 |---|---|---|
-| `latest` | 默认变体的浮动标签，部分镜像发布此标签 | `latest` |
-| `<version>` | 上游应用或运行时版本 | `24.17.0` |
-| `<version>-r<N>` | 同一上游版本的构建修订 | `5.0.7-r0` |
-| `<version>-alpine-<alpine>-r<N>` | 应用版本、Alpine 发行版本和构建修订 | `24.17.0-alpine-3.24.1-r0` |
+| `<version>-r<N>` | 完整版本标签：上游版本加构建 revision | `5.0.7-r2` |
+| `<version>-alpine-<alpine>-r<N>` | 同时记录 Alpine 版本的完整版本标签 | `24.17.0-alpine-3.24.2-r1` |
+| `<variant>-<完整版本标签>` | 变体的完整版本标签 | `8.4-8.4.27-r0-alpine-3.24.2-r0` |
+| 短标签 | 跟随最新完整版本标签的移动标签 | `8.4`、`8.4-alpine-3.24.2`、`latest` |
 
-Manifest 变体使用以 `-r<N>` 结尾的 canonical 标签。非默认变体增加 `<variant>-` 前缀，例如 `openrc-3.24.1-r0`。发布流程跳过已有的 canonical 标签；重新构建需要修改版本或 revision。
+完整版本标签不会被覆盖。需要可复现部署时固定完整版本标签或 digest；需要自动获得更新时使用短标签。版本不变而重新构建时 revision `r<N>` 递增，例如带上 Alpine 安全更新；版本升级后从 `r0` 重新开始。
 
-## 镜像索引
+## 注意事项
 
-索引由 `manifest.yaml` 和 Git 已跟踪的 Bake 配置生成。`just readme` 同时更新中英文版本的生成区块，标记之外的正文手工维护。
+- 基于 `wener/base` 的镜像在 `/etc/apk/repositories` 中使用清华 TUNA Alpine 镜像源（`mirrors.tuna.tsinghua.edu.cn`）。
+- PHP 8.2 停留在 Alpine 3.19 和 PHP 8.2.26，不再更新，请使用 PHP 8.4 或 8.5。
+- 受管理镜像带有 OCI 标签 `org.opencontainers.image.source`、`org.opencontainers.image.version` 和 `org.opencontainers.image.revision`。
+
+## 镜像列表
 
 <!-- BEGIN GENERATED IMAGES -->
 
-### Manifest 发布目标
+### 受管理镜像
 
-`manifest.yaml` 中定义的目标版本。发布状态可通过 `just status --remote` 查询。
+发布到 GHCR。完整版本标签不会被覆盖；短标签跟随最新的完整版本标签。
 
-| 变体 | 构建 | 版本策略 | 目标版本 | Alpine | 基础镜像 | GHCR canonical 引用 |
-|---|---|---|---|---|---|---|
-| `base.default` | [base/base](base/base/) · `base` | alpine | `3.24.2-r1` | 3.24.2 | `scratch / Alpine minirootfs` | `ghcr.io/wenerme/dockerfiles/base:3.24.2-r1` |
-| `agent.default` | [agent](agent/) · `agent` | alpine | `3.24.2-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/agent:3.24.2-r1` |
-| `pdns.default` | [pdns](pdns/) · `pdns` | app | `5.0.7-r2` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r2` |
-| `node-builder.default` | [node-builder](node-builder/) · `node-builder` | app-alpine | `24.17.0-alpine-3.24.2-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.2-r1` |
-| `go-builder.default` | [go-builder](go-builder/) · `go-builder` | app-alpine | `1.26.3-r0-alpine-3.24.1-r0` | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0@sha256:e2abf60cd8c81a1705edd458c81047ceda81349ec06d90149058b5053a7a7350` | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` |
-| `nginx.default` | [nginx](nginx/) · `nginx` | app-alpine | `1.30.4-r1-alpine-3.24.2-r1` | 3.24.2 | `base.default` | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.2-r1` |
-| `php.8.2` | [php](php/) · `82` | app-alpine | `8.2-8.2.26-r0-alpine-3.19.1-r0` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1@sha256:1da7b7845bed8cc54efb93d7289cb89c2bf87656159258a51ed7c0c3e1c449a5` | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` |
-| `php.8.3` | [php](php/) · `83` | app-alpine | `8.3-8.3.36-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.2-r0` |
-| `php.8.4` | [php](php/) · `84` | app-alpine | `8.4-8.4.27-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.2-r0` |
-| `php.8.5` | [php](php/) · `85` | app-alpine | `8.5-8.5.12-r0-alpine-3.24.2-r0` | 3.24.2 | `nginx.default` | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.2-r0` |
+| 镜像 | 完整版本标签 | 短标签 | Alpine | 基础镜像 | 源码 |
+|---|---|---|---|---|---|
+| base | `ghcr.io/wenerme/dockerfiles/base:3.24.2-r1` | - | 3.24.2 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
+| agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.2-r1` | - | 3.24.2 | `base` | [agent](agent/) |
+| pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r2` | - | 3.24.2 | `base` | [pdns](pdns/) |
+| node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.2-r1` | - | 3.24.2 | `base` | [node-builder](node-builder/) |
+| go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` | - | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0` | [go-builder](go-builder/) |
+| nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.2-r1` | - | 3.24.2 | `base` | [nginx](nginx/) |
+| php 8.2 | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` | `8.2`<br>`8.2-alpine-3.19.1` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1` | [php](php/) |
+| php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.2-r0` | `8.3`<br>`8.3-alpine-3.24.2` | 3.24.2 | `nginx` | [php](php/) |
+| php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.2-r0` | `8.4`<br>`8.4-alpine-3.24.2` | 3.24.2 | `nginx` | [php](php/) |
+| php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.2-r0` | `8.5`<br>`8.5-alpine-3.24.2` | 3.24.2 | `nginx` | [php](php/) |
 
-### 其他 Bake 镜像组
+### 其他镜像
 
-共 40 个已跟踪的 Bake 镜像组，manifest 管理 10 个变体。下列 33 个镜像组尚未纳入 manifest。变体列出非默认的 Bake target，基础镜像仅列出父镜像仓库。
+33 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
@@ -90,108 +99,6 @@ Manifest 变体使用以 `-r<N>` 结尾的 canonical 标签。非默认变体增
 
 <!-- END GENERATED IMAGES -->
 
-## 开发
+## 许可证
 
-依赖 Bun、[just](https://github.com/casey/just) 1.58.0 或更新版本，以及带 Buildx 插件的 Docker。Bun 版本在 `package.json` 中声明，`just/common.just` 强制检查 just 最低版本。
-
-仓库工具由 `dfcli` 提供，入口为 `scripts/dfcli/main.ts`，基于 commander。`just` 列出可用任务，`just dfcli --help` 列出 CLI 命令。
-
-```bash
-bun install --frozen-lockfile
-just --jobs 3 check        # 并行执行独立检查，最多同时运行三个任务
-just status                # Manifest 变体与 Bake target 校验
-just status --remote       # 同时查询 GHCR 发布状态
-just plan base             # 受影响变体及其前置依赖的构建顺序
-just publish-plan          # 预览需要构建的 GHCR 标签
-just manifest-bake agent   # 输出解析后的 GHCR 专用 Bake JSON
-just readme                # 重新生成中英文镜像索引
-just dfcli scan             # 列出已跟踪的 Bake 镜像组
-```
-
-目录中的 Makefile 提供构建变量和准备步骤。可复用的 just 任务位于 [`just/`](just/)，镜像目录的 justfile 导入共享任务，并根据共享文件的位置解析仓库根目录。根目录和镜像目录的命令都通过 Make 与 `build.mk` 执行，保留仓库 Docker 配置。仅有 Bake 的目录使用 `build.mk` 作为 Makefile。
-
-```bash
-just print nginx           # 通过目录 Makefile 解析 Bake JSON
-just build nginx           # 构建并加载本机架构镜像
-just push nginx --dry-run  # 预览 Make 命令，不执行构建或发布
-
-cd php
-just print 82              # PHP 8.2 的历史基础镜像
-just build 83              # 构建并加载 PHP 8.3
-just push --dry-run 83     # 预览 PHP 8.3 发布命令
-# just push 83             # 发布已配置的 Docker Hub/Quay 标签
-```
-
-存在镜像专用 Make 任务时，优先使用 `image-build`、`image-load`、`image-push` 和 `image-ls`，保留应用构建等前置步骤。自定义任务需使用 `$(DOCKER_BUILD_BAKE)` 接收显式 target 与构建/加载选项；需要这些参数但任务尚未适配时，会在执行前报错。
-
-共享设置启用变量惰性求值，未指定任务时列出可用任务。`just check` 并行执行类型检查、测试、manifest 校验、两份 README 检查，以及 justfile 语法和格式检查。`just just-fmt` 格式化所有已跟踪的 justfile 与共享文件。
-
-`just bake` 仅构建，`just build` 与 `just load` 加载本机平台。这些任务与 `just push` 均支持 `--dry-run` 预览 Make 命令。本地发布通过共享 CLI 调用 `make push`，等价的 Make 命令如下：
-
-```bash
-# 查看某个镜像组解析后的 Bake 配置
-cd gitea-runner
-make -s print
-
-# 构建并推送该镜像组配置的标签
-DOCKER_BUILD_PROGRESS=plain make push
-```
-
-## GitHub Actions
-
-| 工作流 | 触发条件 | 行为 |
-|---|---|---|
-| [CI](.github/workflows/ci.yml) | Pull request 和推送到 `master` | 类型检查、测试、manifest 校验、README 生成区块与 justfile 检查，以及受管理 Bake target 的解析 |
-| [Publish GHCR](.github/workflows/ghcr.yml) | `master` 上的 `manifest.yaml` 或发布工作流变更；手动触发 | 按依赖顺序构建 GHCR 上缺失的 canonical 标签，跳过已有标签 |
-| [Publish GHCR](.github/workflows/ghcr.yml)（验证） | 修改 `manifest.yaml`、发布工作流或 `scripts/dfcli` 的 pull request | 构建同样缺失的标签，只推送到 runner 上的本地 registry；下游使用同一次运行中构建的父镜像 |
-
-版本变更通过 pull request 提交：验证运行构建全部缺失标签，合并到 `master` 后正式发布。每次发布还会把变体的别名（如 `php:8.4`）指向其 canonical 标签。手动发布支持镜像选择器、平台覆盖和 dry-run。
-
-`just mirror <image> --to docker.io/wener` 预览将 GHCR 上已发布的 canonical 与别名标签复制到 Docker Hub 或 Quay，不重新构建；加 `--push` 后使用仓库 Docker 配置写入。未纳入 manifest 的镜像仍使用各镜像目录中的本地 `make push` 命令。
-
-## 版本维护
-
-受 manifest 管理的变体通过 `version` 字段确定 canonical 标签：
-
-| 策略 | 版本字段 | 示例 |
-|---|---|---|
-| `alpine` | Alpine 发行版本和 revision | `3.24.1-r0` |
-| `app` | 应用版本和 revision | `5.0.7-r0` |
-| `app-alpine` | 应用版本、Alpine 发行版本和 revision | `24.17.0-alpine-3.24.1-r0` |
-
-Alpine 版本可以从内部基础变体继承。`just plan` 计算构建顺序。
-
-`just alpine-update` 读取 `alpinelinux.org/releases.json`，预览将每个显式 Alpine 版本升级到所在分支的最新补丁；`just alpine-update --write` 写入 `manifest.yaml` 与 README 生成区块。revision 沿依赖图传播：canonical 标签变化的变体从 `r0` 开始；父镜像变化但标签不变的变体（如 `pdns`）递增 revision。固定外部父镜像的变体和更新的 Alpine 分支只提示，不修改。
-
-`just bump <image>` 递增变体的 revision 并传播到所有下游；适用于版本不变但内容变化的情况。base 镜像构建时执行 `apk upgrade`，因此 `just bump base --write` 可以带上 minirootfs 发布之后的 Alpine 安全更新。
-
-变体中的 `aliases` 声明移动标签，例如 `"8.4"` 或 `"8.4-alpine-${alpine}"`。它们在 canonical 标签发布后更新，不能以 `-rN` 结尾，该后缀保留给 canonical 标签。
-
-`just manifest-bake <image>` 将 manifest 版本、canonical GHCR 标签、OCI labels 和父镜像 contexts 解析为 Bake JSON，仅输出配置。Bake 与 Make 的默认值仍单独维护。`just status` 中的 `BAKE TAG=generated` 表示 canonical 标签由生成配置提供，`native` 表示该目录的 Bake 配置已声明此标签。
-
-受管理的应用版本可以包含 Alpine 包修订，例如 `1.30.4-r1`。PHP 8.2 使用固定 digest 的历史 nginx 镜像，基于 Alpine 3.19.1，不主动维护。PHP 8.3、8.4 和 8.5 通过受管理的 nginx 变体继承 base 的 Alpine 版本。各 PHP 变体独立维护应用版本和构建 revision，别名 `<major.minor>` 与 `<major.minor>-alpine-<alpine>` 跟随其最新的 canonical 标签。旧 target `7`、`81`、`8` 和 `7-composer` 不参与自动发布，PHP 8.1 的手动 target 同样使用 Alpine 3.19.1。
-
-`just plan php` 与 `just publish-plan php` 选择全部受管理的 PHP 变体。要求单个 target 的命令使用显式选择器，例如 `just manifest-bake php.8.2`。
-
-尚未纳入 manifest 的镜像组通过维护命令更新 Bake 中的 revision 默认值：
-
-```bash
-# 预览或写入下一个 revision
-just dfcli rev bump postgres
-just dfcli rev bump postgres --write
-
-# 记录上游基础镜像 digest，已有 digest 变化时递增 revision
-just dfcli base check postgres --write
-just dfcli base check postgres --write --bump
-
-# 比较 PostgreSQL 扩展与上游版本
-just postgres-versions
-```
-
-`base check` 将上游镜像 digest 保存在 `.github/image-base-digests.json`。首次观察建立基线，后续 digest 发生变化时可以通过 `--bump` 递增 revision。
-
-## 构建信息
-
-- 大多数镜像组面向 `linux/amd64` 和 `linux/arm64`，平台列表由各 Bake target 定义。
-- 部分 Bake target 通过命名 `contexts` 将父镜像映射到 Quay。
-- GHCR 发布使用仓库的 GitHub Actions token，并记录 OCI source、version 和 revision 元数据。
+[MIT](LICENSE)
