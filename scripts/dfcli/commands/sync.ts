@@ -53,8 +53,9 @@ export function registerSyncCommands(program: Command) {
             const repository = `${namespace}/${image}`;
             if (!repositories.has(repository)) repositories.set(repository, await regctlRepository(repository));
             const state = repositories.get(repository)!;
-            if (state.state === 'missing') {
-              rows.push({ action: 'skip', ref: target, detail: 'repository missing or not accessible; create it as public first' });
+            if (state.state === 'missing' || state.state === 'private') {
+              rows.push({ action: 'skip', ref: target, detail: state.state === 'private'
+                ? 'repository is private; make it public first' : 'repository missing or not accessible; create it as public first' });
               continue;
             }
             if (state.state === 'error') {
