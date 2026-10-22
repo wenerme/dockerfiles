@@ -58,14 +58,16 @@ describe('bilingual README generation', () => {
     const english = generateReadme(images, releases);
     const chinese = generateReadme(images, releases, 'zh-CN');
     expect(english).not.toMatch(/\p{Script=Han}/u);
-    expect(chinese).toContain('其他 Bake 镜像组');
-    expect(english).toContain('Additional Bake Image Groups');
+    expect(chinese).toContain('其他镜像');
+    expect(english).toContain('Other Images');
+    // Internal tooling stays out of the public README.
+    for (const output of [english, chinese]) expect(output).not.toMatch(/just |dfcli|manifest\.yaml|\bCI\b|Bake/);
     for (const output of [english, chinese]) {
       expect(output).not.toContain('mermaid');
       expect(output).not.toContain('flowchart');
       for (const release of releases) expect(output).toContain(release.ref);
     }
-    const rows = (output: string) => output.split('\n').filter((line) => /^\| (?:`|\[)/.test(line));
+    const rows = (output: string) => output.split('\n').filter((line) => /^\| (?!-|Image|镜像)/.test(line));
     expect(rows(english)).toEqual(rows(chinese));
   });
 
@@ -87,7 +89,7 @@ describe('bilingual README generation', () => {
       expect(syncReadmes(dir, images, releases, { check: true })).toEqual(files.map((file) => ({ file, state: 'checked' })));
       expect(syncReadmes(dir, images, releases)).toEqual(files.map((file) => ({ file, state: 'unchanged' })));
       const english = readFileSync(path.join(dir, files[0]), 'utf8');
-      const staleChinese = readFileSync(path.join(dir, files[1]), 'utf8').replace('### Manifest 发布目标', '### Outdated heading');
+      const staleChinese = readFileSync(path.join(dir, files[1]), 'utf8').replace('### 受管理镜像', '### Outdated heading');
       writeFileSync(path.join(dir, files[1]), staleChinese);
       expect(() => syncReadmes(dir, images, releases, { check: true })).toThrow('README.zh-CN.md generated region is out of date');
       expect(readFileSync(path.join(dir, files[0]), 'utf8')).toBe(english);

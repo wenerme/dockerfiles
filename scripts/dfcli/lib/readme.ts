@@ -7,21 +7,21 @@ type ReadmeLocale = 'en' | 'zh-CN';
 
 const copy = {
   en: {
-    manifestHeading: 'Manifest Release Targets',
-    manifestDescription: 'Desired versions from `manifest.yaml`. Publication status is available through `just status --remote`.',
-    manifestColumns: '| Variant | Build | Version scheme | Target version | Alpine | Base | GHCR canonical ref |',
-    bakeHeading: 'Additional Bake Image Groups',
-    bakeDescription: (groups: number, variants: number, remaining: number) =>
-      `${groups} tracked Bake groups and ${variants} manifest variants. The ${remaining} groups below are not managed by the manifest. Variants lists nondefault Bake targets; Base lists parent image repositories.`,
+    manifestHeading: 'Managed Images',
+    manifestDescription: 'Published to GHCR. Canonical tags are never overwritten; short tags follow the latest canonical tag.',
+    manifestColumns: '| Image | Canonical tag | Short tags | Alpine | Base | Source |',
+    bakeHeading: 'Other Images',
+    bakeDescription: (_groups: number, _variants: number, remaining: number) =>
+      `${remaining} image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.`,
     bakeColumns: '| Image | Variants | Base |',
   },
   'zh-CN': {
-    manifestHeading: 'Manifest 发布目标',
-    manifestDescription: '`manifest.yaml` 中定义的目标版本。发布状态可通过 `just status --remote` 查询。',
-    manifestColumns: '| 变体 | 构建 | 版本策略 | 目标版本 | Alpine | 基础镜像 | GHCR canonical 引用 |',
-    bakeHeading: '其他 Bake 镜像组',
-    bakeDescription: (groups: number, variants: number, remaining: number) =>
-      `共 ${groups} 个已跟踪的 Bake 镜像组，manifest 管理 ${variants} 个变体。下列 ${remaining} 个镜像组尚未纳入 manifest。变体列出非默认的 Bake target，基础镜像仅列出父镜像仓库。`,
+    manifestHeading: '受管理镜像',
+    manifestDescription: '发布到 GHCR。完整版本标签不会被覆盖；短标签跟随最新的完整版本标签。',
+    manifestColumns: '| 镜像 | 完整版本标签 | 短标签 | Alpine | 基础镜像 | 源码 |',
+    bakeHeading: '其他镜像',
+    bakeDescription: (_groups: number, _variants: number, remaining: number) =>
+      `${remaining} 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。`,
     bakeColumns: '| 镜像 | 变体 | 基础镜像 |',
   },
 } satisfies Record<ReadmeLocale, {
@@ -68,13 +68,17 @@ export function summarizeBase(info: ImageInfo, ownRepository?: string) {
 function renderManifestTable(releases: Release[], locale: ReadmeLocale): string {
   const text = copy[locale];
   const rows = releases.map((release) => {
-    const base = release.base?.image ? `${release.base.image}.${release.base.variant ?? 'default'}`
-      : release.base?.ref ?? 'scratch / Alpine minirootfs';
-    return `| \`${release.id}\` | [${release.build.dir}](${release.build.dir}/) · \`${release.build.target}\` | ${release.version.scheme} | \`${release.tag}\` | ${release.alpine ?? '—'} | \`${base}\` | \`${release.ref}\` |`;
+    // Parents are shown as pullable names: managed parents by image (and variant), external ones without the digest pin.
+    const base = release.base?.image
+      ? `${release.base.image}${release.base.variant && release.base.variant !== 'default' ? `:${release.base.variant}` : ''}`
+      : release.base?.ref?.split('@')[0] ?? 'scratch (Alpine minirootfs)';
+    const image = release.name === 'default' ? release.image : `${release.image} ${release.name}`;
+    const aliases = release.aliasTags.length ? release.aliasTags.map((alias) => `\`${alias}\``).join('<br>') : '-';
+    return `| ${image} | \`${release.ref}\` | ${aliases} | ${release.alpine ?? '-'} | \`${base}\` | [${release.build.dir}](${release.build.dir}/) |`;
   });
   return [
     `### ${text.manifestHeading}`, '', text.manifestDescription, '', text.manifestColumns,
-    '|---|---|---|---|---|---|---|', ...rows,
+    '|---|---|---|---|---|---|', ...rows,
   ].join('\n');
 }
 
