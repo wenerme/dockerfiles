@@ -1,16 +1,16 @@
 variable "IMAGE_NAME" { default = "node-builder" }
-variable "VERSION" { default = "24.17.0" }
+variable "VERSION" { default = "24.22.1" }
 variable "VERSION_MAJOR" { default = split(".", VERSION)[0] }
 variable "VERSION_MAJOR_MINOR" { default = "${split(".", VERSION)[0]}.${split(".", VERSION)[1]}" }
 variable "ALPINE_RELEASE" { default = "3.24.1" }
 variable "ALPINE_VERSION" { default = "3.24" }
 variable "REV" { default = "0" }
 
-variable "NPM_VERSION" { default = "11.17.0" }
-variable "PNPM_VERSION" { default = "11.8.0" }
+variable "NPM_VERSION" { default = "11.21.1" }
+variable "PNPM_VERSION" { default = "11.28.7" }
 variable "YARN_VERSION" { default = "1.22.22" }
-variable "BIOME_VERSION" { default = "2.5.0" }
-variable "BUN_VERSION" { default = "1.3.14" }
+variable "BIOME_VERSION" { default = "2.6.2" }
+variable "BUN_VERSION" { default = "1.4.3" }
 variable "FULL_ICU_VERSION" { default = "1.6.0" }
 
 group "default" {

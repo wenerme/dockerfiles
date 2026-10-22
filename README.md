@@ -46,16 +46,16 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 
 | Image | Canonical tag | Short tags | Alpine | Base | Source |
 |---|---|---|---|---|---|
-| base | `ghcr.io/wenerme/dockerfiles/base:3.24.2-r1` | - | 3.24.2 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
-| agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.2-r1` | - | 3.24.2 | `base` | [agent](agent/) |
-| pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r2` | - | 3.24.2 | `base` | [pdns](pdns/) |
-| node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.17.0-alpine-3.24.2-r1` | - | 3.24.2 | `base` | [node-builder](node-builder/) |
+| base | `ghcr.io/wenerme/dockerfiles/base:3.24.3-r0` | - | 3.24.3 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
+| agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.3-r0` | - | 3.24.3 | `base` | [agent](agent/) |
+| pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r3` | - | 3.24.3 | `base` | [pdns](pdns/) |
+| node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.22.1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [node-builder](node-builder/) |
 | go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` | - | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0` | [go-builder](go-builder/) |
-| nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.2-r1` | - | 3.24.2 | `base` | [nginx](nginx/) |
+| nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [nginx](nginx/) |
 | php 8.2 | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` | `8.2`<br>`8.2-alpine-3.19.1` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1` | [php](php/) |
-| php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.2-r0` | `8.3`<br>`8.3-alpine-3.24.2` | 3.24.2 | `nginx` | [php](php/) |
-| php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.2-r0` | `8.4`<br>`8.4-alpine-3.24.2` | 3.24.2 | `nginx` | [php](php/) |
-| php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.2-r0` | `8.5`<br>`8.5-alpine-3.24.2` | 3.24.2 | `nginx` | [php](php/) |
+| php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.3-r0` | `8.3`<br>`8.3-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
+| php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.3-r0` | `8.4`<br>`8.4-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
+| php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r0` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 
 ### Other Images
 
