@@ -1,8 +1,15 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { $ } from 'bun';
 
 /** Repository root, independent of the caller's working directory. */
 export const root = path.resolve(import.meta.dir, '../../..');
+
+/** Same rule as build.mk: registry credentials come from the repository Docker config when it exists. */
+export function useRepositoryDockerConfig() {
+  const dir = path.join(root, '.docker');
+  if (existsSync(dir)) process.env.DOCKER_CONFIG = dir;
+}
 
 export function rel(file: string) {
   return path.relative(root, file) || '.';

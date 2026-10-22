@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { parseManifest, resolveManifest, type ImageManifest, type ManifestVariant, type Release } from './manifest.ts';
+import { matchReleases, parseManifest, resolveManifest, type ImageManifest, type ManifestVariant, type Release } from './manifest.ts';
 
 const releaseVersion = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -49,16 +49,16 @@ export async function fetchAlpineBranches(url = 'https://alpinelinux.org/release
   return parseAlpineReleases(await response.json());
 }
 
-export interface AlpineChange {
+export interface ManifestChange {
   id: string;
   from: { alpine?: string; revision: number; tag: string };
   to: { alpine?: string; revision: number; tag: string };
   reason: string;
 }
 
-export interface AlpineUpdatePlan {
+export interface ManifestUpdatePlan {
   manifest: ImageManifest;
-  changes: AlpineChange[];
+  changes: ManifestChange[];
   notes: string[];
 }
 
@@ -69,18 +69,56 @@ function variantIndex(manifest: ImageManifest): Map<string, ManifestVariant> {
 const identity = (tag: string) => tag.replace(/-r\d+$/, '');
 
 /**
- * Move explicit Alpine versions to the newest patch on their branch, then propagate revisions down the graph:
- * a release whose canonical identity changed starts again at r0, and one whose inputs changed under an unchanged
- * identity (e.g. pdns, tagged by app version only) gets revision + 1 so the existing tag is not mistaken as current.
+ * Settle revisions of `draft` (a copy of `source` with edited versions) along the dependency graph.
+ * A variant is affected when it is a seed, its Alpine or app version changed, or one of its parents was affected.
+ * An affected variant whose canonical identity changed starts again at r0; one whose identity is unchanged
+ * (e.g. pdns, tagged by app version only) gets revision + 1 so the existing tag is not mistaken as current.
+ */
+export function propagateRevisions(source: ImageManifest, draft: ImageManifest, seeds: Iterable<string> = []): ManifestChange[] {
+  const variants = variantIndex(draft);
+  const before = new Map(resolveManifest(source).map((release) => [release.id, release]));
+  const seeded = new Set(seeds);
+  for (const id of seeded) {
+    if (!variants.has(id) || !before.has(id)) throw new Error(`unknown variant ${id}`);
+  }
+  const reasons = new Map<string, string>();
+  // resolveManifest returns dependency order, so every parent is settled before its dependents.
+  for (const release of resolveManifest(draft)) {
+    const previous = before.get(release.id);
+    if (!previous) continue; // a new variant keeps its declared revision
+    const parents = release.dependencies.filter((id) => reasons.has(id));
+    // Compare resolved values: an inherited Alpine change is reported as the parent change that caused it.
+    const reason = release.version.app !== previous.version.app ? `app ${previous.version.app} -> ${release.version.app}`
+      : parents.length ? `parent changed: ${parents.join(', ')}`
+      : release.alpine !== previous.alpine ? `Alpine ${previous.alpine} -> ${release.alpine}`
+      : seeded.has(release.id) ? 'revision bump' : undefined;
+    if (!reason) continue;
+    reasons.set(release.id, reason);
+    variants.get(release.id)!.version.revision = identity(release.tag) === identity(previous.tag) ? previous.version.revision + 1 : 0;
+  }
+  return resolveManifest(draft).filter((release) => reasons.has(release.id)).map((release) => ({
+    id: release.id, from: snapshot(before.get(release.id)!), to: snapshot(release), reason: reasons.get(release.id)!,
+  }));
+}
+
+/** Bump the selected variants (image or image.variant) and every dependent, e.g. after a base image content change. */
+export function planRevisionBump(source: ImageManifest, selectors: string[]): ManifestUpdatePlan {
+  if (!selectors.length) throw new Error('select at least one image or variant to bump');
+  const seeds = matchReleases(resolveManifest(source), selectors).map((release) => release.id);
+  const manifest = structuredClone(source);
+  return { manifest, changes: propagateRevisions(source, manifest, seeds), notes: [] };
+}
+
+/**
+ * Move explicit Alpine versions to the newest patch on their branch and propagate revisions down the graph.
  * Variants pinned to an external parent are reported, not changed: their Alpine follows the published parent.
  */
-export function planAlpineUpdate(source: ImageManifest, branches: AlpineBranches): AlpineUpdatePlan {
+export function planAlpineUpdate(source: ImageManifest, branches: AlpineBranches): ManifestUpdatePlan {
   const manifest = structuredClone(source);
   const variants = variantIndex(manifest);
-  const before = new Map(resolveManifest(source).map((release) => [release.id, release]));
   const newest = [...branches.values()].sort(compareVersions).at(-1)!;
   const notes: string[] = [];
-  for (const release of before.values()) {
+  for (const release of resolveManifest(source)) {
     const current = release.version.alpine;
     if (!current) continue;
     const latest = branches.get(alpineBranch(current));
@@ -99,27 +137,7 @@ export function planAlpineUpdate(source: ImageManifest, branches: AlpineBranches
       notes.push(`${release.id}: Alpine ${alpineBranch(newest)} is available; branch upgrades are manual`);
     }
   }
-
-  // resolveManifest returns dependency order, so every parent is settled before its dependents.
-  const changed = new Set<string>();
-  const changes: AlpineChange[] = [];
-  for (const draft of resolveManifest(manifest)) {
-    const previous = before.get(draft.id)!;
-    if (draft.alpine === previous.alpine && !draft.dependencies.some((id) => changed.has(id))) continue;
-    changed.add(draft.id);
-    const variant = variants.get(draft.id)!;
-    variant.version.revision = identity(draft.tag) === identity(previous.tag) ? previous.version.revision + 1 : 0;
-  }
-  const after = resolveManifest(manifest);
-  for (const release of after) {
-    if (!changed.has(release.id)) continue;
-    const previous = before.get(release.id)!;
-    const reason = release.version.alpine && release.version.alpine !== previous.version.alpine
-      ? `Alpine ${previous.version.alpine} -> ${release.version.alpine}`
-      : `parent changed: ${release.dependencies.filter((id) => changed.has(id)).join(', ')}`;
-    changes.push({ id: release.id, from: snapshot(previous), to: snapshot(release), reason });
-  }
-  return { manifest, changes, notes };
+  return { manifest, changes: propagateRevisions(source, manifest), notes };
 }
 
 function snapshot(release: Release) {

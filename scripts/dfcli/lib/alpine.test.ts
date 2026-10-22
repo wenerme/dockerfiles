@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { parseAlpineReleases, planAlpineUpdate, renderManifestUpdate, type AlpineBranches } from './alpine.ts';
+import { parseAlpineReleases, planAlpineUpdate, planRevisionBump, renderManifestUpdate, type AlpineBranches } from './alpine.ts';
 import { parseManifest, resolveManifest } from './manifest.ts';
 
 const fixture = `schema: 1
@@ -94,6 +94,7 @@ images:
           scheme: app-alpine
           app: "8.4.26-r0"
           revision: 1
+        aliases: ["8.4", "8.4-alpine-\${alpine}"]
 
   - name: go-builder
     variants:
@@ -165,6 +166,28 @@ describe('Alpine update plan', () => {
     const plan = planAlpineUpdate(parseManifest(fixture), new Map([['3.19', '3.19.9']]));
     expect(plan.changes).toEqual([]);
     expect(plan.notes).toContain('base.default: Alpine 3.24 is no longer listed upstream; staying on 3.24.1');
+  });
+});
+
+describe('revision bump', () => {
+  test('a base content change bumps it and every internal dependent once, not pinned or unrelated variants', () => {
+    const plan = planRevisionBump(parseManifest(fixture), ['base']);
+    expect(plan.changes.map((change) => [change.id, change.from.tag, change.to.tag, change.reason])).toEqual([
+      ['base.default', '3.24.1-r0', '3.24.1-r1', 'revision bump'],
+      ['pdns.default', '5.0.7-r2', '5.0.7-r3', 'parent changed: base.default'],
+      ['nginx.default', '1.30.4-r1-alpine-3.24.1-r3', '1.30.4-r1-alpine-3.24.1-r4', 'parent changed: base.default'],
+      ['php.8.4', '8.4-8.4.26-r0-alpine-3.24.1-r1', '8.4-8.4.26-r0-alpine-3.24.1-r2', 'parent changed: nginx.default'],
+    ]);
+    // aliases follow the canonical tag; they are not versioned themselves
+    expect(resolveManifest(plan.manifest).find((release) => release.id === 'php.8.4')!.aliasTags).toEqual(['8.4', '8.4-alpine-3.24.1']);
+    expect(() => planRevisionBump(parseManifest(fixture), ['missing'])).toThrow('unknown image');
+    expect(() => planRevisionBump(parseManifest(fixture), [])).toThrow('select at least one');
+  });
+
+  test('the renderer refuses edits it cannot write instead of dropping them, e.g. app versions', () => {
+    const plan = planRevisionBump(parseManifest(fixture), ['base']);
+    plan.manifest.images[3].variants[1].version.app = '8.4.27-r0';
+    expect(() => renderManifestUpdate(fixture, plan.manifest)).toThrow('does not match the planned update');
   });
 });
 

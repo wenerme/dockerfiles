@@ -143,6 +143,18 @@ publish-plan *images:
 alpine-update *args:
     bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} alpine update "$@"
 
+# Bump a variant after a content change and propagate revisions to dependents: just bump base --write.
+[group('manifest')]
+[positional-arguments]
+bump *args:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} manifest bump "$@"
+
+# Copy published GHCR tags to another registry without rebuilding: just mirror php.8.4 --to docker.io/wener --push.
+[group('manifest')]
+[positional-arguments]
+mirror *args:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} mirror "$@"
+
 # Compare postgres extension versions with upstream.
 [group('project')]
 postgres-versions:

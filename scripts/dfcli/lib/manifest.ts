@@ -19,6 +19,8 @@ export interface ManifestVariant {
   version: { scheme: VersionScheme; app?: string; alpine?: string; revision: number };
   base?: Dependency;
   inputs: Dependency[];
+  /** Moving tags such as "8.4" or "8.4-alpine-${alpine}", repointed to the canonical tag after each publish. */
+  aliases?: string[];
 }
 export interface ImageManifest {
   schema: 1;
@@ -31,7 +33,11 @@ export interface Release extends ManifestVariant {
   image: string;
   alpine?: string;
   tag: string;
+  /** Registry repository without tag, e.g. ghcr.io/wenerme/dockerfiles/php. */
+  repository: string;
   ref: string;
+  /** Resolved alias tags; they never end in -rN, which is reserved for canonical tags. */
+  aliasTags: string[];
   source: string;
   dependencies: string[];
 }
@@ -78,6 +84,8 @@ function text(value: unknown, label: string, pattern?: RegExp): string {
 }
 
 const slug = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/;
+const templateField = /\$\{(?!alpine\}|app\})/;
+const tagPattern = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/;
 const alpineVersion = /^\d+\.\d+\.\d+$/;
 const appVersion = /^[0-9][a-zA-Z0-9_.-]*$/;
 
@@ -85,7 +93,7 @@ function dependency(value: unknown, label: string): Dependency {
   const item = object(value, label, ['image', 'variant', 'ref', 'context', 'arg']);
   const arg = item.arg === undefined ? undefined : text(item.arg, `${label}.arg`, /^[A-Z][A-Z0-9_]*$/);
   const context = text(item.context, `${label}.context`);
-  if (/\$\{(?!alpine\}|app\})/.test(context) || /[\s|`]/.test(context)) {
+  if (templateField.test(context) || /[\s|`]/.test(context)) {
     throw new Error(`${label}.context: only \${alpine} and \${app} substitutions are supported`);
   }
   if (item.ref !== undefined) {
@@ -110,7 +118,7 @@ export function parseManifest(source: string): ImageManifest {
     const name = text(image.name, 'image.name', slug);
     const variants = list(image.variants, `${name}.variants`).map((rawVariant): ManifestVariant => {
       const label = `${name}.variant`;
-      const variant = object(rawVariant, label, ['name', 'build', 'version', 'base', 'inputs']);
+      const variant = object(rawVariant, label, ['name', 'build', 'version', 'base', 'inputs', 'aliases']);
       const build = object(variant.build, `${label}.build`, ['dir', 'target', 'variables', 'prepare']);
       const prepare = build.prepare === undefined ? undefined : text(build.prepare, `${label}.build.prepare`, /^[a-z][a-z0-9_-]*$/);
       if (prepare && ['push', 'build', 'load', 'print', 'info'].includes(prepare)) {
@@ -140,12 +148,18 @@ export function parseManifest(source: string): ImageManifest {
       if (scheme === 'alpine' && app) throw new Error(`${label}: alpine scheme does not use app version`);
       if (!bindings.revision || (scheme !== 'alpine' && !bindings.app)) throw new Error(`${label}: missing version variable binding`);
       if (variant.inputs !== undefined && !Array.isArray(variant.inputs)) throw new Error(`${label}.inputs: expected list`);
+      const aliases = variant.aliases === undefined ? [] : list(variant.aliases, `${label}.aliases`).map((alias) => {
+        const value = text(alias, `${label}.aliases`, /^[A-Za-z0-9_.${}-]+$/);
+        if (templateField.test(value)) throw new Error(`${label}.aliases: only \${alpine} and \${app} substitutions are supported`);
+        return value;
+      });
       return {
         name: text(variant.name, `${label}.name`, slug),
         build: { dir, target: text(build.target, `${label}.build.target`, /^[a-zA-Z0-9_.-]+$/), variables: bindings, prepare },
         version: { scheme: scheme as VersionScheme, app, alpine, revision: version.revision as number },
         base: variant.base === undefined ? undefined : dependency(variant.base, `${label}.base`),
         inputs: (variant.inputs as unknown[] | undefined ?? []).map((item) => dependency(item, `${label}.inputs`)),
+        aliases,
       };
     });
     return { name, variants };
@@ -191,8 +205,18 @@ export function resolveManifest(manifest: ImageManifest): Release[] {
     const prefix = variant.name === 'default' ? '' : `${variant.name}-`;
     const tag = `${prefix}${identity}-r${variant.version.revision}`;
     if (tag.length > 128) throw new Error(`${id}: tag exceeds 128 characters`);
+    const aliasTags = (variant.aliases ?? []).map((template) => {
+      const alias = template.replace(/\$\{(alpine|app)\}/g, (_, field: string) => {
+        const value = field === 'alpine' ? alpine : variant.version.app;
+        if (!value) throw new Error(`${id}: alias ${template} requires ${field}`);
+        return value;
+      });
+      if (!tagPattern.test(alias) || /-r\d+$/.test(alias)) throw new Error(`${id}: invalid alias ${alias}; -rN is reserved for canonical tags`);
+      return alias;
+    });
+    const repository = `${manifest.registry}/${variant.image}`;
     const release: Release = {
-      ...variant, id, alpine, tag, ref: `${manifest.registry}/${variant.image}:${tag}`, source: manifest.source, dependencies,
+      ...variant, id, alpine, tag, repository, ref: `${repository}:${tag}`, aliasTags, source: manifest.source, dependencies,
     };
     resolved.set(id, release);
     visiting.pop();
@@ -200,7 +224,8 @@ export function resolveManifest(manifest: ImageManifest): Release[] {
   };
   for (const id of variants.keys()) visit(id);
   const releases = [...resolved.values()];
-  if (new Set(releases.map((release) => release.ref)).size !== releases.length) throw new Error('canonical tag collision');
+  const refs = releases.flatMap((release) => [release.ref, ...release.aliasTags.map((alias) => `${release.repository}:${alias}`)]);
+  if (new Set(refs).size !== refs.length) throw new Error('canonical or alias tag collision');
   return releases;
 }
 
@@ -221,13 +246,19 @@ export function validateSelectors(selectors: string[]) {
   }
 }
 
-export function planReleases(releases: Release[], selectors: string[]): Release[] {
-  if (!selectors.length) return releases;
-  const affected = new Set(selectors.flatMap((selector) => {
+/** Releases matching image or image.variant selectors, without dependencies. */
+export function matchReleases(releases: Release[], selectors: string[]): Release[] {
+  const ids = new Set(selectors.flatMap((selector) => {
     const matches = releases.filter((release) => release.image === selector || release.id === selector);
     if (!matches.length) throw new Error(`unknown image ${selector}`);
     return matches.map((release) => release.id);
   }));
+  return releases.filter((release) => ids.has(release.id));
+}
+
+export function planReleases(releases: Release[], selectors: string[]): Release[] {
+  if (!selectors.length) return releases;
+  const affected = new Set(matchReleases(releases, selectors).map((release) => release.id));
   for (const release of releases) {
     if (release.dependencies.some((id) => affected.has(id))) affected.add(release.id);
   }
@@ -346,6 +377,56 @@ export function localRef(ref: string, registry: string): string {
   const slash = ref.indexOf('/');
   if (slash < 0) throw new Error(`invalid image ref ${ref}`);
   return `${registry}${ref.slice(slash)}`;
+}
+
+/** Alias refs of a release in its own repository, or rewritten onto the local verification registry. */
+export function aliasRefs(release: Release, registry?: string): string[] {
+  return release.aliasTags.map((alias) => {
+    const ref = `${release.repository}:${alias}`;
+    return registry ? localRef(ref, registry) : ref;
+  });
+}
+
+/** Target namespace for copies outside GHCR, e.g. docker.io/wener or quay.io/wener. */
+export function parseMirrorNamespace(value: string): string {
+  if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?::\d+)?\/[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(value)) {
+    throw new Error(`mirror target must be <registry>/<namespace>, e.g. docker.io/wener; got ${value}`);
+  }
+  return value;
+}
+
+/** Canonical and alias refs of a release under another namespace, keeping image name and tags. */
+export function mirrorRefs(release: Release, namespace: string): string[] {
+  return [release.tag, ...release.aliasTags].map((tag) => `${namespace}/${release.image}:${tag}`);
+}
+
+export interface TagSync { ref: string; digest: string; action: 'current' | 'updated' | 'would update' }
+
+/**
+ * Point every target tag at `repository@digest`. Tags already on that digest are left alone.
+ * imagetools copies the index unchanged, so targets end up with the same digest; this is verified after writing.
+ * Unknown registry state stops the sync instead of overwriting a tag that might be fine.
+ */
+export async function syncTags(repository: string, digest: string, targets: string[], write: boolean): Promise<TagSync[]> {
+  const states = await Promise.all(targets.map(async (ref) => ({ ref, publication: await inspectPublication(ref) })));
+  for (const { ref, publication } of states) {
+    if (publication.state !== 'published' && publication.state !== 'missing') {
+      throw new Error(`${ref}: ${publication.detail ?? `registry state ${publication.state}`}`);
+    }
+  }
+  const stale = states.filter((state) => state.publication.digest !== digest).map((state) => state.ref);
+  if (write && stale.length) {
+    await run(['docker', 'buildx', 'imagetools', 'create', ...stale.flatMap((ref) => ['--tag', ref]), `${repository}@${digest}`], {
+      timeoutMs: 60 * 60_000,
+    });
+    for (const ref of stale) {
+      const written = await inspectPublication(ref);
+      if (written.digest !== digest) throw new Error(`${ref}: expected ${digest}, registry reports ${written.digest ?? written.state}`);
+    }
+  }
+  return states.map(({ ref, publication }) => ({
+    ref, digest, action: publication.digest === digest ? 'current' : write ? 'updated' : 'would update',
+  }));
 }
 
 /** Missing tags are built; existing canonical tags are immutable; unknown registry state stops publishing. */
