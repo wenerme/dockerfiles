@@ -197,3 +197,39 @@ images:
           revision: 0
         aliases: ["8.5", "8.5-alpine-${alpine}"]
         track: { apk: php85 }
+
+  # Debian with the TUNA apt mirror; versions follow the official image's point-release tags.
+  - name: debian
+    variants:
+      - name: default
+        build:
+          dir: debian
+          target: debian
+          variables:
+            app: VERSION
+            revision: REV
+        base:
+          ref: "docker.io/library/debian:${app}"
+          context: "debian:${app}"
+        version:
+          scheme: app
+          app: "13.7"
+          revision: 0
+        aliases: ["13", "trixie", "latest"]
+        track: { docker: debian, prefix: "13." }
+      - name: bookworm
+        build:
+          dir: debian
+          target: debian
+          variables:
+            app: VERSION
+            revision: REV
+        base:
+          ref: "docker.io/library/debian:${app}"
+          context: "debian:${app}"
+        version:
+          scheme: app
+          app: "12.15"
+          revision: 0
+        aliases: ["12", "bookworm"]
+        track: { docker: debian, prefix: "12." }

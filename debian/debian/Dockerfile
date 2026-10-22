@@ -1,35 +1,22 @@
-ARG VERSION
+ARG VERSION=13.7
 FROM debian:${VERSION}
 
-MAINTAINER wener
+ARG DEBIAN_MIRROR=https://mirrors.tuna.tsinghua.edu.cn
 
-#LABEL org.label-schema.name="debian" \
-#    org.label-schema.vendor="Wener" \
-#    org.label-schema.description="Debian with China mirror" \
-#    org.label-schema.url="https://github.com/wenerme/dockerfiles" \
-#    org.label-schema.vcs-url="https://github.com/wenerme/dockerfiles" \
-#    org.label-schema.license="MIT"
+LABEL org.opencontainers.image.description="Debian with a China apt mirror and backports enabled"
 
-#ENV DEBIAN_CODENAME=bookworm
-#ENV DEBIAN_MIRROR=http://mirrors.aliyun.com
-#RUN echo "# China mirror                                                                              \n\
-#deb $DEBIAN_MIRROR/debian/               ${DEBIAN_CODENAME} main non-free contrib                     \n\
-#deb $DEBIAN_MIRROR/debian/               ${DEBIAN_CODENAME}-proposed-updates main non-free contrib    \n\
-#deb-src $DEBIAN_MIRROR/debian/           ${DEBIAN_CODENAME} main non-free contrib                     \n\
-#deb-src $DEBIAN_MIRROR/debian/           ${DEBIAN_CODENAME}-proposed-updates main non-free contrib    \n\
-#" > /etc/apt/sources.list \
-#  && echo "deb http://mirrors.aliyun.com/debian ${DEBIAN_CODENAME}-backports main" > /etc/apt/sources.list.d/backports.list
-# deb-src $DEBIAN_MIRROR/debian-security/  ${DEBIAN_CODENAME}/updates main non-free contrib
-# debian is not small anyway
-
-RUN apt update && apt upgrade -y && \
-    apt install -y \
-    wget curl \
-    ca-certificates  \
-    file  \
-    htop  \
-    nano  \
-    procps \
-    tree  \
-    util-linux  \
-    && rm -rf /var/lib/apt/lists/*
+# Install and upgrade from deb.debian.org, which is fast on any builder, then point apt at the China mirror
+# for users of the image. Backports are added so `apt install -t <codename>-backports` works.
+RUN set -eux; \
+    . /etc/os-release; \
+    apt-get update; \
+    apt-get upgrade -y; \
+    apt-get install -y --no-install-recommends \
+      ca-certificates curl wget file htop nano procps tree util-linux; \
+    rm -rf /var/lib/apt/lists/*; \
+    sed -i \
+      -e "s#http://deb.debian.org#${DEBIAN_MIRROR}#g" \
+      -e "s#^Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates\$#Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates ${VERSION_CODENAME}-backports#" \
+      /etc/apt/sources.list.d/debian.sources; \
+    grep -q "${DEBIAN_MIRROR}/debian-security" /etc/apt/sources.list.d/debian.sources; \
+    grep -q "${VERSION_CODENAME}-backports" /etc/apt/sources.list.d/debian.sources

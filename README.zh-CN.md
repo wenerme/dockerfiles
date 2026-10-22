@@ -33,6 +33,7 @@ docker pull wener/php:8.4
 ## 注意事项
 
 - 基于 `wener/base` 的镜像在 `/etc/apk/repositories` 中使用清华 TUNA Alpine 镜像源（`mirrors.tuna.tsinghua.edu.cn`）。
+- Debian 镜像的 apt 使用清华 TUNA 镜像源并启用 backports；构建时仍从 `deb.debian.org` 安装软件包。
 - PHP 8.2 停留在 Alpine 3.19 和 PHP 8.2.26，不再更新，请使用 PHP 8.4 或 8.5。
 - 受管理镜像带有 OCI 标签 `org.opencontainers.image.source`、`org.opencontainers.image.version` 和 `org.opencontainers.image.revision`。
 
@@ -56,10 +57,12 @@ docker pull wener/php:8.4
 | php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.3-r0` | `8.3`<br>`8.3-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.3-r0` | `8.4`<br>`8.4-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r0` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
+| debian | `ghcr.io/wenerme/dockerfiles/debian:13.7-r0` | `13`<br>`trixie`<br>`latest` | - | `docker.io/library/debian:13.7` | [debian](debian/) |
+| debian bookworm | `ghcr.io/wenerme/dockerfiles/debian:bookworm-12.15-r0` | `12`<br>`bookworm` | - | `docker.io/library/debian:12.15` | [debian](debian/) |
 
 ### 其他镜像
 
-33 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
+32 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
@@ -71,7 +74,6 @@ docker pull wener/php:8.4
 | [chromium](chromium/) | - | `wener/xvfb` |
 | [continue-server](continue-server/) | - | `wener/base` |
 | [dante](dante/) | - | `wener/base` |
-| [debian](debian/) | bookworm-backports | `debian` |
 | [dev](dev/) | - | `wener/node` |
 | [dnsmasq](dnsmasq/) | - | `wener/base` |
 | [docker](docker/) | - | `wener/base` |

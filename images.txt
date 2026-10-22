@@ -16,3 +16,10 @@ php:8.4-alpine-3.24.3
 php:8.5-8.5.12-r0-alpine-3.24.3-r0
 php:8.5
 php:8.5-alpine-3.24.3
+debian:13.7-r0
+debian:13
+debian:trixie
+debian:latest
+debian:bookworm-12.15-r0
+debian:12
+debian:bookworm
