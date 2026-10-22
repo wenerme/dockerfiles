@@ -35,6 +35,7 @@ describe('repo helpers', () => {
       const expected = process.env.DOCKER_CONFIG ?? '';
       expect((await capture(['sh', '-c', 'printf %s "$DOCKER_CONFIG"'])).stdout).toBe(expected);
       process.env.DFCLI_ENV_PROBE = 'live';
+      expect((await capture(['sh', '-c', 'printf %s "$DOCKER_CONFIG"'], { env: { DOCKER_CONFIG: '/tmp/override' } })).stdout).toBe('/tmp/override');
       expect((await capture(['sh', '-c', 'printf %s "$DFCLI_ENV_PROBE"'])).stdout).toBe('live');
       await expect(run(['sh', '-c', 'test "$DFCLI_ENV_PROBE" = live'], { timeoutMs: 5_000 })).resolves.toBeUndefined();
     } finally {

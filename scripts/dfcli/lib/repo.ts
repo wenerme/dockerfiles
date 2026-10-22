@@ -6,7 +6,7 @@ import { $ } from 'bun';
 export const root = path.resolve(import.meta.dir, '../../..');
 
 // Bun.spawn snapshots the environment at startup; pass the live one so settings such as DOCKER_CONFIG reach children.
-const childEnv = () => ({ ...process.env });
+const childEnv = (extra?: Record<string, string>) => ({ ...process.env, ...extra });
 
 /** Same rule as build.mk: registry credentials come from the repository Docker config when it exists. */
 export function useRepositoryDockerConfig() {
@@ -46,11 +46,11 @@ function killedByTimeout(signal: string | null, startedAt: number, timeoutMs?: n
  * Run a command with a timeout and capture its output without throwing.
  * Bun Shell has no per-command timeout, so registry queries that may hang use Bun.spawn.
  */
-export async function capture(cmd: string[], options: { cwd?: string; timeoutMs?: number } = {}): Promise<Captured> {
+export async function capture(cmd: string[], options: { cwd?: string; timeoutMs?: number; env?: Record<string, string> } = {}): Promise<Captured> {
   let proc: Bun.Subprocess<'ignore', 'pipe', 'pipe'>;
   const startedAt = performance.now();
   try {
-    proc = Bun.spawn(cmd, { cwd: options.cwd, env: childEnv(), stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: options.timeoutMs });
+    proc = Bun.spawn(cmd, { cwd: options.cwd, env: childEnv(options.env), stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout: options.timeoutMs });
   } catch (error) {
     return { exitCode: 127, stdout: '', stderr: error instanceof Error ? error.message : String(error), timedOut: false };
   }
