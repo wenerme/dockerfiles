@@ -14,7 +14,7 @@ function commandPaths(command = buildProgram(), prefix = ''): string[] {
 describe('dfcli command tree', () => {
   test('exposes the expected commands', () => {
     expect(commandPaths().sort()).toEqual([
-      'alpine update', 'base check', 'graph', 'manifest bake', 'manifest check', 'plan', 'postgres versions',
+      'alpine update', 'base check', 'graph', 'manifest bake', 'manifest bump', 'manifest check', 'mirror', 'plan', 'postgres versions',
       'project build', 'project info', 'project load', 'project print', 'project push',
       'publish', 'readme', 'rev bump', 'scan', 'status',
     ]);

@@ -1,10 +1,21 @@
 import { writeFileSync } from 'node:fs';
 import type { Command } from 'commander';
 import {
-  generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef, parseLocalRegistry, parsePlatforms,
-  planReleases, prepareBuild, publishAction, pushBake, selectRelease, validateSelectors, type Publication,
+  aliasRefs, generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef, matchReleases, mirrorRefs,
+  parseLocalRegistry, parseMirrorNamespace, parsePlatforms, planReleases, prepareBuild, publishAction, pushBake,
+  selectRelease, syncTags, validateSelectors, type Publication, type TagSync,
 } from '../lib/manifest.ts';
-import { commandError, root, sourceRevision } from '../lib/repo.ts';
+import { commandError, root, sourceRevision, useRepositoryDockerConfig } from '../lib/repo.ts';
+
+type ResultRow = { id: string; ref: string; action: string; digest?: string };
+
+const tagRows = (id: string, syncs: TagSync[], prefix = ''): ResultRow[] =>
+  syncs.map((sync) => ({ id, ref: sync.ref, action: `${prefix}${sync.action}`, digest: sync.digest }));
+
+function printRows(results: ResultRow[]) {
+  console.log('ACTION\tVARIANT\tREF');
+  for (const item of results) console.log(`${item.action}\t${item.id}\t${item.ref}${item.digest ? ` ${item.digest}` : ''}`);
+}
 
 /** Manifest-managed images: status, plan, graph and GHCR publishing. */
 export function registerImageCommands(program: Command) {
@@ -85,13 +96,17 @@ export function registerImageCommands(program: Command) {
       const releases = loadReleases(root);
       const platforms = parsePlatforms(options.platforms);
       const revision = await sourceRevision();
-      const results: { id: string; ref: string; action: string; digest?: string }[] = [];
+      const results: ResultRow[] = [];
       let current: string | undefined;
       try {
         for (const release of planReleases(releases, selectors)) {
           current = release.id;
-          if (publishAction(await inspectPublication(release.ref)) === 'skip') {
+          const publication = await inspectPublication(release.ref);
+          if (publishAction(publication) === 'skip') {
             results.push({ id: release.id, ref: release.ref, action: 'skip (published)' });
+            // Moving tags follow the published canonical tag; only a real publish writes to GHCR.
+            results.push(...tagRows(release.id,
+              await syncTags(release.repository, publication.digest!, aliasRefs(release), Boolean(options.push)), 'alias '));
             continue;
           }
           const target = verify ? localRef(release.ref, verify) : release.ref;
@@ -100,6 +115,7 @@ export function registerImageCommands(program: Command) {
           });
           if (!options.push && !verify) {
             results.push({ id: release.id, ref: release.ref, action: 'would build' });
+            results.push(...aliasRefs(release).map((ref) => ({ id: release.id, ref, action: 'alias would update' })));
             continue;
           }
           console.error(`==> ${release.id}: building ${target}`);
@@ -109,14 +125,15 @@ export function registerImageCommands(program: Command) {
           if (published.state !== 'published') throw new Error(`pushed but ${target} reports ${published.state}`);
           if (verify) localRefs.set(release.id, target);
           results.push({ id: release.id, ref: target, action: verify ? 'verified' : 'built', digest: published.digest });
+          const repository = verify ? localRef(release.repository, verify) : release.repository;
+          results.push(...tagRows(release.id, await syncTags(repository, published.digest!, aliasRefs(release, verify), true), 'alias '));
         }
         current = undefined;
       } catch (error) {
         if (current) results.push({ id: current, ref: '-', action: 'failed' });
         throw new Error(`${current ?? 'publish'}: ${commandError(error)}`);
       } finally {
-        console.log('ACTION\tVARIANT\tREF');
-        for (const item of results) console.log(`${item.action}\t${item.id}\t${item.ref}${item.digest ? ` ${item.digest}` : ''}`);
+        printRows(results);
         if (process.env.GITHUB_STEP_SUMMARY) {
           const rows = results.map((item) => `| \`${item.id}\` | ${item.action} | \`${item.ref}\` | ${item.digest ? `\`${item.digest}\`` : '-'} |`);
           writeFileSync(process.env.GITHUB_STEP_SUMMARY, [
@@ -124,6 +141,30 @@ export function registerImageCommands(program: Command) {
             '| Variant | Action | Ref | Digest |', '|---|---|---|---|', ...rows, '',
           ].join('\n'), { flag: 'a' });
         }
+      }
+    });
+
+  program
+    .command('mirror')
+    .description('Copy published GHCR canonical and alias tags to another registry without rebuilding; dry-run unless --push')
+    .argument('<images...>', 'image or image.variant IDs to copy; dependencies are not added')
+    .requiredOption('--to <namespace>', 'target registry namespace, e.g. docker.io/wener')
+    .option('--push', 'write missing or stale tags')
+    .action(async (selectors: string[], options: { to: string; push?: boolean }) => {
+      validateSelectors(selectors);
+      const namespace = parseMirrorNamespace(options.to);
+      useRepositoryDockerConfig();
+      const results: ResultRow[] = [];
+      try {
+        for (const release of matchReleases(loadReleases(root), selectors)) {
+          const publication = await inspectPublication(release.ref);
+          if (publication.state !== 'published') {
+            throw new Error(`${release.id}: ${release.ref} is ${publication.state}; publish it to GHCR first`);
+          }
+          results.push(...tagRows(release.id, await syncTags(release.repository, publication.digest!, mirrorRefs(release, namespace), Boolean(options.push))));
+        }
+      } finally {
+        printRows(results);
       }
     });
 }

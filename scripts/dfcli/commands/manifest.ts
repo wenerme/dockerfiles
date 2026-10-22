@@ -1,5 +1,7 @@
 import type { Command } from 'commander';
-import { generatedBake, inspectBake, loadReleases, selectRelease } from '../lib/manifest.ts';
+import { planRevisionBump } from '../lib/alpine.ts';
+import { generatedBake, inspectBake, loadReleases, selectRelease, validateSelectors } from '../lib/manifest.ts';
+import { applyManifestPlan, readManifest } from '../lib/manifest-write.ts';
 import { root } from '../lib/repo.ts';
 
 export function registerManifestCommands(program: Command) {
@@ -23,5 +25,17 @@ export function registerManifestCommands(program: Command) {
       const releases = loadReleases(root);
       const release = selectRelease(releases, selector);
       console.log(JSON.stringify(generatedBake(await inspectBake(root, release), release, releases), null, 2));
+    });
+
+  manifest
+    .command('bump')
+    .description('Increment the revision of the selected variants and propagate to every dependent; preview unless --write')
+    .argument('<images...>', 'image or image.variant whose content changed, e.g. base')
+    .option('--write', 'write manifest.yaml and regenerate the README regions')
+    .option('--json', 'print the planned changes as JSON')
+    .action(async (selectors: string[], options: { write?: boolean; json?: boolean }) => {
+      validateSelectors(selectors);
+      const { source, manifest: parsed } = readManifest();
+      await applyManifestPlan(planRevisionBump(parsed, selectors), source, options);
     });
 }

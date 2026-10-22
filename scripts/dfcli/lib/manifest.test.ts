@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
+  aliasRefs, executionBake, generatedBake, localRef, mirrorRefs, parseLocalRegistry, parseManifest, parseMirrorNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
   registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, validateSelectors, versionVariables, type ImageManifest,
 } from './manifest.ts';
 
@@ -193,6 +193,41 @@ describe('generated artifacts and publication states', () => {
       .toBe('docker-image://ghcr.io/wenerme/dockerfiles/base:3.24.1-r2');
     for (const value of ['ghcr.io', 'registry.example.com:5000', 'localhost', '0.0.0.0:5000', 'localhost:5000/x']) {
       expect(() => parseLocalRegistry(value)).toThrow('localhost:<port>');
+    }
+  });
+
+  test('aliases resolve version templates, stay unique per repository and never look canonical', () => {
+    const manifest = sample();
+    manifest.images[3].variants[0].aliases = ['5', '5-alpine-${alpine}', '${app}'];
+    const releases = resolveManifest(manifest);
+    const builder = selectRelease(releases, 'builder');
+    expect(builder.aliasTags).toEqual(['5', '5-alpine-3.24.1', '5.0.0']);
+    expect(aliasRefs(builder)).toEqual([
+      'ghcr.io/wenerme/dockerfiles/builder:5', 'ghcr.io/wenerme/dockerfiles/builder:5-alpine-3.24.1', 'ghcr.io/wenerme/dockerfiles/builder:5.0.0',
+    ]);
+    expect(aliasRefs(builder, 'localhost:5000')[0]).toBe('localhost:5000/wenerme/dockerfiles/builder:5');
+    expect(selectRelease(releases, 'agent').aliasTags).toEqual([]);
+
+    const canonicalLike = sample();
+    canonicalLike.images[3].variants[0].aliases = ['5-r1'];
+    expect(() => resolveManifest(canonicalLike)).toThrow('reserved for canonical');
+    const collision = sample();
+    collision.images[1].variants.push({ ...collision.images[1].variants[0], name: 'python', aliases: ['3.24.1-r7'.replace('-r7', '')] });
+    collision.images[1].variants[0].aliases = ['3.24.1'];
+    expect(() => resolveManifest(collision)).toThrow('alias tag collision');
+    const yaml = `schema: 1\nregistry: ghcr.io/x/y\nsource: https://github.com/x/y\nimages:\n  - name: a\n    variants:\n      - name: default\n        build: { dir: a, target: a, variables: { alpine: A, revision: R } }\n        version: { scheme: alpine, alpine: "3.24.1", revision: 0 }\n        aliases: ["\${revision}"]\n`;
+    expect(() => parseManifest(yaml)).toThrow('substitutions');
+  });
+
+  test('mirror copies canonical and alias tags under another namespace', () => {
+    const manifest = sample();
+    manifest.images[3].variants[0].aliases = ['5'];
+    const builder = selectRelease(resolveManifest(manifest), 'builder');
+    expect(mirrorRefs(builder, parseMirrorNamespace('docker.io/wener'))).toEqual([
+      'docker.io/wener/builder:5.0.0-alpine-3.24.1-r4', 'docker.io/wener/builder:5',
+    ]);
+    for (const value of ['wener', 'docker.io', 'docker.io/wener/php', 'docker.io/Wener', 'docker.io/wener;rm']) {
+      expect(() => parseMirrorNamespace(value)).toThrow('mirror target');
     }
   });
 
