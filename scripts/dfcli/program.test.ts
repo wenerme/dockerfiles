@@ -14,9 +14,9 @@ function commandPaths(command = buildProgram(), prefix = ''): string[] {
 describe('dfcli command tree', () => {
   test('exposes the expected commands', () => {
     expect(commandPaths().sort()).toEqual([
-      'alpine update', 'base check', 'graph', 'manifest bake', 'manifest bump', 'manifest check', 'mirror', 'plan', 'postgres versions',
+      'base check', 'graph', 'images', 'manifest bake', 'manifest bump', 'manifest check', 'plan', 'postgres versions',
       'project build', 'project info', 'project load', 'project print', 'project push',
-      'publish', 'readme', 'rev bump', 'scan', 'status',
+      'publish', 'readme', 'rev bump', 'scan', 'status', 'sync', 'update',
     ]);
   });
 
@@ -30,5 +30,15 @@ describe('dfcli command tree', () => {
     const result = Bun.spawnSync([process.execPath, main, 'stauts'], { stdout: 'pipe', stderr: 'pipe' });
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr.toString()).toContain('status');
+  });
+
+  test('sync keeps image arguments after a repeated --to and validates targets before any registry access', () => {
+    const run = (...args: string[]) => Bun.spawnSync([process.execPath, main, 'sync', ...args], { stdout: 'pipe', stderr: 'pipe' });
+    const unmatched = run('--to', 'docker.io/wener', 'no-such-image', '--to', 'quay.io/wener');
+    expect(unmatched.exitCode).toBe(1);
+    expect(unmatched.stderr.toString()).toContain('no images.txt line matches no-such-image');
+    const badTarget = run('php', '--to', 'docker.io/wener', '--to', 'not-a-namespace');
+    expect(badTarget.exitCode).toBe(1);
+    expect(badTarget.stderr.toString()).toContain('got not-a-namespace');
   });
 });

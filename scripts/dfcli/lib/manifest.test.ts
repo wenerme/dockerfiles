@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  aliasRefs, executionBake, generatedBake, localRef, mirrorRefs, parseLocalRegistry, parseManifest, parseMirrorNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
+  aliasRefs, executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parseNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
   registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, validateSelectors, versionVariables, type ImageManifest,
 } from './manifest.ts';
 
@@ -219,15 +219,10 @@ describe('generated artifacts and publication states', () => {
     expect(() => parseManifest(yaml)).toThrow('substitutions');
   });
 
-  test('mirror copies canonical and alias tags under another namespace', () => {
-    const manifest = sample();
-    manifest.images[3].variants[0].aliases = ['5'];
-    const builder = selectRelease(resolveManifest(manifest), 'builder');
-    expect(mirrorRefs(builder, parseMirrorNamespace('docker.io/wener'))).toEqual([
-      'docker.io/wener/builder:5.0.0-alpine-3.24.1-r4', 'docker.io/wener/builder:5',
-    ]);
+  test('sync target namespaces are registry/namespace pairs only', () => {
+    expect(parseNamespace('docker.io/wener')).toBe('docker.io/wener');
     for (const value of ['wener', 'docker.io', 'docker.io/wener/php', 'docker.io/Wener', 'docker.io/wener;rm']) {
-      expect(() => parseMirrorNamespace(value)).toThrow('mirror target');
+      expect(() => parseNamespace(value)).toThrow('<registry>/<namespace>');
     }
   });
 

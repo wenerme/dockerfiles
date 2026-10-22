@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { parseAlpineReleases, planAlpineUpdate, planRevisionBump, renderManifestUpdate, type AlpineBranches } from './alpine.ts';
+import { parseAlpineReleases, planAlpineUpdate, planRevisionBump, planUpdate, renderManifestUpdate, type AlpineBranches } from './alpine.ts';
 import { parseManifest, resolveManifest } from './manifest.ts';
 
 const fixture = `schema: 1
@@ -169,6 +169,46 @@ describe('Alpine update plan', () => {
   });
 });
 
+describe('tracked version update', () => {
+  test('a newer app version starts again at r0 and dependents are rebuilt once', () => {
+    const plan = planUpdate(parseManifest(fixture), new Map([['3.24', '3.24.1'], ['3.19', '3.19.1']]), new Map([
+      ['nginx.default', { version: '1.30.4-r3' }],
+      ['pdns.default', { version: '5.0.7' }],
+      ['php.8.4', { version: '8.4.26-r0' }],
+    ]));
+    expect(plan.changes.map((change) => [change.id, change.to.tag, change.reason])).toEqual([
+      ['nginx.default', '1.30.4-r3-alpine-3.24.1-r0', 'app 1.30.4-r1 -> 1.30.4-r3'],
+      ['php.8.4', '8.4-8.4.26-r0-alpine-3.24.1-r2', 'parent changed: nginx.default'],
+    ]);
+    expect(plan.notes).toEqual([]);
+  });
+
+  test('lagging or failing upstreams never downgrade and are reported', () => {
+    const plan = planUpdate(parseManifest(fixture), new Map([['3.24', '3.24.1'], ['3.19', '3.19.1']]), new Map([
+      ['nginx.default', { version: '1.30.3-r0' }],
+      ['pdns.default', { error: 'HTTP 503' }],
+    ]));
+    expect(plan.changes).toEqual([]);
+    expect(plan.notes).toEqual([
+      'nginx.default: upstream 1.30.3-r0 is older than 1.30.4-r1; keeping 1.30.4-r1',
+      'pdns.default: upstream lookup failed: HTTP 503',
+    ]);
+  });
+
+  test('without the Alpine release list, tracked app versions still update', () => {
+    const plan = planUpdate(parseManifest(fixture), new Map(), new Map([['nginx.default', { version: '1.30.4-r3' }]]));
+    expect(plan.changes.map((change) => change.id)).toEqual(['nginx.default', 'php.8.4']);
+    expect(plan.changes[0].to.tag).toBe('1.30.4-r3-alpine-3.24.1-r0');
+  });
+
+  test('Alpine patches and app versions combine into one plan', () => {
+    const plan = planUpdate(parseManifest(fixture), upstream, new Map([['php.8.4', { version: '8.4.27-r0' }]]));
+    expect(plan.changes.find((change) => change.id === 'php.8.4')).toMatchObject({
+      to: { tag: '8.4-8.4.27-r0-alpine-3.24.2-r0' }, reason: 'app 8.4.26-r0 -> 8.4.27-r0',
+    });
+  });
+});
+
 describe('revision bump', () => {
   test('a base content change bumps it and every internal dependent once, not pinned or unrelated variants', () => {
     const plan = planRevisionBump(parseManifest(fixture), ['base']);
@@ -184,10 +224,14 @@ describe('revision bump', () => {
     expect(() => planRevisionBump(parseManifest(fixture), [])).toThrow('select at least one');
   });
 
-  test('the renderer refuses edits it cannot write instead of dropping them, e.g. app versions', () => {
+  test('the renderer writes app versions and refuses adding or removing version fields', () => {
     const plan = planRevisionBump(parseManifest(fixture), ['base']);
     plan.manifest.images[3].variants[1].version.app = '8.4.27-r0';
-    expect(() => renderManifestUpdate(fixture, plan.manifest)).toThrow('does not match the planned update');
+    const output = renderManifestUpdate(fixture, plan.manifest);
+    expect(output).toContain('app: "8.4.27-r0"');
+    expect(parseManifest(output)).toEqual(plan.manifest);
+    delete plan.manifest.images[3].variants[1].version.app;
+    expect(() => renderManifestUpdate(fixture, plan.manifest)).toThrow();
   });
 });
 
