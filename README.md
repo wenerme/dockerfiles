@@ -33,6 +33,7 @@ Canonical tags are never overwritten. Pin a canonical tag or digest for reproduc
 ## Notes
 
 - Images built on `wener/base` use the TUNA Alpine mirror (`mirrors.tuna.tsinghua.edu.cn`) in `/etc/apk/repositories`.
+- Debian images use the TUNA apt mirror with backports enabled; packages are installed from `deb.debian.org` during the build.
 - PHP 8.2 remains on Alpine 3.19 with PHP 8.2.26 and no longer receives updates. Use PHP 8.4 or 8.5.
 - Managed images carry the OCI labels `org.opencontainers.image.source`, `org.opencontainers.image.version`, and `org.opencontainers.image.revision`.
 
@@ -56,10 +57,12 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.3-r0` | `8.3`<br>`8.3-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.3-r0` | `8.4`<br>`8.4-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r0` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
+| debian | `ghcr.io/wenerme/dockerfiles/debian:13.7-r0` | `13`<br>`trixie`<br>`latest` | - | `docker.io/library/debian:13.7` | [debian](debian/) |
+| debian bookworm | `ghcr.io/wenerme/dockerfiles/debian:bookworm-12.15-r0` | `12`<br>`bookworm` | - | `docker.io/library/debian:12.15` | [debian](debian/) |
 
 ### Other Images
 
-33 image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.
+32 image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.
 
 | Image | Variants | Base |
 |---|---|---|
@@ -71,7 +74,6 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | [chromium](chromium/) | - | `wener/xvfb` |
 | [continue-server](continue-server/) | - | `wener/base` |
 | [dante](dante/) | - | `wener/base` |
-| [debian](debian/) | bookworm-backports | `debian` |
 | [dev](dev/) | - | `wener/node` |
 | [dnsmasq](dnsmasq/) | - | `wener/base` |
 | [docker](docker/) | - | `wener/base` |

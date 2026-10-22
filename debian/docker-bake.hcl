@@ -1,26 +1,22 @@
-target "base" {
-  dockerfile = "Dockerfile"
-  #platforms  = equal("", DEV) ? ["linux/amd64", "linux/arm64"] : ["linux/amd64"]
-  platforms  = ["linux/amd64"]
-  context  = "debian"
-  pull       = true
-}
+variable "VERSION" { default = "13.7" }
+variable "REV" { default = "0" }
+variable "DEBIAN_MIRROR" { default = "https://mirrors.tuna.tsinghua.edu.cn" }
 
 group "default" {
-  targets = ["bookworm-backports"]
+  targets = ["debian"]
 }
 
-target "bookworm-backports" {
-  inherits = ["base"]
-  tags     = tags("bookworm-backports")
-  args     = {
-    VERSION = "bookworm-backports"
+target "debian" {
+  context    = "debian"
+  dockerfile = "Dockerfile"
+  platforms  = ["linux/amd64", "linux/arm64"]
+  pull       = true
+  args = {
+    VERSION       = VERSION
+    DEBIAN_MIRROR = DEBIAN_MIRROR
   }
-}
-
-function "tags" {
-  params = [name]
-  result = [
-    "docker.io/wener/debian:${name}","quay.io/wener/debian:${name}",
+  tags = [
+    "docker.io/wener/debian:${VERSION}-r${REV}",
+    "quay.io/wener/debian:${VERSION}-r${REV}",
   ]
 }
