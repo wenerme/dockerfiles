@@ -1,11 +1,11 @@
 import { writeFileSync } from 'node:fs';
 import type { Command } from 'commander';
 import {
-  aliasRefs, generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef, matchReleases, mirrorRefs,
-  parseLocalRegistry, parseMirrorNamespace, parsePlatforms, planReleases, prepareBuild, publishAction, pushBake,
+  aliasRefs, generatedBake, graph, inspectBake, inspectPublication, loadReleases, localRef,
+  parseLocalRegistry, parsePlatforms, planReleases, prepareBuild, publishAction, pushBake,
   selectRelease, syncTags, validateSelectors, type Publication, type TagSync,
 } from '../lib/manifest.ts';
-import { commandError, root, sourceRevision, useRepositoryDockerConfig } from '../lib/repo.ts';
+import { commandError, root, sourceRevision } from '../lib/repo.ts';
 
 type ResultRow = { id: string; ref: string; action: string; digest?: string };
 
@@ -144,27 +144,4 @@ export function registerImageCommands(program: Command) {
       }
     });
 
-  program
-    .command('mirror')
-    .description('Copy published GHCR canonical and alias tags to another registry without rebuilding; dry-run unless --push')
-    .argument('<images...>', 'image or image.variant IDs to copy; dependencies are not added')
-    .requiredOption('--to <namespace>', 'target registry namespace, e.g. docker.io/wener')
-    .option('--push', 'write missing or stale tags')
-    .action(async (selectors: string[], options: { to: string; push?: boolean }) => {
-      validateSelectors(selectors);
-      const namespace = parseMirrorNamespace(options.to);
-      useRepositoryDockerConfig();
-      const results: ResultRow[] = [];
-      try {
-        for (const release of matchReleases(loadReleases(root), selectors)) {
-          const publication = await inspectPublication(release.ref);
-          if (publication.state !== 'published') {
-            throw new Error(`${release.id}: ${release.ref} is ${publication.state}; publish it to GHCR first`);
-          }
-          results.push(...tagRows(release.id, await syncTags(release.repository, publication.digest!, mirrorRefs(release, namespace), Boolean(options.push))));
-        }
-      } finally {
-        printRows(results);
-      }
-    });
 }

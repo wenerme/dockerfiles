@@ -1,10 +1,11 @@
 import { Command } from 'commander';
-import { registerAlpineCommands } from './commands/alpine.ts';
 import { registerImageCommands } from './commands/images.ts';
 import { registerMaintainCommands } from './commands/maintain.ts';
 import { registerManifestCommands } from './commands/manifest.ts';
 import { registerRepoCommands } from './commands/repo.ts';
 import { registerProjectCommands } from './commands/project.ts';
+import { registerSyncCommands } from './commands/sync.ts';
+import { registerUpdateCommands } from './commands/update.ts';
 
 /** Build the dfcli command tree; each area registers its own commands. */
 export function buildProgram() {
@@ -18,6 +19,7 @@ export function buildProgram() {
   registerRepoCommands(program);
   registerProjectCommands(program);
   registerMaintainCommands(program);
-  registerAlpineCommands(program);
+  registerUpdateCommands(program);
+  registerSyncCommands(program);
   return program;
 }

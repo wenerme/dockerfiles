@@ -75,7 +75,7 @@ docker-setup:
 # Run independent repository checks concurrently; limit concurrency with --jobs.
 [group('manifest')]
 [parallel]
-check: typecheck test manifest-check readme-check just-check
+check: typecheck test manifest-check readme-check images-check just-check
 
 # Check TypeScript sources.
 [group('check')]
@@ -96,6 +96,11 @@ manifest-check:
 [group('check')]
 readme-check:
     bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} readme --check
+
+# Fail if images.txt is out of date.
+[group('check')]
+images-check:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} images --check
 
 # Run any dfcli command: just dfcli --help.
 [group('manifest')]
@@ -137,11 +142,11 @@ manifest-bake image:
 publish-plan *images:
     bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} publish "$@"
 
-# Move manifest Alpine versions to the newest patch and propagate revisions: just alpine-update --write.
+# Check Alpine patches and tracked upstream versions: just update --write.
 [group('manifest')]
 [positional-arguments]
-alpine-update *args:
-    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} alpine update "$@"
+update *args:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} update "$@"
 
 # Bump a variant after a content change and propagate revisions to dependents: just bump base --write.
 [group('manifest')]
@@ -149,11 +154,16 @@ alpine-update *args:
 bump *args:
     bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} manifest bump "$@"
 
-# Copy published GHCR tags to another registry without rebuilding: just mirror php.8.4 --to docker.io/wener --push.
+# Regenerate images.txt from manifest.yaml.
+[group('manifest')]
+images:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} images
+
+# Sync images.txt from GHCR to Docker Hub and Quay with regctl: just sync php --push.
 [group('manifest')]
 [positional-arguments]
-mirror *args:
-    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} mirror "$@"
+sync *args:
+    bun {{ quote(_repo_root / 'scripts/dfcli/main.ts') }} sync "$@"
 
 # Compare postgres extension versions with upstream.
 [group('project')]

@@ -13,6 +13,18 @@ export interface Dependency {
   context: string;
   arg?: string;
 }
+/** Where newer application versions come from; exactly one source is set. */
+export interface Track {
+  /** Alpine package in the variant's Alpine branch (main or community); both architectures must agree. */
+  apk?: string;
+  /** GitHub repository whose latest release tag is the version, e.g. fatedier/frp. */
+  github?: string;
+  /** Node.js major line, resolved from the unofficial musl builds that node-builder downloads. */
+  nodejs?: string;
+  /** apk only: keep the -rN package release in the version (default true). */
+  pkgrel?: boolean;
+}
+
 export interface ManifestVariant {
   name: string;
   build: { dir: string; target: string; variables: Partial<Record<VersionField, string>>; prepare?: string };
@@ -21,6 +33,7 @@ export interface ManifestVariant {
   inputs: Dependency[];
   /** Moving tags such as "8.4" or "8.4-alpine-${alpine}", repointed to the canonical tag after each publish. */
   aliases?: string[];
+  track?: Track;
 }
 export interface ImageManifest {
   schema: 1;
@@ -108,6 +121,22 @@ function dependency(value: unknown, label: string): Dependency {
   };
 }
 
+function track(value: unknown, label: string, scheme: string): Track {
+  const item = object(value, label, ['apk', 'github', 'nodejs', 'pkgrel']);
+  const sources = (['apk', 'github', 'nodejs'] as const).filter((key) => item[key] !== undefined);
+  if (sources.length !== 1) throw new Error(`${label}: set exactly one of apk, github, nodejs`);
+  if (scheme === 'alpine') throw new Error(`${label}: alpine scheme has no app version to track`);
+  const result: Track = {};
+  if (item.apk !== undefined) result.apk = text(item.apk, `${label}.apk`, /^[a-z0-9][a-z0-9_.+-]*$/);
+  if (item.github !== undefined) result.github = text(item.github, `${label}.github`, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/);
+  if (item.nodejs !== undefined) result.nodejs = text(String(item.nodejs), `${label}.nodejs`, /^\d+$/);
+  if (item.pkgrel !== undefined) {
+    if (typeof item.pkgrel !== 'boolean' || !result.apk) throw new Error(`${label}.pkgrel: boolean, apk only`);
+    result.pkgrel = item.pkgrel;
+  }
+  return result;
+}
+
 export function parseManifest(source: string): ImageManifest {
   const config = object(YAML.parse(source), 'manifest', ['schema', 'registry', 'source', 'images']);
   if (config.schema !== 1) throw new Error('manifest.schema: expected 1');
@@ -118,7 +147,7 @@ export function parseManifest(source: string): ImageManifest {
     const name = text(image.name, 'image.name', slug);
     const variants = list(image.variants, `${name}.variants`).map((rawVariant): ManifestVariant => {
       const label = `${name}.variant`;
-      const variant = object(rawVariant, label, ['name', 'build', 'version', 'base', 'inputs', 'aliases']);
+      const variant = object(rawVariant, label, ['name', 'build', 'version', 'base', 'inputs', 'aliases', 'track']);
       const build = object(variant.build, `${label}.build`, ['dir', 'target', 'variables', 'prepare']);
       const prepare = build.prepare === undefined ? undefined : text(build.prepare, `${label}.build.prepare`, /^[a-z][a-z0-9_-]*$/);
       if (prepare && ['push', 'build', 'load', 'print', 'info'].includes(prepare)) {
@@ -160,6 +189,7 @@ export function parseManifest(source: string): ImageManifest {
         base: variant.base === undefined ? undefined : dependency(variant.base, `${label}.base`),
         inputs: (variant.inputs as unknown[] | undefined ?? []).map((item) => dependency(item, `${label}.inputs`)),
         aliases,
+        ...(variant.track === undefined ? {} : { track: track(variant.track, `${label}.track`, scheme) }),
       };
     });
     return { name, variants };
@@ -388,16 +418,11 @@ export function aliasRefs(release: Release, registry?: string): string[] {
 }
 
 /** Target namespace for copies outside GHCR, e.g. docker.io/wener or quay.io/wener. */
-export function parseMirrorNamespace(value: string): string {
+export function parseNamespace(value: string): string {
   if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?::\d+)?\/[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(value)) {
-    throw new Error(`mirror target must be <registry>/<namespace>, e.g. docker.io/wener; got ${value}`);
+    throw new Error(`target must be <registry>/<namespace>, e.g. docker.io/wener; got ${value}`);
   }
   return value;
-}
-
-/** Canonical and alias refs of a release under another namespace, keeping image name and tags. */
-export function mirrorRefs(release: Release, namespace: string): string[] {
-  return [release.tag, ...release.aliasTags].map((tag) => `${namespace}/${release.image}:${tag}`);
 }
 
 export interface TagSync { ref: string; digest: string; action: 'current' | 'updated' | 'would update' }

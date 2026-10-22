@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { matchReleases, parseManifest, resolveManifest, type ImageManifest, type ManifestVariant, type Release } from './manifest.ts';
+import { compareLoose, type UpstreamResult } from './upstream.ts';
 
 const releaseVersion = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -109,15 +110,11 @@ export function planRevisionBump(source: ImageManifest, selectors: string[]): Ma
   return { manifest, changes: propagateRevisions(source, manifest, seeds), notes: [] };
 }
 
-/**
- * Move explicit Alpine versions to the newest patch on their branch and propagate revisions down the graph.
- * Variants pinned to an external parent are reported, not changed: their Alpine follows the published parent.
- */
-export function planAlpineUpdate(source: ImageManifest, branches: AlpineBranches): ManifestUpdatePlan {
-  const manifest = structuredClone(source);
+/** Move explicit Alpine versions in `manifest` to the newest patch on their branch; notes collect what is left alone. */
+function applyAlpinePatches(source: ImageManifest, manifest: ImageManifest, branches: AlpineBranches, notes: string[]) {
+  if (!branches.size) return; // the release list was unavailable; the caller reports it
   const variants = variantIndex(manifest);
   const newest = [...branches.values()].sort(compareVersions).at(-1)!;
-  const notes: string[] = [];
   for (const release of resolveManifest(source)) {
     const current = release.version.alpine;
     if (!current) continue;
@@ -136,6 +133,38 @@ export function planAlpineUpdate(source: ImageManifest, branches: AlpineBranches
     if (alpineBranch(newest) !== alpineBranch(current)) {
       notes.push(`${release.id}: Alpine ${alpineBranch(newest)} is available; branch upgrades are manual`);
     }
+  }
+}
+
+/**
+ * Move explicit Alpine versions to the newest patch on their branch and propagate revisions down the graph.
+ * Variants pinned to an external parent are reported, not changed: their Alpine follows the published parent.
+ */
+export function planAlpineUpdate(source: ImageManifest, branches: AlpineBranches): ManifestUpdatePlan {
+  return planUpdate(source, branches, new Map());
+}
+
+/**
+ * Alpine patches plus tracked application versions in one plan. `latest` maps variant ID to the upstream lookup;
+ * only newer versions are applied, so a lagging upstream never downgrades an image. A changed version starts at r0.
+ */
+export function planUpdate(source: ImageManifest, branches: AlpineBranches, latest: Map<string, UpstreamResult>): ManifestUpdatePlan {
+  const manifest = structuredClone(source);
+  const notes: string[] = [];
+  applyAlpinePatches(source, manifest, branches, notes);
+  const variants = variantIndex(manifest);
+  for (const [id, result] of latest) {
+    const variant = variants.get(id);
+    if (!variant) throw new Error(`unknown variant ${id}`);
+    const current = variant.version.app;
+    if (result.error || !result.version) {
+      notes.push(`${id}: upstream lookup failed: ${result.error ?? 'no version'}`);
+      continue;
+    }
+    if (!current) throw new Error(`${id}: tracked variant has no app version`);
+    const order = compareLoose(result.version, current);
+    if (order > 0) variant.version.app = result.version;
+    else if (order < 0) notes.push(`${id}: upstream ${result.version} is older than ${current}; keeping ${current}`);
   }
   return { manifest, changes: propagateRevisions(source, manifest), notes };
 }
@@ -196,12 +225,12 @@ function childBlock(lines: string[], item: Block, key: string): Block {
   throw new Error(`manifest edit: ${key} block not found near line ${item.start + 1}`);
 }
 
-function setField(lines: string[], block: Block, field: 'alpine' | 'revision', value: string | number) {
+function setField(lines: string[], block: Block, field: 'app' | 'alpine' | 'revision', value: string | number) {
   const pattern = new RegExp(`^(\\s*${field}:\\s*)(?:"[^"]*"|'[^']*'|[^\\s#]+)(\\s*(?:#.*)?)$`);
   for (let index = block.start + 1; index < block.end; index += 1) {
     const line = lines[index];
     if (indentOf(line) === block.indent + 2 && pattern.test(line)) {
-      lines[index] = line.replace(pattern, `$1${field === 'alpine' ? JSON.stringify(value) : value}$2`);
+      lines[index] = line.replace(pattern, `$1${field === 'revision' ? value : JSON.stringify(value)}$2`);
       return;
     }
   }
@@ -235,6 +264,12 @@ export function renderManifestUpdate(source: string, next: ImageManifest): strin
           throw new Error(`${image.name}.${variant.name}: adding or removing version.alpine is a manual edit`);
         }
         setField(lines, version, 'alpine', target.version.alpine);
+      }
+      if (target.version.app !== variant.version.app) {
+        if (!target.version.app || !variant.version.app) {
+          throw new Error(`${image.name}.${variant.name}: adding or removing version.app is a manual edit`);
+        }
+        setField(lines, version, 'app', target.version.app);
       }
       if (target.version.revision !== variant.version.revision) setField(lines, version, 'revision', target.version.revision);
     }
