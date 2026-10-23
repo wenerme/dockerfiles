@@ -60,6 +60,46 @@ images:
           revision: 3
         track: { apk: pdns, pkgrel: false }
 
+  # Node.js runtime from the official musl builds; one variant per maintained major line.
+  - name: node
+    variants:
+      - name: "26"
+        build:
+          dir: node
+          target: node
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "26.12.1"
+          revision: 0
+        aliases: ["26", "${app}", "latest"]
+        track: { nodejs: "26" }
+      - name: "24"
+        build:
+          dir: node
+          target: node
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "24.22.1"
+          revision: 0
+        aliases: ["24", "${app}"]
+        track: { nodejs: "24" }
+
   - name: node-builder
     variants:
       - name: default

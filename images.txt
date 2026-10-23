@@ -1,6 +1,13 @@
 base:3.24.3-r0
 agent:3.24.3-r0
 pdns:5.0.7-r3
+node:26-26.12.1-alpine-3.24.3-r0
+node:26
+node:26.12.1
+node:latest
+node:24-24.22.1-alpine-3.24.3-r0
+node:24
+node:24.22.1
 node-builder:24.22.1-alpine-3.24.3-r0
 go-builder:1.26.3-r0-alpine-3.24.1-r0
 nginx:1.30.4-r1-alpine-3.24.3-r0
