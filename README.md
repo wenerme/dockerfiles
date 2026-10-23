@@ -50,6 +50,8 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | base | `ghcr.io/wenerme/dockerfiles/base:3.24.3-r0` | - | 3.24.3 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
 | agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.3-r0` | - | 3.24.3 | `base` | [agent](agent/) |
 | pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r3` | - | 3.24.3 | `base` | [pdns](pdns/) |
+| node 26 | `ghcr.io/wenerme/dockerfiles/node:26-26.12.1-alpine-3.24.3-r0` | `26`<br>`26.12.1`<br>`latest` | 3.24.3 | `base` | [node](node/) |
+| node 24 | `ghcr.io/wenerme/dockerfiles/node:24-24.22.1-alpine-3.24.3-r0` | `24`<br>`24.22.1` | 3.24.3 | `base` | [node](node/) |
 | node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.22.1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [node-builder](node-builder/) |
 | go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` | - | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0` | [go-builder](go-builder/) |
 | nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [nginx](nginx/) |
@@ -62,7 +64,7 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 
 ### Other Images
 
-32 image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.
+31 image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.
 
 | Image | Variants | Base |
 |---|---|---|
@@ -88,7 +90,6 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | [mihomo](mihomo/) | - | `golang`<br>`wener/base` |
 | [ml](ml/) | pytorch | `python`<br>`quay.io/wener/pytorch` |
 | [surya-ocr](ml/surya-ocr/) | - | `quay.io/wener/pytorch` |
-| [node](node/) | docker | `wener/base` |
 | [postgres](postgres/) | - | `postgres` |
 | [samba](samba/) | - | `wener/app` |
 | [sing-box](sing-box/) | - | `wener/base` |
