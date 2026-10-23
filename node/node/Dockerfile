@@ -30,7 +30,7 @@ RUN --mount=type=cache,id=apk-${TARGETARCH}${TARGETVARIANT},sharing=locked,targe
     curl -fsSL "${NODE_DOWNLOAD_BASE}/v${VERSION}/SHASUMS256.txt" | grep " ${file}\$" | sha256sum -c -; \
     tar -xJf "${file}" -C /usr/local --strip-components=1 --no-same-owner \
       --exclude='*/include' --exclude='*/CHANGELOG.md' --exclude='*/README.md' --exclude='*/LICENSE' \
-      --exclude='*/share/doc' --exclude='*/share/man' --exclude='*/bin/corepack' --exclude='*/lib/node_modules/corepack'; \
+      --exclude='*/share/doc' --exclude='*/share/man'; \
     rm -f "${file}"; \
     apk del .fetch; \
     ln -sf /usr/local/bin/node /usr/local/bin/nodejs
