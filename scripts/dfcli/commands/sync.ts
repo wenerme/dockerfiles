@@ -9,6 +9,22 @@ const defaultTargets = ['docker.io/wener', 'quay.io/wener'];
 
 type Row = { action: string; ref: string; detail?: string };
 
+/** Copy and verify the target digest, retrying once; a retry reuses the blobs that already arrived. Returns an error or undefined. */
+async function copyVerified(from: string, target: string, digest: string, attempts = 2): Promise<string | undefined> {
+  let error = '';
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await regctlCopy(from, target);
+      const written = await regctlDigest(target);
+      if (written.state === 'found' && written.digest === digest) return undefined;
+      error = `expected ${digest} after copy, got ${written.state === 'found' ? written.digest : written.state}`;
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+  return `${error} (after ${attempts} attempts)`;
+}
+
 /** images.txt and the GHCR -> Docker Hub/Quay sync built on it. */
 export function registerSyncCommands(program: Command) {
   program
@@ -47,7 +63,11 @@ export function registerSyncCommands(program: Command) {
         for (const line of lines) {
           const image = line.split(':')[0];
           const from = await regctlDigest(`${source}/${line}`);
-          if (from.state !== 'found') throw new Error(`${source}/${line}: ${from.state === 'missing' ? 'not published on GHCR' : from.detail}`);
+          if (from.state !== 'found') {
+            failed = true;
+            rows.push({ action: 'error', ref: `${source}/${line}`, detail: from.state === 'missing' ? 'not published on GHCR' : from.detail });
+            continue;
+          }
           for (const namespace of targets) {
             const target = `${namespace}/${line}`;
             const repository = `${namespace}/${image}`;
@@ -82,10 +102,12 @@ export function registerSyncCommands(program: Command) {
               rows.push({ action: 'would copy', ref: target, detail: from.digest });
               continue;
             }
-            await regctlCopy(`${source}/${image}@${from.digest}`, target);
-            const written = await regctlDigest(target);
-            if (written.state !== 'found' || written.digest !== from.digest) {
-              throw new Error(`${target}: expected ${from.digest} after copy, got ${written.state === 'found' ? written.digest : written.state}`);
+            // One failed copy (slow uploads can outlive the registry's upload session) must not stop the other tags.
+            const copied = await copyVerified(`${source}/${image}@${from.digest}`, target, from.digest);
+            if (copied) {
+              failed = true;
+              rows.push({ action: 'failed', ref: target, detail: copied });
+              continue;
             }
             rows.push({ action: 'copied', ref: target, detail: from.digest });
           }
