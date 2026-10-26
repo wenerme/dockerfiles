@@ -1,42 +1,24 @@
-ARG BUN_VERSION=1.1.38
-ARG ALPINE_RELEASE=3.21.0
+ARG VERSION=1.4.4
+ARG ALPINE_RELEASE=3.24.3
 
-FROM oven/bun:${BUN_VERSION}-alpine AS builder
-
-# https://github.com/oven-sh/bun/blob/main/dockerhub/alpine/Dockerfile
+# The official Alpine image carries the musl build of bun; only the binary is reused.
+FROM oven/bun:${VERSION}-alpine AS bun
 
 FROM wener/base:${ALPINE_RELEASE}
 
+LABEL org.opencontainers.image.description="Bun (musl build from oven/bun) on Alpine"
+
 RUN apk add --no-cache libgcc libstdc++
 
-# Disable the runtime transpiler cache by default inside Docker containers.
-# On ephemeral containers, the cache is not useful
-ARG BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
-ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=${BUN_RUNTIME_TRANSPILER_CACHE_PATH}
+# Disable the runtime transpiler cache: it is not useful in ephemeral containers. Keep `bun install -g` on PATH.
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 \
+    BUN_INSTALL_BIN=/usr/local/bin
 
-# Ensure `bun install -g` works
-ARG BUN_INSTALL_BIN=/usr/local/bin
-ENV BUN_INSTALL_BIN=${BUN_INSTALL_BIN}
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
-COPY --from=builder /usr/local/bin/bun /usr/local/bin/bun
+RUN set -eux; \
+    ln -s bun /usr/local/bin/bunx; \
+    bun --version; \
+    bunx --version
 
-# When MUSL ready
-RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx \
-    && which bun \
-    && which bunx \
-    && bun --version \
-
-# glibc 需要从源码构建才能用
-# https://github.com/sgerrand/alpine-pkg-glibc/issues/176
-# https://github.com/sgerrand/alpine-pkg-glibc
-#ARG GLIBC_VERSION=2.34-r0
-#RUN set -ex \
-#    && cd /tmp  \
-#    && curl --remote-name-all -sfL https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc{,-bin,-dev,-i18n}-${GLIBC_VERSION}.apk \
-#    && apk del gcompat  \
-#    && apk add glibc{,-bin,-dev,-i18n}-${GLIBC_VERSION}.apk --no-cache --force-overwrite --allow-untrusted  \
-#    && rm -rf /tmp/* \
-#    && ln -s /usr/local/bin/bun /usr/local/bin/bunx \
-#    && which bun \
-#    && which bunx \
-#    && bun --version
+CMD ["bun"]

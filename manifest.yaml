@@ -162,6 +162,31 @@ images:
         aliases: ["${app}", "latest"]
         track: { github: fatedier/frp }
 
+  # Bun: the musl binary from the official oven/bun Alpine image on wener/base.
+  - name: bun
+    variants:
+      - name: default
+        build:
+          dir: bun
+          target: bun
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        inputs:
+          - ref: "docker.io/oven/bun:${app}-alpine"
+            context: "oven/bun:${app}-alpine"
+        version:
+          scheme: app-alpine
+          app: "1.4.4"
+          revision: 0
+        aliases: ["${app}", "latest"]
+        track: { docker: oven/bun, prefix: "1.", suffix: "-alpine" }
+
   - name: node-builder
     variants:
       - name: default

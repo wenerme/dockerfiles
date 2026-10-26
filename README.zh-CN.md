@@ -55,6 +55,7 @@ docker pull wener/php:8.4
 | frp | `ghcr.io/wenerme/dockerfiles/frp:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
 | frpc | `ghcr.io/wenerme/dockerfiles/frpc:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
 | frps | `ghcr.io/wenerme/dockerfiles/frps:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
+| bun | `ghcr.io/wenerme/dockerfiles/bun:1.4.4-alpine-3.24.3-r0` | `1.4.4`<br>`latest` | 3.24.3 | `base` | [bun](bun/) |
 | node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.22.1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [node-builder](node-builder/) |
 | go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` | - | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0` | [go-builder](go-builder/) |
 | nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.6-r0-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [nginx](nginx/) |
@@ -67,14 +68,13 @@ docker pull wener/php:8.4
 
 ### 其他镜像
 
-30 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
+29 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
 | [app](app/) | ssh | `wener/base` |
 | [base](base/) | openrc, app | `alpine`<br>`wener/base` |
 | [builder](builder/) | - | `wener/app`<br>`wener/base` |
-| [bun](bun/) | - | `oven/bun`<br>`wener/base` |
 | [caddy](caddy/) | full, docker-proxy | `caddy`<br>`wener/base` |
 | [chromium](chromium/) | - | `wener/xvfb` |
 | [continue-server](continue-server/) | - | `wener/base` |
