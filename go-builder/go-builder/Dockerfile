@@ -1,4 +1,4 @@
-ARG GO_BASE_IMAGE=wener/go:1.26.3-r0-alpine-3.24.1-r0
+ARG GO_BASE_IMAGE=wener/go:1.26.10-r0-alpine-3.24.3-r0
 FROM ${GO_BASE_IMAGE}
 
 ARG TARGETARCH

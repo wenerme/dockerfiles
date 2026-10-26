@@ -21,7 +21,9 @@ bun:1.4.4-alpine-3.24.3-r0
 bun:1.4.4
 bun:latest
 node-builder:24.22.1-alpine-3.24.3-r0
-go-builder:1.26.3-r0-alpine-3.24.1-r0
+go:1.26.10-r0-alpine-3.24.3-r0
+go:latest
+go-builder:1.26.10-r0-alpine-3.24.3-r0
 nginx:1.30.6-r0-alpine-3.24.3-r0
 php:8.2-8.2.26-r0-alpine-3.19.1-r0
 php:8.2
