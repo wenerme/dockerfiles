@@ -158,7 +158,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "1.30.4-r1"
+          app: "1.30.6-r0"
           revision: 0
         track: { apk: nginx }
 
@@ -198,7 +198,7 @@ images:
         version:
           scheme: app-alpine
           app: "8.3.36-r0"
-          revision: 0
+          revision: 1
         aliases: ["8.3", "8.3-alpine-${alpine}"]
         track: { apk: php83 }
       - name: "8.4"
@@ -216,7 +216,7 @@ images:
         version:
           scheme: app-alpine
           app: "8.4.27-r0"
-          revision: 0
+          revision: 1
         aliases: ["8.4", "8.4-alpine-${alpine}"]
         track: { apk: php84 }
       - name: "8.5"
@@ -234,7 +234,7 @@ images:
         version:
           scheme: app-alpine
           app: "8.5.12-r0"
-          revision: 0
+          revision: 1
         aliases: ["8.5", "8.5-alpine-${alpine}"]
         track: { apk: php85 }
 
