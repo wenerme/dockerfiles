@@ -100,6 +100,68 @@ images:
         aliases: ["24", "${app}"]
         track: { nodejs: "24" }
 
+  # frp release binaries; frpc and frps add the default command on top of the same build.
+  - name: frp
+    variants:
+      - name: default
+        build:
+          dir: frp
+          target: frp
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "0.71.1"
+          revision: 0
+        aliases: ["${app}", "latest"]
+        track: { github: fatedier/frp }
+  - name: frpc
+    variants:
+      - name: default
+        build:
+          dir: frp
+          target: frpc
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "0.71.1"
+          revision: 0
+        aliases: ["${app}", "latest"]
+        track: { github: fatedier/frp }
+  - name: frps
+    variants:
+      - name: default
+        build:
+          dir: frp
+          target: frps
+          variables:
+            app: VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "0.71.1"
+          revision: 0
+        aliases: ["${app}", "latest"]
+        track: { github: fatedier/frp }
+
   - name: node-builder
     variants:
       - name: default

@@ -1,17 +1,29 @@
-ARG ALPINE_RELEASE
-FROM wener/base:${ALPINE_RELEASE}
+ARG ALPINE_RELEASE=3.24.3
+FROM wener/base:${ALPINE_RELEASE} AS frp
 
-# https://github.com/fatedier/frp/releases
-ARG VERSION
 ARG TARGETARCH
+ARG VERSION=0.71.1
 
-# inotify-tools help auto reload frp
-# TARGETARCH amd64
-RUN apk add --no-cache inotify-tools
-RUN test -n "$VERSION" \
-    && apk add frp  \
-    && echo Building ${VERSION} \
-    && curl -LO https://github.com/fatedier/frp/releases/download/v${VERSION}/frp_${VERSION}_linux_${TARGETARCH}.tar.gz \
-    && tar -zxvf frp_${VERSION}_linux_${TARGETARCH}.tar.gz \
-    && mv frp_${VERSION}_linux_${TARGETARCH}/frps frp_${VERSION}_linux_${TARGETARCH}/frpc /usr/bin/ \
-    && rm -rf frp_${VERSION}_linux_${TARGETARCH}*
+LABEL org.opencontainers.image.description="frp (fatedier/frp) client and server"
+
+# inotify-tools lets a wrapper reload frp when the mounted config changes.
+RUN set -eux; \
+    case "${TARGETARCH}" in amd64|arm64) ;; *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; esac; \
+    apk add --no-cache inotify-tools; \
+    name="frp_${VERSION}_linux_${TARGETARCH}"; \
+    base="https://github.com/fatedier/frp/releases/download/v${VERSION}"; \
+    cd /tmp; \
+    curl -fsSLO "${base}/${name}.tar.gz"; \
+    curl -fsSL "${base}/frp_sha256_checksums.txt" | grep "  ${name}.tar.gz\$" | sha256sum -c -; \
+    tar -xzf "${name}.tar.gz"; \
+    install -m 755 "${name}/frpc" "${name}/frps" /usr/bin/; \
+    install -d /etc/frp; \
+    install -m 644 "${name}/frpc.toml" "${name}/frps.toml" /etc/frp/; \
+    rm -rf "/tmp/${name}" "/tmp/${name}.tar.gz"; \
+    frpc --version; frps --version
+
+FROM frp AS frpc
+CMD ["frpc", "-c", "/etc/frp/frpc.yaml"]
+
+FROM frp AS frps
+CMD ["frps", "-c", "/etc/frp/frps.yaml"]

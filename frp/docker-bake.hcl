@@ -1,50 +1,39 @@
-variable "TAG" {
-	default = "latest"
-}
-variable "VERSION" { default = "" }
-variable "ALPINE_RELEASE" { default = "" }
-variable "ALPINE_VERSION" { default = "" }
+variable "VERSION" { default = "0.71.1" }
+variable "ALPINE_RELEASE" { default = "3.24.3" }
+variable "REV" { default = "0" }
 
 group "default" {
-	targets = ["frp", "frps", "frpc"]
+  targets = ["frp", "frpc", "frps"]
+}
+
+target "_common" {
+  context    = "frp"
+  dockerfile = "Dockerfile"
+  platforms  = ["linux/amd64", "linux/arm64"]
+  pull       = true
+  args = {
+    VERSION        = VERSION
+    ALPINE_RELEASE = ALPINE_RELEASE
+  }
+  contexts = {
+    "wener/base:${ALPINE_RELEASE}" = "docker-image://ghcr.io/wenerme/dockerfiles/base:${ALPINE_RELEASE}-r0"
+  }
 }
 
 target "frp" {
-	context = "frp"
-	tags = tags("frp")
+  inherits = ["_common"]
+  target   = "frp"
+  tags     = ["docker.io/wener/frp:${VERSION}-alpine-${ALPINE_RELEASE}-r${REV}"]
+}
 
-	dockerfile = "Dockerfile"
-	platforms = ["linux/amd64", "linux/arm64"]
-	# platforms = ["linux/amd64"]
-	pull = true
-	args = {
-		ALPINE_RELEASE = ALPINE_RELEASE
-		VERSION        = VERSION
-	}
+target "frpc" {
+  inherits = ["_common"]
+  target   = "frpc"
+  tags     = ["docker.io/wener/frpc:${VERSION}-alpine-${ALPINE_RELEASE}-r${REV}"]
 }
 
 target "frps" {
-	inherits = ["frp"]
-	context = "frps"
-	tags = tags("frps")
-	contexts = {
-		"wener/frp" : "target:frp"
-	}
-}
-target "frpc" {
-	inherits = ["frp"]
-	context = "frpc"
-	tags = tags("frpc")
-	contexts = {
-		"wener/frp" : "target:frp"
-	}
-}
-
-function "tags" {
-	params = [name]
-	result = [
-		"docker.io/wener/${name}:${TAG}", "quay.io/wener/${name}:${TAG}",
-			notequal("", VERSION) ? "docker.io/wener/${name}:${VERSION}" : "",
-			notequal("", VERSION) ? "quay.io/wener/${name}:${VERSION}" : "",
-	]
+  inherits = ["_common"]
+  target   = "frps"
+  tags     = ["docker.io/wener/frps:${VERSION}-alpine-${ALPINE_RELEASE}-r${REV}"]
 }
