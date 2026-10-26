@@ -1,30 +1,22 @@
-variable "IMAGE_NAME" { default = "bun" }
-variable "VERSION" { default = "" }
-variable "ALPINE_RELEASE" { default = "" }
+variable "VERSION" { default = "1.4.4" }
+variable "ALPINE_RELEASE" { default = "3.24.3" }
+variable "REV" { default = "0" }
 
-
-target "base" {
-  dockerfile = "Dockerfile"
-  platforms  = ["linux/amd64","linux/arm64"]
-  pull       = true
+group "default" {
+  targets = ["bun"]
 }
 
-target "default" {
-  inherits = ["base"]
-  context  = "bun"
-  tags     = tags("latest")
-  args     = {
-    BUN_VERSION = VERSION
+target "bun" {
+  context    = "bun"
+  dockerfile = "Dockerfile"
+  platforms  = ["linux/amd64", "linux/arm64"]
+  pull       = true
+  args = {
+    VERSION        = VERSION
     ALPINE_RELEASE = ALPINE_RELEASE
   }
-}
-
-function "tags" {
-  params = [name]
-  result = [
-    "docker.io/wener/${IMAGE_NAME}:${name}",
-    notequal("", VERSION) ? "docker.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
-    // "quay.io/wener/${IMAGE_NAME}:${name}",
-    // notequal("", VERSION) ? "quay.io/wener/${IMAGE_NAME}:${notequal("latest", name)?"${name}-":""}${VERSION}" : "",
-  ]
+  contexts = {
+    "wener/base:${ALPINE_RELEASE}" = "docker-image://ghcr.io/wenerme/dockerfiles/base:${ALPINE_RELEASE}-r0"
+  }
+  tags = ["docker.io/wener/bun:${VERSION}-alpine-${ALPINE_RELEASE}-r${REV}"]
 }

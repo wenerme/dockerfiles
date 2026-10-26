@@ -17,6 +17,9 @@ frpc:latest
 frps:0.71.1-alpine-3.24.3-r0
 frps:0.71.1
 frps:latest
+bun:1.4.4-alpine-3.24.3-r0
+bun:1.4.4
+bun:latest
 node-builder:24.22.1-alpine-3.24.3-r0
 go-builder:1.26.3-r0-alpine-3.24.1-r0
 nginx:1.30.6-r0-alpine-3.24.3-r0
