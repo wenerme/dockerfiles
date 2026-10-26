@@ -1,6 +1,6 @@
 variable "IMAGE_NAME" { default = "go-builder" }
 variable "GO_PACKAGE_VERSION" {
-  default = "1.26.3-r0"
+  default = "1.26.10-r0"
   validation {
     condition     = GO_PACKAGE_VERSION != ""
     error_message = "GO_PACKAGE_VERSION must not be empty."
@@ -10,7 +10,7 @@ variable "GO_PACKAGE_VERSION" {
     error_message = "GO_PACKAGE_VERSION must be a major.minor.patch-rN APK version."
   }
 }
-variable "ALPINE_RELEASE" { default = "3.24.1" }
+variable "ALPINE_RELEASE" { default = "3.24.3" }
 variable "REV" { default = "0" }
 variable "GO_BASE_REV" {
   default = "0"

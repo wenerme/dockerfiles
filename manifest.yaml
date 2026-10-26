@@ -208,6 +208,29 @@ images:
         # Node.js LTS line; follows the unofficial musl builds the Dockerfile downloads.
         track: { nodejs: "24" }
 
+  # Go from the Alpine package; go-builder adds the toolchain on top and follows the same package version.
+  - name: go
+    variants:
+      - name: default
+        build:
+          dir: go
+          target: go
+          variables:
+            app: GO_PACKAGE_VERSION
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: app-alpine
+          app: "1.26.10-r0"
+          revision: 0
+        # The APK version ends in -rN, which is reserved for canonical tags, so it cannot be an alias.
+        aliases: ["latest"]
+        track: { apk: go }
+
   - name: go-builder
     variants:
       - name: default
@@ -218,16 +241,16 @@ images:
             app: GO_PACKAGE_VERSION
             alpine: ALPINE_RELEASE
             revision: REV
-        # The parent Go image has an independent revision and remains a published external input.
         base:
-          ref: "quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0@sha256:e2abf60cd8c81a1705edd458c81047ceda81349ec06d90149058b5053a7a7350"
-          context: "wener/go:${app}-alpine-${alpine}-r0"
+          image: go
+          variant: default
+          context: "wener/go:${app}-alpine-${alpine}"
           arg: GO_BASE_IMAGE
         version:
           scheme: app-alpine
-          app: "1.26.3-r0"
-          alpine: "3.24.1"
+          app: "1.26.10-r0"
           revision: 0
+        track: { apk: go }
 
   - name: nginx
     variants:
