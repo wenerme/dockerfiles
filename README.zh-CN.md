@@ -52,6 +52,9 @@ docker pull wener/php:8.4
 | pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r3` | - | 3.24.3 | `base` | [pdns](pdns/) |
 | node 26 | `ghcr.io/wenerme/dockerfiles/node:26-26.12.1-alpine-3.24.3-r0` | `26`<br>`26.12.1`<br>`latest` | 3.24.3 | `base` | [node](node/) |
 | node 24 | `ghcr.io/wenerme/dockerfiles/node:24-24.22.1-alpine-3.24.3-r0` | `24`<br>`24.22.1` | 3.24.3 | `base` | [node](node/) |
+| frp | `ghcr.io/wenerme/dockerfiles/frp:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
+| frpc | `ghcr.io/wenerme/dockerfiles/frpc:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
+| frps | `ghcr.io/wenerme/dockerfiles/frps:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
 | node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.22.1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [node-builder](node-builder/) |
 | go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.3-r0-alpine-3.24.1-r0` | - | 3.24.1 | `quay.io/wener/go:1.26.3-r0-alpine-3.24.1-r0` | [go-builder](go-builder/) |
 | nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.4-r1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [nginx](nginx/) |
@@ -64,7 +67,7 @@ docker pull wener/php:8.4
 
 ### 其他镜像
 
-31 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
+30 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
@@ -79,7 +82,6 @@ docker pull wener/php:8.4
 | [dev](dev/) | - | `wener/node` |
 | [dnsmasq](dnsmasq/) | - | `wener/base` |
 | [docker](docker/) | - | `wener/base` |
-| [frp](frp/) | frps, frpc | `wener/base` |
 | [gitea-runner](gitea-runner/) | - | `wener/builder` |
 | [go](go/) | - | `wener/base` |
 | [httpd](httpd/) | - | `wener/base` |

@@ -8,6 +8,15 @@ node:latest
 node:24-24.22.1-alpine-3.24.3-r0
 node:24
 node:24.22.1
+frp:0.71.1-alpine-3.24.3-r0
+frp:0.71.1
+frp:latest
+frpc:0.71.1-alpine-3.24.3-r0
+frpc:0.71.1
+frpc:latest
+frps:0.71.1-alpine-3.24.3-r0
+frps:0.71.1
+frps:latest
 node-builder:24.22.1-alpine-3.24.3-r0
 go-builder:1.26.3-r0-alpine-3.24.1-r0
 nginx:1.30.4-r1-alpine-3.24.3-r0
