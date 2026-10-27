@@ -23,6 +23,72 @@ images:
           alpine: "3.24.3"
           revision: 0
 
+      # OpenRC init on base; parent of the app/ssh/workspace chain.
+      - name: openrc
+        build:
+          dir: base
+          target: openrc
+          variables:
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: default
+          context: "wener/base:${alpine}"
+        version:
+          scheme: alpine
+          revision: 0
+        aliases: ["openrc", "${alpine}-openrc"]
+
+  # Application container chain: app (openrc services, admin user) -> ssh -> workspace (dev tools, agents).
+  # Rebuild one layer with `just bump app.<variant> --write`; dependents follow.
+  - name: app
+    variants:
+      - name: default
+        build:
+          dir: app
+          target: app
+          variables:
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: base
+          variant: openrc
+          context: "wener/base:${alpine}-openrc"
+        version:
+          scheme: alpine
+          revision: 0
+        aliases: ["latest", "${alpine}"]
+      - name: ssh
+        build:
+          dir: app
+          target: ssh
+          variables:
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: app
+          variant: default
+          context: "wener/app:${alpine}"
+        version:
+          scheme: alpine
+          revision: 0
+        aliases: ["ssh", "${alpine}-ssh"]
+      - name: workspace
+        build:
+          dir: app
+          target: workspace
+          variables:
+            alpine: ALPINE_RELEASE
+            revision: REV
+        base:
+          image: app
+          variant: ssh
+          context: "wener/app:${alpine}-ssh"
+        version:
+          scheme: alpine
+          revision: 0
+        aliases: ["workspace", "${alpine}-workspace"]
   - name: agent
     variants:
       - name: default
