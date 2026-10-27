@@ -48,6 +48,10 @@ docker pull wener/php:8.4
 | 镜像 | 完整版本标签 | 短标签 | Alpine | 基础镜像 | 源码 |
 |---|---|---|---|---|---|
 | base | `ghcr.io/wenerme/dockerfiles/base:3.24.3-r0` | - | 3.24.3 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
+| base openrc | `ghcr.io/wenerme/dockerfiles/base:openrc-3.24.3-r0` | `openrc`<br>`3.24.3-openrc` | 3.24.3 | `base` | [base](base/) |
+| app | `ghcr.io/wenerme/dockerfiles/app:3.24.3-r0` | `latest`<br>`3.24.3` | 3.24.3 | `base:openrc` | [app](app/) |
+| app ssh | `ghcr.io/wenerme/dockerfiles/app:ssh-3.24.3-r0` | `ssh`<br>`3.24.3-ssh` | 3.24.3 | `app` | [app](app/) |
+| app workspace | `ghcr.io/wenerme/dockerfiles/app:workspace-3.24.3-r0` | `workspace`<br>`3.24.3-workspace` | 3.24.3 | `app:ssh` | [app](app/) |
 | agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.3-r0` | - | 3.24.3 | `base` | [agent](agent/) |
 | pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r3` | - | 3.24.3 | `base` | [pdns](pdns/) |
 | node 26 | `ghcr.io/wenerme/dockerfiles/node:26-26.12.1-alpine-3.24.3-r0` | `26`<br>`26.12.1`<br>`latest` | 3.24.3 | `base` | [node](node/) |
@@ -69,12 +73,10 @@ docker pull wener/php:8.4
 
 ### 其他镜像
 
-28 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
+26 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
-| [app](app/) | ssh | `wener/base` |
-| [base](base/) | openrc, app | `alpine`<br>`wener/base` |
 | [builder](builder/) | - | `wener/app`<br>`wener/base` |
 | [caddy](caddy/) | full, docker-proxy | `caddy`<br>`wener/base` |
 | [chromium](chromium/) | - | `wener/xvfb` |

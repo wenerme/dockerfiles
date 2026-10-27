@@ -1,4 +1,16 @@
 base:3.24.3-r0
+base:openrc-3.24.3-r0
+base:openrc
+base:3.24.3-openrc
+app:3.24.3-r0
+app:latest
+app:3.24.3
+app:ssh-3.24.3-r0
+app:ssh
+app:3.24.3-ssh
+app:workspace-3.24.3-r0
+app:workspace
+app:3.24.3-workspace
 agent:3.24.3-r0
 pdns:5.0.7-r3
 node:26-26.12.1-alpine-3.24.3-r0
