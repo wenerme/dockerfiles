@@ -198,12 +198,13 @@ describe('generated artifacts and publication states', () => {
 
   test('aliases resolve version templates, stay unique per repository and never look canonical', () => {
     const manifest = sample();
-    manifest.images[3].variants[0].aliases = ['5', '5-alpine-${alpine}', '${app}'];
+    manifest.images[3].variants[0].aliases = ['5', '5-alpine-${alpine}', '${app}', '5-alpine-${alpine_minor}'];
     const releases = resolveManifest(manifest);
     const builder = selectRelease(releases, 'builder');
-    expect(builder.aliasTags).toEqual(['5', '5-alpine-3.24.1', '5.0.0']);
+    expect(builder.aliasTags).toEqual(['5', '5-alpine-3.24.1', '5.0.0', '5-alpine-3.24']);
     expect(aliasRefs(builder)).toEqual([
       'ghcr.io/wenerme/dockerfiles/builder:5', 'ghcr.io/wenerme/dockerfiles/builder:5-alpine-3.24.1', 'ghcr.io/wenerme/dockerfiles/builder:5.0.0',
+      'ghcr.io/wenerme/dockerfiles/builder:5-alpine-3.24',
     ]);
     expect(aliasRefs(builder, 'localhost:5000')[0]).toBe('localhost:5000/wenerme/dockerfiles/builder:5');
     expect(selectRelease(releases, 'agent').aliasTags).toEqual([]);

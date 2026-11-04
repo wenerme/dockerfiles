@@ -104,6 +104,8 @@ function text(value: unknown, label: string, pattern?: RegExp): string {
 
 const slug = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/;
 const templateField = /\$\{(?!alpine\}|app\})/;
+// Aliases may also float on the Alpine minor branch, e.g. ${alpine_minor}-workspace -> 3.24-workspace.
+const aliasField = /\$\{(?!alpine\}|alpine_minor\}|app\})/;
 const tagPattern = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/;
 const alpineVersion = /^\d+\.\d+\.\d+$/;
 const appVersion = /^[0-9][a-zA-Z0-9_.-]*$/;
@@ -195,7 +197,7 @@ export function parseManifest(source: string): ImageManifest {
       if (variant.inputs !== undefined && !Array.isArray(variant.inputs)) throw new Error(`${label}.inputs: expected list`);
       const aliases = variant.aliases === undefined ? [] : list(variant.aliases, `${label}.aliases`).map((alias) => {
         const value = text(alias, `${label}.aliases`, /^[A-Za-z0-9_.${}-]+$/);
-        if (templateField.test(value)) throw new Error(`${label}.aliases: only \${alpine} and \${app} substitutions are supported`);
+        if (aliasField.test(value)) throw new Error(`${label}.aliases: only \${alpine}, \${alpine_minor} and \${app} substitutions are supported`);
         return value;
       });
       return {
@@ -252,8 +254,8 @@ export function resolveManifest(manifest: ImageManifest): Release[] {
     const tag = `${prefix}${identity}-r${variant.version.revision}`;
     if (tag.length > 128) throw new Error(`${id}: tag exceeds 128 characters`);
     const aliasTags = (variant.aliases ?? []).map((template) => {
-      const alias = template.replace(/\$\{(alpine|app)\}/g, (_, field: string) => {
-        const value = field === 'alpine' ? alpine : variant.version.app;
+      const alias = template.replace(/\$\{(alpine_minor|alpine|app)\}/g, (_, field: string) => {
+        const value = field === 'app' ? variant.version.app : field === 'alpine_minor' ? alpine?.split('.').slice(0, 2).join('.') : alpine;
         if (!value) throw new Error(`${id}: alias ${template} requires ${field}`);
         return value;
       });
