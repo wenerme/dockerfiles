@@ -22,6 +22,8 @@ images:
           scheme: alpine
           alpine: "3.24.3"
           revision: 0
+        # Floating tags: latest, patch (3.24.3) and minor (3.24) follow the newest canonical tag.
+        aliases: ["latest", "${alpine}", "${alpine_minor}"]
 
       # OpenRC init on base; parent of the app/ssh/workspace chain.
       - name: openrc
@@ -38,7 +40,7 @@ images:
         version:
           scheme: alpine
           revision: 0
-        aliases: ["openrc", "${alpine}-openrc"]
+        aliases: ["openrc", "${alpine}-openrc", "${alpine_minor}-openrc"]
 
   # Application container chain: app (openrc services, admin user) -> ssh -> workspace (dev tools, agents).
   # Rebuild one layer with `just bump app.<variant> --write`; dependents follow.
@@ -58,7 +60,7 @@ images:
         version:
           scheme: alpine
           revision: 0
-        aliases: ["latest", "${alpine}"]
+        aliases: ["latest", "${alpine}", "${alpine_minor}"]
       - name: ssh
         build:
           dir: app
@@ -73,7 +75,7 @@ images:
         version:
           scheme: alpine
           revision: 0
-        aliases: ["ssh", "${alpine}-ssh"]
+        aliases: ["ssh", "${alpine}-ssh", "${alpine_minor}-ssh"]
       - name: workspace
         build:
           dir: app
@@ -88,7 +90,7 @@ images:
         version:
           scheme: alpine
           revision: 0
-        aliases: ["workspace", "${alpine}-workspace"]
+        aliases: ["workspace", "${alpine}-workspace", "${alpine_minor}-workspace"]
   - name: agent
     variants:
       - name: default
