@@ -70,7 +70,7 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r1` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | debian | `ghcr.io/wenerme/dockerfiles/debian:13.7-r0` | `13`<br>`trixie`<br>`latest` | - | `docker.io/library/debian:13.7` | [debian](debian/) |
 | debian bookworm | `ghcr.io/wenerme/dockerfiles/debian:bookworm-12.15-r0` | `12`<br>`bookworm` | - | `docker.io/library/debian:12.15` | [debian](debian/) |
-| postgres | `ghcr.io/wenerme/dockerfiles/postgres:18.6-r0` | `18`<br>`18.6`<br>`latest` | - | `docker.io/library/postgres:18.6-alpine3.24` | [postgres](postgres/) |
+| postgres | `ghcr.io/wenerme/dockerfiles/postgres:18.6-r1` | `18`<br>`18.6`<br>`latest` | - | `docker.io/library/postgres:18.6-alpine3.24` | [postgres](postgres/) |
 
 ### Other Images
 

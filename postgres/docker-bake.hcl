@@ -6,7 +6,7 @@ variable "POSTGRES_VERSION" { default = "18.6" }
 variable "PG_MAJOR" { default = split(".", POSTGRES_VERSION)[0] }
 variable "PG_IMAGE_VERSION" { default = POSTGRES_VERSION }
 variable "PG_ALPINE_VERSION" { default = "3.24" }
-variable "PG_REVISION" { default = "0" }
+variable "PG_REVISION" { default = "1" }
 
 # Source pins: fetched by exact commit.
 variable "WRAPPERS_REPO" { default = "https://github.com/wenerme/wrappers.git" }

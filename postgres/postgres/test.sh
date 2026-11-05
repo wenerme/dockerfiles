@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# No -e: a failing or crashing check must be reported, not end the run silently.
+set -uo pipefail
 
 IMAGE="${1:-wener/postgres:18}"
+# Optional, e.g. linux/amd64: test another platform of a multi-platform tag (emulated).
+PLATFORM_ARGS=()
+[[ -n "${TEST_PLATFORM:-}" ]] && PLATFORM_ARGS=(--platform "$TEST_PLATFORM")
 CONTAINER="pg-ext-test-$$"
 PASS=0
 FAIL=0
@@ -21,7 +25,9 @@ psql_exec() {
 
 # ── start container ─────────────────────────────────────────────
 log "Starting container from $IMAGE"
-docker run --rm -d \
+# Pull first so the readiness timeout measures PostgreSQL, not the download.
+docker pull -q "${PLATFORM_ARGS[@]}" "$IMAGE" >/dev/null 2>&1 || docker image inspect "$IMAGE" >/dev/null || { fail "cannot pull $IMAGE"; exit 1; }
+docker run "${PLATFORM_ARGS[@]}" --rm -d \
   --name "$CONTAINER" \
   -e POSTGRES_PASSWORD=test \
   -e POSTGRES_HOST_AUTH_METHOD=trust \
@@ -117,6 +123,23 @@ log "Testing DuckDB extensions"
 HTTPFS=$(docker exec "$CONTAINER" sh -c 'ls /usr/local/lib/duckdb/extensions/*/*/httpfs.duckdb_extension 2>/dev/null')
 if [[ $(printf '%s\n' "$HTTPFS" | grep -c .) == "1" ]]; then ok "httpfs at ${HTTPFS#/usr/local/lib/duckdb/extensions/}"; else fail "expected one httpfs extension, got: $HTTPFS"; fi
 
+# ── test: portable binaries ─────────────────────────────────────
+# A build runner's CPU features must not leak into the image: -march=native on an SVE runner
+# makes extensions crash with SIGILL on arm64 CPUs without SVE.
+log "Testing portable binaries"
+ARCH=$(docker exec "$CONTAINER" uname -m)
+if [[ "$ARCH" == "aarch64" ]]; then
+  SVE=$(docker exec "$CONTAINER" sh -c 'apk add -q binutils >/dev/null 2>&1 || exit 2
+    for f in /usr/local/lib/postgresql/*.so /usr/local/lib/duckdb/extensions/*/*/*.duckdb_extension; do
+      n=$(objdump -d "$f" | grep -cwE "ptrue|whilelo|whilelt"); [ "$n" -gt 0 ] && echo "${f##*/}:$n"
+    done; true')
+  if [[ $? -ne 0 ]]; then fail "binutils not installable for the SVE scan"
+  elif [[ -z "$SVE" ]]; then ok "no SVE instructions in extensions"
+  else fail "SVE instructions (build CPU leaked): $SVE"; fi
+else
+  ok "SVE scan skipped on $ARCH"
+fi
+
 # ── test: pg_cron ───────────────────────────────────────────────
 log "Testing pg_cron"
 psql_exec "CREATE EXTENSION IF NOT EXISTS pg_cron;" >/dev/null && ok "CREATE EXTENSION pg_cron" || fail "CREATE EXTENSION pg_cron"
@@ -205,9 +228,9 @@ log "Testing pgsodium/vault preload on fresh PGDATA (uid 1001, no getkey GUC)"
 SODIUM="pg-sodium-test-$$"
 SODIUM_VOL="pg-sodium-test-$$"
 docker volume create "$SODIUM_VOL" >/dev/null
-docker run --rm -v "$SODIUM_VOL:/v" --entrypoint chown "$IMAGE" 1001:1001 /v
+docker run "${PLATFORM_ARGS[@]}" --rm -v "$SODIUM_VOL:/v" --entrypoint chown "$IMAGE" 1001:1001 /v
 trap 'cleanup; docker rm -f "$SODIUM" &>/dev/null || true; docker volume rm -f "$SODIUM_VOL" &>/dev/null || true' EXIT
-docker run -d --name "$SODIUM" --user 1001:1001 \
+docker run "${PLATFORM_ARGS[@]}" -d --name "$SODIUM" --user 1001:1001 \
   -e POSTGRES_PASSWORD=test \
   -v "$SODIUM_VOL:/var/lib/postgresql" \
   "$IMAGE" \

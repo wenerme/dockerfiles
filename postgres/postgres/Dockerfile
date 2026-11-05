@@ -136,10 +136,13 @@ ARG PGVECTOR_VERSION=0.8.7
 RUN git clone --branch v${PGVECTOR_VERSION} --depth 1 \
         https://github.com/pgvector/pgvector.git /tmp/pgvector
 
+# pgvector defaults to -march=native: built on an SVE runner (e.g. Neoverse N2) it crashes with SIGILL on
+# arm64 CPUs without SVE (Apple Silicon, Graviton2, Ampere Altra). OPTFLAGS="" is upstream's portable build;
+# its AVX-512/F16C paths are dispatched at runtime.
 RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
     cd /tmp/pgvector; \
-    make USE_PGXS=1 with_llvm=no; \
-    make USE_PGXS=1 with_llvm=no install DESTDIR=/tmp/install
+    make USE_PGXS=1 OPTFLAGS="" with_llvm=no; \
+    make USE_PGXS=1 OPTFLAGS="" with_llvm=no install DESTDIR=/tmp/install
 
 # ── pg_cron ─────────────────────────────────────────────────────
 FROM build AS pg_cron
