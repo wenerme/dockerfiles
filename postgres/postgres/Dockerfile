@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
 ARG PG_VERSION=18
-ARG PG_IMAGE_VERSION=18.4
+ARG PG_IMAGE_VERSION=18.6
 ARG PG_ALPINE_VERSION=3.24
 
 # ── base build stage ────────────────────────────────────────────
 FROM postgres:${PG_IMAGE_VERSION}-alpine${PG_ALPINE_VERSION} AS build
 
-ARG PG_IMAGE_VERSION=18.4
+ARG PG_IMAGE_VERSION=18.6
 ARG PG_ALPINE_VERSION=3.24
 ARG TARGETARCH
 ARG TARGETVARIANT
@@ -35,9 +35,25 @@ ARG PG_VERSION=18
 ARG TARGETARCH
 ARG TARGETVARIANT
 ARG WRAPPERS_REPO=https://github.com/wenerme/wrappers.git
-ARG WRAPPERS_BRANCH=develop
-ARG WRAPPERS_REV=ddf5a2d6850ec47fcee2a1a9b1c1582e5eb1141a
-ARG PGRX_VERSION=0.19.1
+ARG WRAPPERS_REV=ecafbf1979af81a18bcb57d790bd167208d3ffa0
+ARG PGRX_VERSION=0.19.2
+# The wrappers workspace rust-version; Alpine's rust (1.96 on 3.24) lags behind it.
+ARG RUST_VERSION=1.97.1
+# Must equal the DuckDB bundled by the wrappers duckdb crate; checked against Cargo.lock below.
+ARG DUCKDB_VERSION=v1.5.6
+# Parallel rustc/cc jobs; libduckdb-sys compiles DuckDB C++ and runs out of memory with more.
+ARG CARGO_BUILD_JOBS=2
+# wrappers versions already installed in existing databases; their catalog still references
+# $libdir/wrappers-<old>.so until `ALTER EXTENSION wrappers UPDATE`.
+ARG WRAPPERS_OLD_VERSIONS="0.6.0"
+
+# musl rustup toolchains link statically by default; pgrx extensions must not.
+ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/root/.cargo PATH=/root/.cargo/bin:${PATH} \
+    RUSTFLAGS="-C target-feature=-crt-static"
+RUN --mount=type=cache,id=apk-pg-build-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/etc/apk/cache \
+    apk add rustup && \
+    rustup-init -y --profile minimal --default-toolchain ${RUST_VERSION} --no-modify-path && \
+    rustc --version
 
 RUN --mount=type=cache,id=cargo-registry-wrappers-$TARGETARCH,target=/root/.cargo/registry \
     --mount=type=cache,id=cargo-git-wrappers-$TARGETARCH,target=/root/.cargo/git \
@@ -45,17 +61,20 @@ RUN --mount=type=cache,id=cargo-registry-wrappers-$TARGETARCH,target=/root/.carg
 
 RUN cargo pgrx init --pg${PG_VERSION}=$(which pg_config)
 
-RUN echo "rev: ${WRAPPERS_REV}" && git clone --branch ${WRAPPERS_BRANCH} --depth 1 ${WRAPPERS_REPO} /tmp/wrappers
-
+# Fetch the exact commit so WRAPPERS_REV pins the source, not just the cache.
 RUN set -eux; \
+    git init -q /tmp/wrappers; \
     cd /tmp/wrappers; \
-    find . -name Cargo.toml -exec sed -i \
-      -e "s/=0\\.16\\.1/${PGRX_VERSION}/g" \
-      -e "s/\"=0\\.16\\.1\"/\"${PGRX_VERSION}\"/g" \
-      -e "s/\"0\\.16\\.1\"/\"${PGRX_VERSION}\"/g" \
-      {} +; \
-    cargo update -p pgrx --precise ${PGRX_VERSION}; \
-    cargo update -p pgrx-tests --precise ${PGRX_VERSION}
+    git fetch -q --depth 1 ${WRAPPERS_REPO} ${WRAPPERS_REV}; \
+    git checkout -q FETCH_HEAD; \
+    test "$(git rev-parse HEAD)" = "${WRAPPERS_REV}"; \
+    grep -q "pgrx = { version = \"=${PGRX_VERSION}\"" wrappers/Cargo.toml \
+      || { echo "wrappers pins another pgrx; set PGRX_VERSION" >&2; grep -n 'pgrx = ' wrappers/Cargo.toml >&2; exit 1; }; \
+    duckdb_crate=$(awk '/^name = "libduckdb-sys"$/{getline; gsub(/[^0-9.]/, ""); print; exit}' Cargo.lock); \
+    minor=$(echo "$duckdb_crate" | cut -d. -f2); \
+    bundled="v$((minor / 10000)).$((minor / 100 % 100)).$((minor % 100))"; \
+    test "$bundled" = "${DUCKDB_VERSION}" \
+      || { echo "wrappers bundles DuckDB $bundled (libduckdb-sys $duckdb_crate), DUCKDB_VERSION=${DUCKDB_VERSION}" >&2; exit 1; }
 
 RUN --mount=type=cache,id=cargo-registry-wrappers-$TARGETARCH,target=/root/.cargo/registry \
     --mount=type=cache,id=cargo-git-wrappers-$TARGETARCH,target=/root/.cargo/git \
@@ -69,24 +88,37 @@ RUN --mount=type=cache,id=cargo-registry-wrappers-$TARGETARCH,target=/root/.carg
     cp /usr/local/lib/postgresql/wrappers*.so /tmp/install/usr/local/lib/postgresql/ && \
     cp /usr/local/share/postgresql/extension/wrappers* /tmp/install/usr/local/share/postgresql/extension/
 
+# Keep existing databases working across the version bump:
+#  - wrappers-<old>.so -> wrappers-<new>.so keeps not-yet-updated catalogs loadable
+#  - wrappers--<old>--<new>.sql makes `ALTER EXTENSION wrappers UPDATE` possible
+RUN set -eux; \
+    cd /tmp/install/usr/local/share/postgresql/extension; \
+    set -- wrappers--*.sql; \
+    test $# -eq 1 && test -e "$1"; \
+    new=$(echo "$1" | sed -E 's/^wrappers--([^-]+)\.sql$/\1/'); \
+    test -e /tmp/install/usr/local/lib/postgresql/wrappers-$new.so; \
+    for v in ${WRAPPERS_OLD_VERSIONS}; do \
+      [ "$v" = "$new" ] && continue; \
+      cp wrappers--$new.sql wrappers--$v--$new.sql; \
+      ln -sf wrappers-$new.so /tmp/install/usr/local/lib/postgresql/wrappers-$v.so; \
+    done; \
+    ls -la . /tmp/install/usr/local/lib/postgresql/
+
 # ── DuckDB extensions (pre-built not available for linux_*_musl)
 FROM build AS duckdb_ext
 
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG DUCKDB_VERSION=v1.4.4
+ARG DUCKDB_VERSION=v1.5.6
 
 RUN git clone --branch ${DUCKDB_VERSION} --depth 1 \
         https://github.com/duckdb/duckdb.git /tmp/duckdb
 
-RUN printf '%s\n' \
-      'duckdb_extension_load(httpfs GIT_URL https://github.com/duckdb/duckdb-httpfs GIT_TAG 13f8a814d41a978c3f19eb1dc76069489652ea6f INCLUDE_DIR src/include)' \
-      > /tmp/duckdb_ext_config.cmake
-
+# DuckDB's own config pins the httpfs commit and patches that match this release.
 RUN --mount=type=cache,id=ccache-duckdb-$TARGETARCH,target=/root/.ccache \
     set -eux; \
     cd /tmp/duckdb; \
-    EXTENSION_CONFIGS="/tmp/duckdb_ext_config.cmake" make -j1 release; \
+    EXTENSION_CONFIGS="/tmp/duckdb/.github/config/extensions/httpfs.cmake" make -j1 release; \
     DUCKDB_VER=${DUCKDB_VERSION#v}; \
     PLATFORM="linux_${TARGETARCH}_musl"; \
     mkdir -p /tmp/install/duckdb-extensions/v${DUCKDB_VER}/${PLATFORM}; \
@@ -99,7 +131,7 @@ RUN --mount=type=cache,id=ccache-duckdb-$TARGETARCH,target=/root/.ccache \
 FROM build AS pgvector
 
 ARG TARGETARCH
-ARG PGVECTOR_VERSION=0.8.2
+ARG PGVECTOR_VERSION=0.8.7
 
 RUN git clone --branch v${PGVECTOR_VERSION} --depth 1 \
         https://github.com/pgvector/pgvector.git /tmp/pgvector
@@ -113,7 +145,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pg_cron
 
 ARG TARGETARCH
-ARG PG_CRON_VERSION=1.6.7
+ARG PG_CRON_VERSION=1.6.8
 
 RUN git clone --branch v${PG_CRON_VERSION} --depth 1 \
         https://github.com/citusdata/pg_cron.git /tmp/pg_cron
@@ -127,7 +159,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pg_tle
 
 ARG TARGETARCH
-ARG PG_TLE_VERSION=1.5.2
+ARG PG_TLE_VERSION=1.5.3
 
 RUN git clone --branch v${PG_TLE_VERSION} --depth 1 \
         https://github.com/aws/pg_tle.git /tmp/pg_tle
@@ -141,7 +173,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pg_stat_monitor
 
 ARG TARGETARCH
-ARG PG_STAT_MONITOR_VERSION=2.3.2
+ARG PG_STAT_MONITOR_VERSION=2.4.0
 
 RUN git clone --branch ${PG_STAT_MONITOR_VERSION} --depth 1 \
         https://github.com/percona/pg_stat_monitor.git /tmp/pg_stat_monitor
@@ -183,7 +215,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pgsql_http
 
 ARG TARGETARCH
-ARG PGSQL_HTTP_VERSION=1.7.0
+ARG PGSQL_HTTP_VERSION=1.7.2
 
 RUN git clone --branch v${PGSQL_HTTP_VERSION} --depth 1 \
         https://github.com/pramsey/pgsql-http.git /tmp/pgsql-http
@@ -197,7 +229,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pg_net
 
 ARG TARGETARCH
-ARG PG_NET_VERSION=0.20.2
+ARG PG_NET_VERSION=0.20.5
 
 RUN git clone --branch v${PG_NET_VERSION} --depth 1 \
         https://github.com/supabase/pg_net.git /tmp/pg_net
@@ -225,7 +257,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pg_partman
 
 ARG TARGETARCH
-ARG PG_PARTMAN_VERSION=5.4.3
+ARG PG_PARTMAN_VERSION=5.5.0
 
 RUN git clone --branch v${PG_PARTMAN_VERSION} --depth 1 \
         https://github.com/pgpartman/pg_partman.git /tmp/pg_partman
@@ -239,7 +271,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pgmq
 
 ARG TARGETARCH
-ARG PGMQ_VERSION=1.11.0
+ARG PGMQ_VERSION=1.13.1
 
 RUN git clone --branch v${PGMQ_VERSION} --depth 1 \
         https://github.com/pgmq/pgmq.git /tmp/pgmq
@@ -253,7 +285,7 @@ FROM build AS timescaledb
 
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG TIMESCALEDB_VERSION=2.25.2
+ARG TIMESCALEDB_VERSION=2.31.0
 
 RUN --mount=type=cache,id=apk-pg-build-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/etc/apk/cache \
     apk add dpkg-dev dpkg icu-dev
@@ -276,12 +308,15 @@ FROM build AS pljs
 
 ARG TARGETARCH
 ARG PLJS_REPO=https://github.com/wenerme/pljs.git
-ARG PLJS_BRANCH=develop
-ARG PLJS_REV=
+ARG PLJS_REV=d59634ed2fe98d6342956a79af5be0874d811a5f
 
-RUN echo "rev: ${PLJS_REV}" && \
-    git clone --branch ${PLJS_BRANCH} --depth 1 --recurse-submodules \
-        ${PLJS_REPO} /tmp/pljs
+RUN set -eux; \
+    git init -q /tmp/pljs; \
+    cd /tmp/pljs; \
+    git fetch -q --depth 1 ${PLJS_REPO} ${PLJS_REV}; \
+    git checkout -q FETCH_HEAD; \
+    test "$(git rev-parse HEAD)" = "${PLJS_REV}"; \
+    git submodule update -q --init --recursive --depth 1
 
 RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
     cd /tmp/pljs; \
@@ -296,9 +331,8 @@ ARG PG_VERSION=18
 ARG TARGETARCH
 ARG TARGETVARIANT
 ARG PG_WODEKIT_REPO=https://github.com/wenerme/pg_wodekit.git
-ARG PG_WODEKIT_BRANCH=develop
 ARG PG_WODEKIT_REV=65fbc46b79dbce692a7ec8bbeb2f2ae5016cc4b4
-ARG PGRX_VERSION=0.19.1
+ARG PGRX_VERSION=0.19.2
 
 RUN --mount=type=cache,id=cargo-registry-pg-wodekit-$TARGETARCH,target=/root/.cargo/registry \
     --mount=type=cache,id=cargo-git-pg-wodekit-$TARGETARCH,target=/root/.cargo/git \
@@ -306,9 +340,12 @@ RUN --mount=type=cache,id=cargo-registry-pg-wodekit-$TARGETARCH,target=/root/.ca
 
 RUN cargo pgrx init --pg${PG_VERSION}=$(which pg_config)
 
-RUN echo "rev: ${PG_WODEKIT_REV}" && \
-    git clone --branch ${PG_WODEKIT_BRANCH} --depth 1 \
-        ${PG_WODEKIT_REPO} /tmp/pg_wodekit
+RUN set -eux; \
+    git init -q /tmp/pg_wodekit; \
+    cd /tmp/pg_wodekit; \
+    git fetch -q --depth 1 ${PG_WODEKIT_REPO} ${PG_WODEKIT_REV}; \
+    git checkout -q FETCH_HEAD; \
+    test "$(git rev-parse HEAD)" = "${PG_WODEKIT_REV}"
 
 RUN set -eux; \
     cd /tmp/pg_wodekit; \
@@ -335,7 +372,7 @@ RUN --mount=type=cache,id=cargo-registry-pg-wodekit-$TARGETARCH,target=/root/.ca
 FROM build AS pgsodium
 
 ARG TARGETARCH
-ARG PGSODIUM_VERSION=3.1.9
+ARG PGSODIUM_VERSION=3.1.11
 
 RUN git clone --branch v${PGSODIUM_VERSION} --depth 1 \
         https://github.com/michelp/pgsodium.git /tmp/pgsodium
@@ -349,7 +386,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS vault
 
 ARG TARGETARCH
-ARG VAULT_VERSION=0.3.1
+ARG VAULT_VERSION=0.3.2
 
 # Vault needs pgsodium headers at build time
 COPY --from=pgsodium /tmp/install/usr/local/ /usr/local/

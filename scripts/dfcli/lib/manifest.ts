@@ -33,7 +33,17 @@ export interface Track {
 
 export interface ManifestVariant {
   name: string;
-  build: { dir: string; target: string; variables: Partial<Record<VersionField, string>>; prepare?: string };
+  build: {
+    dir: string; target: string; variables: Partial<Record<VersionField, string>>; prepare?: string;
+    /**
+     * Build each platform on a runner of that architecture instead of QEMU, then merge the digests.
+     * For images too heavy to emulate (Rust/C++ toolchains); they may not depend on or be depended on by
+     * other manifest images, because each runner only holds its own platform.
+     */
+    native?: boolean;
+    /** native only: script in build.dir run as `bash <test> <image-ref>` against each platform build before it is used. */
+    test?: string;
+  };
   version: { scheme: VersionScheme; app?: string; alpine?: string; revision: number };
   base?: Dependency;
   inputs: Dependency[];
@@ -166,7 +176,7 @@ export function parseManifest(source: string): ImageManifest {
     const variants = list(image.variants, `${name}.variants`).map((rawVariant): ManifestVariant => {
       const label = `${name}.variant`;
       const variant = object(rawVariant, label, ['name', 'build', 'version', 'base', 'inputs', 'aliases', 'track']);
-      const build = object(variant.build, `${label}.build`, ['dir', 'target', 'variables', 'prepare']);
+      const build = object(variant.build, `${label}.build`, ['dir', 'target', 'variables', 'prepare', 'native', 'test']);
       const prepare = build.prepare === undefined ? undefined : text(build.prepare, `${label}.build.prepare`, /^[a-z][a-z0-9_-]*$/);
       if (prepare && ['push', 'build', 'load', 'print', 'info'].includes(prepare)) {
         throw new Error(`${label}.build.prepare: ${prepare} is a Bake action, not a preparation step`);
@@ -200,9 +210,15 @@ export function parseManifest(source: string): ImageManifest {
         if (aliasField.test(value)) throw new Error(`${label}.aliases: only \${alpine}, \${alpine_minor} and \${app} substitutions are supported`);
         return value;
       });
+      if (build.native !== undefined && typeof build.native !== 'boolean') throw new Error(`${label}.build.native: expected boolean`);
+      const test = build.test === undefined ? undefined : text(build.test, `${label}.build.test`, /^[A-Za-z0-9_-][A-Za-z0-9_./-]*\.sh$/);
+      if (test && (!build.native || test.split('/').includes('..'))) throw new Error(`${label}.build.test: native builds only, inside build.dir`);
       return {
         name: text(variant.name, `${label}.name`, slug),
-        build: { dir, target: text(build.target, `${label}.build.target`, /^[a-zA-Z0-9_.-]+$/), variables: bindings, prepare },
+        build: {
+          dir, target: text(build.target, `${label}.build.target`, /^[a-zA-Z0-9_.-]+$/), variables: bindings, prepare,
+          ...(build.native ? { native: true } : {}), ...(test ? { test } : {}),
+        },
         version: { scheme: scheme as VersionScheme, app, alpine, revision: version.revision as number },
         base: variant.base === undefined ? undefined : dependency(variant.base, `${label}.base`),
         inputs: (variant.inputs as unknown[] | undefined ?? []).map((item) => dependency(item, `${label}.inputs`)),
@@ -239,7 +255,11 @@ export function resolveManifest(manifest: ImageManifest): Release[] {
     if (!variant) throw new Error(`unknown dependency ${id}`);
     visiting.push(id);
     const dependencies = [...new Set([variant.base, ...variant.inputs].filter((dep): dep is Dependency => Boolean(dep)).map(internalId).filter((dep): dep is string => Boolean(dep)))];
-    for (const dep of dependencies) visit(dep);
+    if (variant.build.native && dependencies.length) throw new Error(`${id}: native builds cannot depend on manifest images (${dependencies.join(', ')})`);
+    for (const dep of dependencies) {
+      if (variants.get(dep)?.build.native) throw new Error(`${id}: depends on native build ${dep}`);
+      visit(dep);
+    }
     const baseId = variant.base && internalId(variant.base);
     const inheritedAlpine = baseId ? resolved.get(baseId)?.alpine : undefined;
     const alpine = variant.version.alpine ?? inheritedAlpine;
@@ -366,6 +386,8 @@ export interface BakeOptions {
   ref?: string;
   /** Internal dependency ID -> image ref, for parents built earlier in the same verification run. */
   dependencyRefs?: Map<string, string>;
+  /** Push by digest only (native per-platform builds); the canonical tag is written when the digests are merged. */
+  byDigest?: boolean;
 }
 
 export function generatedBake(bake: BakePrint, release: Release, releases: Release[], options: BakeOptions = {}): BakePrint {
@@ -394,6 +416,7 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
     'org.opencontainers.image.version': release.tag,
     ...(options.revision ? { 'org.opencontainers.image.revision': options.revision } : {}),
   };
+  const ref = options.ref ?? release.ref;
   return {
     group: { default: { targets: [release.build.target] } },
     target: { [release.build.target]: {
@@ -401,7 +424,9 @@ export function generatedBake(bake: BakePrint, release: Release, releases: Relea
       args,
       contexts,
       labels,
-      tags: [options.ref ?? release.ref],
+      ...(options.byDigest
+        ? { tags: [], output: [`type=image,name=${ref.slice(0, ref.lastIndexOf(':'))},push-by-digest=true,name-canonical=true,push=true`] }
+        : { tags: [ref] }),
       ...(options.platforms?.length ? { platforms: options.platforms } : {}),
     } },
   };
@@ -518,16 +543,52 @@ export async function prepareBuild(root: string, release: Release) {
   });
 }
 
-export async function pushBake(root: string, release: Release, bake: BakePrint) {
+export async function pushBake(root: string, release: Release, bake: BakePrint): Promise<string | undefined> {
   const dir = path.resolve(root, release.build.dir);
   const temp = mkdtempSync(path.join(tmpdir(), 'dockerfiles-bake-'));
   try {
     const file = path.join(temp, 'docker-bake.json');
+    const metadata = path.join(temp, 'metadata.json');
     writeFileSync(file, JSON.stringify(executionBake(bake, dir), null, 2));
-    await run(['docker', 'buildx', 'bake', '--file', file, '--push', release.build.target], { cwd: dir, timeoutMs: 4 * 60 * 60_000 });
+    // --push would replace a push-by-digest output; that output already pushes.
+    const byDigest = Boolean(bake.target?.[release.build.target]?.output);
+    await run(['docker', 'buildx', 'bake', '--file', file, '--metadata-file', metadata, ...(byDigest ? [] : ['--push']), release.build.target], {
+      cwd: dir, timeoutMs: 5 * 60 * 60_000,
+    });
+    if (!byDigest) return undefined;
+    const digest = (JSON.parse(readFileSync(metadata, 'utf8')) as Record<string, Record<string, unknown>>)[release.build.target]?.['containerimage.digest'];
+    if (typeof digest !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(digest)) throw new Error(`${release.id}: build metadata has no image digest`);
+    return digest;
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
+}
+
+/** Platform of the Docker daemon, e.g. linux/arm64; native builds refuse to run emulated. */
+export async function hostPlatform(): Promise<string> {
+  const result = await capture(['docker', 'version', '--format', '{{.Server.Os}}/{{.Server.Arch}}'], { timeoutMs: 30_000 });
+  if (result.exitCode !== 0) throw new Error(`docker version failed: ${lastErrorLine(result.stderr) ?? result.exitCode}`);
+  return result.stdout.trim();
+}
+
+/** Digest file name for one platform of a native build, e.g. postgres.default@linux-arm64. */
+export function digestFileName(release: Release, platform: string): string {
+  return `${release.id}@${platform.replaceAll('/', '-')}`;
+}
+
+/** Run a native build's test script against one platform image; build logs and test output go to stderr. */
+export async function testRelease(root: string, release: Release, ref: string) {
+  if (!release.build.test) return;
+  await run(['bash', release.build.test, ref], { cwd: path.resolve(root, release.build.dir), timeoutMs: 30 * 60_000 });
+}
+
+/** Join per-platform digests into the canonical multi-platform tag. */
+export async function mergeDigests(release: Release, digests: string[]): Promise<string> {
+  await run(['docker', 'buildx', 'imagetools', 'create', '--tag', release.ref,
+    ...digests.map((digest) => `${release.repository}@${digest}`)], { timeoutMs: 30 * 60_000 });
+  const merged = await inspectPublication(release.ref);
+  if (merged.state !== 'published') throw new Error(`merged but ${release.ref} reports ${merged.state}`);
+  return merged.digest!;
 }
 
 export function registryFailure(message: string): Publication {

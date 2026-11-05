@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  aliasRefs, anonymousPublication, executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parseNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
+  aliasRefs, anonymousPublication, digestFileName, executionBake, generatedBake, localRef, parseLocalRegistry, parseManifest, parseNamespace, parsePlatforms, planReleases, publishAction, regionEnd, regionStart,
   registryFailure, replaceReadmeRegion, resolveManifest, selectRelease, validateSelectors, versionVariables, type ImageManifest,
 } from './manifest.ts';
 
@@ -121,6 +121,22 @@ images:
     manifest.images[0].variants.push(manifest.images[0].variants[0]);
     expect(() => resolveManifest(manifest)).toThrow('duplicate variant');
   });
+  test('native builds carry an optional test script and stay outside the dependency graph', () => {
+    const native = yaml.replace('target: base', 'target: base\n          native: true\n          test: postgres/test.sh');
+    expect(parseManifest(native).images[0].variants[0].build).toMatchObject({ native: true, test: 'postgres/test.sh' });
+    expect(parseManifest(yaml).images[0].variants[0].build.native).toBeUndefined();
+    expect(() => parseManifest(yaml.replace('target: base', 'target: base\n          native: yes'))).toThrow('build.native');
+    expect(() => parseManifest(yaml.replace('target: base', 'target: base\n          test: test.sh'))).toThrow('native builds only');
+    expect(() => parseManifest(native.replace('postgres/test.sh', '../test.sh'))).toThrow('build.test');
+    expect(() => parseManifest(native.replace('postgres/test.sh', 'x/../../test.sh'))).toThrow('inside build.dir');
+    // Each runner holds only its own platform, so native images neither consume nor feed manifest images.
+    const parent = sample();
+    parent.images[0].variants[0].build.native = true;
+    expect(() => resolveManifest(parent)).toThrow('depends on native build base.default');
+    const child = sample();
+    child.images[1].variants[0].build.native = true;
+    expect(() => resolveManifest(child)).toThrow('native builds cannot depend on manifest images');
+  });
 });
 
 describe('generated artifacts and publication states', () => {
@@ -194,6 +210,21 @@ describe('generated artifacts and publication states', () => {
     for (const value of ['ghcr.io', 'registry.example.com:5000', 'localhost', '0.0.0.0:5000', 'localhost:5000/x']) {
       expect(() => parseLocalRegistry(value)).toThrow('localhost:<port>');
     }
+  });
+
+  test('native platform builds push by digest to the canonical repository without tags', () => {
+    const releases = resolveManifest(sample());
+    const base = selectRelease(releases, 'base');
+    const bake = generatedBake({ target: { base: { tags: ['docker.io/wener/base:latest'] } } }, base, releases, {
+      platforms: ['linux/arm64'], byDigest: true,
+    });
+    expect(bake.target!.base.tags).toEqual([]);
+    expect(bake.target!.base.output).toEqual([
+      'type=image,name=ghcr.io/wenerme/dockerfiles/base,push-by-digest=true,name-canonical=true,push=true',
+    ]);
+    expect(bake.target!.base.platforms).toEqual(['linux/arm64']);
+    expect(generatedBake({ target: { base: {} } }, base, releases).target!.base.output).toBeUndefined();
+    expect(digestFileName(base, 'linux/arm64')).toBe('base.default@linux-arm64');
   });
 
   test('aliases resolve version templates, stay unique per repository and never look canonical', () => {

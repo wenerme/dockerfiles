@@ -27,8 +27,9 @@ docker run --rm -d \
   -e POSTGRES_HOST_AUTH_METHOD=trust \
   "$IMAGE" \
   postgres \
-    -c shared_preload_libraries=pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor \
+    -c shared_preload_libraries=timescaledb,pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor,pg_partman_bgw \
     -c cron.database_name=postgres \
+    -c timescaledb.telemetry_level=off \
   >/dev/null
 
 log "Waiting for PostgreSQL to be ready..."
@@ -64,15 +65,56 @@ psql_exec "INSERT INTO _test_vec (emb) VALUES ('[1,0,0]'), ('[0,1,0]'), ('[0,0,1
 psql_exec "CREATE INDEX IF NOT EXISTS _test_vec_hnsw ON _test_vec USING hnsw (emb vector_cosine_ops);" >/dev/null \
   && ok "HNSW index creation" || fail "HNSW index creation"
 
-# ── test: mysql_fdw ─────────────────────────────────────────────
-log "Testing mysql_fdw"
-psql_exec "CREATE EXTENSION IF NOT EXISTS mysql_fdw;" >/dev/null && ok "CREATE EXTENSION mysql_fdw" || fail "CREATE EXTENSION mysql_fdw"
+# ── test: supabase wrappers ─────────────────────────────────────
+log "Testing supabase wrappers"
+psql_exec "CREATE EXTENSION IF NOT EXISTS wrappers;" >/dev/null && ok "CREATE EXTENSION wrappers" || fail "CREATE EXTENSION wrappers"
 
-psql_exec "CREATE SERVER IF NOT EXISTS _test_mysql FOREIGN DATA WRAPPER mysql_fdw OPTIONS (host '127.0.0.1', port '3306');" >/dev/null \
-  && ok "CREATE SERVER with mysql_fdw" || fail "CREATE SERVER with mysql_fdw"
+WRAPPERS_VER=$(psql_exec "SELECT extversion FROM pg_extension WHERE extname = 'wrappers';")
+echo "  wrappers = $WRAPPERS_VER"
+for handler in click_house duckdb mysql prometheus redis s3 s3_vectors tencent_cls; do
+  N=$(psql_exec "SELECT count(*) FROM pg_proc WHERE proname = '${handler}_fdw_handler';")
+  if [[ "$N" == "1" ]]; then ok "${handler}_fdw_handler"; else fail "${handler}_fdw_handler missing"; fi
+done
 
-FDW=$(psql_exec "SELECT fdwname FROM pg_foreign_data_wrapper WHERE fdwname = 'mysql_fdw';")
-if [[ "$FDW" == "mysql_fdw" ]]; then ok "mysql_fdw registered"; else fail "mysql_fdw not found in pg_foreign_data_wrapper"; fi
+psql_exec "CREATE FOREIGN DATA WRAPPER _test_mysql_wrapper HANDLER mysql_fdw_handler VALIDATOR mysql_fdw_validator;" >/dev/null \
+  && ok "CREATE FOREIGN DATA WRAPPER (mysql_fdw_handler)" || fail "CREATE FOREIGN DATA WRAPPER (mysql_fdw_handler)"
+psql_exec "CREATE SERVER _test_mysql FOREIGN DATA WRAPPER _test_mysql_wrapper OPTIONS (conn_string 'mysql://u:p@127.0.0.1:3306/db');" >/dev/null \
+  && ok "CREATE SERVER with mysql wrapper" || fail "CREATE SERVER with mysql wrapper"
+
+# Databases created by earlier images still reference wrappers 0.6.0.
+UPGRADE=$(psql_exec "SELECT count(*) FROM pg_extension_update_paths('wrappers') WHERE source = '0.6.0' AND target = '$WRAPPERS_VER' AND path IS NOT NULL;")
+if [[ "$WRAPPERS_VER" == "0.6.0" || "$UPGRADE" == "1" ]]; then ok "wrappers update path 0.6.0 -> $WRAPPERS_VER"; else fail "no wrappers update path 0.6.0 -> $WRAPPERS_VER"; fi
+if docker exec "$CONTAINER" test -e /usr/local/lib/postgresql/wrappers-0.6.0.so; then ok "wrappers-0.6.0.so still loadable"; else fail "wrappers-0.6.0.so missing"; fi
+
+# ── test: timescaledb ───────────────────────────────────────────
+log "Testing timescaledb"
+psql_exec "CREATE EXTENSION IF NOT EXISTS timescaledb;" >/dev/null && ok "CREATE EXTENSION timescaledb" || fail "CREATE EXTENSION timescaledb"
+psql_exec "CREATE TABLE _test_metrics (time timestamptz NOT NULL, value double precision);" >/dev/null
+HT=$(psql_exec "SELECT count(*) FROM create_hypertable('_test_metrics', by_range('time'));")
+if [[ "$HT" == "1" ]]; then ok "create_hypertable()"; else fail "create_hypertable(): $HT"; fi
+
+# ── test: pgmq / pg_partman ─────────────────────────────────────
+log "Testing pgmq and pg_partman"
+psql_exec "CREATE EXTENSION IF NOT EXISTS pgmq;" >/dev/null && ok "CREATE EXTENSION pgmq" || fail "CREATE EXTENSION pgmq"
+psql_exec "SELECT pgmq.create('_test_q');" >/dev/null
+psql_exec "SELECT pgmq.send('_test_q', '{\"k\":1}'::jsonb);" >/dev/null
+MSG=$(psql_exec "SELECT message->>'k' FROM pgmq.read('_test_q', 30, 1);")
+if [[ "$MSG" == "1" ]]; then ok "pgmq send/read"; else fail "pgmq read: $MSG"; fi
+psql_exec "CREATE SCHEMA IF NOT EXISTS partman; CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;" >/dev/null \
+  && ok "CREATE EXTENSION pg_partman" || fail "CREATE EXTENSION pg_partman"
+
+# ── test: pljs / pg_wodekit ─────────────────────────────────────
+log "Testing pljs and pg_wodekit"
+psql_exec "CREATE EXTENSION IF NOT EXISTS pljs;" >/dev/null && ok "CREATE EXTENSION pljs" || fail "CREATE EXTENSION pljs"
+psql_exec "CREATE FUNCTION _test_js(a int) RETURNS int LANGUAGE pljs AS 'return a * 2;';" >/dev/null
+JS=$(psql_exec "SELECT _test_js(21);")
+if [[ "$JS" == "42" ]]; then ok "pljs function"; else fail "pljs function: $JS"; fi
+psql_exec "CREATE EXTENSION IF NOT EXISTS pg_wodekit;" >/dev/null && ok "CREATE EXTENSION pg_wodekit" || fail "CREATE EXTENSION pg_wodekit"
+
+# ── test: DuckDB extensions for duckdb_fdw ──────────────────────
+log "Testing DuckDB extensions"
+HTTPFS=$(docker exec "$CONTAINER" sh -c 'ls /usr/local/lib/duckdb/extensions/*/*/httpfs.duckdb_extension 2>/dev/null')
+if [[ $(printf '%s\n' "$HTTPFS" | grep -c .) == "1" ]]; then ok "httpfs at ${HTTPFS#/usr/local/lib/duckdb/extensions/}"; else fail "expected one httpfs extension, got: $HTTPFS"; fi
 
 # ── test: pg_cron ───────────────────────────────────────────────
 log "Testing pg_cron"

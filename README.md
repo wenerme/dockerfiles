@@ -70,10 +70,11 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r1` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | debian | `ghcr.io/wenerme/dockerfiles/debian:13.7-r0` | `13`<br>`trixie`<br>`latest` | - | `docker.io/library/debian:13.7` | [debian](debian/) |
 | debian bookworm | `ghcr.io/wenerme/dockerfiles/debian:bookworm-12.15-r0` | `12`<br>`bookworm` | - | `docker.io/library/debian:12.15` | [debian](debian/) |
+| postgres | `ghcr.io/wenerme/dockerfiles/postgres:18.6-r0` | `18`<br>`18.6`<br>`latest` | - | `docker.io/library/postgres:18.6-alpine3.24` | [postgres](postgres/) |
 
 ### Other Images
 
-26 image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.
+25 image groups published from their own directories; see each directory for registries and tags. Variants lists additional image variants; Base lists parent image repositories.
 
 | Image | Variants | Base |
 |---|---|---|
@@ -94,7 +95,6 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 | [mihomo](mihomo/) | - | `golang`<br>`wener/base` |
 | [ml](ml/) | pytorch | `python`<br>`quay.io/wener/pytorch` |
 | [surya-ocr](ml/surya-ocr/) | - | `quay.io/wener/pytorch` |
-| [postgres](postgres/) | - | `postgres` |
 | [samba](samba/) | - | `wener/app` |
 | [sing-box](sing-box/) | - | `wener/base` |
 | [sni-rev-proxy](sni-rev-proxy/) | - | `wener/base` |

@@ -23,7 +23,7 @@ on:
         required: false
         default: ""
       platforms:
-        description: Platform override, e.g. linux/amd64. Empty uses each Bake target's platforms.
+        description: Platform override for QEMU-built images, e.g. linux/amd64. Empty uses each Bake target's platforms. Native images always build every platform.
         required: false
         default: ""
       dry_run:
@@ -78,6 +78,54 @@ jobs:
       # Without GHCR credentials: public tags are checked anonymously and nothing is pushed to GHCR.
       - name: Build missing tags into the local registry
         run: bun scripts/dfcli/main.ts publish --verify-registry localhost:5000
+
+  # build.native images are too heavy for QEMU: each platform builds and runs its test on a runner of that architecture.
+  verify-native:
+    name: Verify native ${{ matrix.platform }}
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux/amd64, arch: amd64, runner: ubuntu-latest }
+          - { platform: linux/arm64, arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 300
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The postgres build (Rust and C++ toolchains, DuckDB) needs more disk than the runner leaves free.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+
+      - name: Start local registry
+        run: docker run -d --name registry -p 127.0.0.1:5000:5000 registry:3.0.0@sha256:6c5666b861f3505b116bb9aa9b25175e71210414bd010d92035ff64018f9457e
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          driver-opts: network=host
+
+      - name: Build and test native images in the local registry
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: bun scripts/dfcli/main.ts publish --native --platforms "$PLATFORM" --verify-registry localhost:5000
 
   publish:
     name: Publish missing tags
@@ -148,3 +196,161 @@ jobs:
             fi
           done
           bun scripts/dfcli/main.ts publish "${args[@]}" -- "${images[@]}"
+
+  # Native images: every platform pushes by digest after its test passes; merge-native writes the canonical tags.
+  publish-native:
+    name: Publish native ${{ matrix.platform }}
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux/amd64, arch: amd64, runner: ubuntu-latest }
+          - { platform: linux/arm64, arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 300
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # workflow_dispatch defaults are not populated on push events.
+      - name: Resolve inputs
+        id: params
+        shell: bash
+        env:
+          INPUT_IMAGES: ${{ inputs.images }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          {
+            echo "images=${INPUT_IMAGES:-}"
+            echo "dry_run=${INPUT_DRY_RUN:-false}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The postgres build (Rust and C++ toolchains, DuckDB) needs more disk than the runner leaves free.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build, test and push platform digests
+        shell: bash
+        env:
+          IMAGE_SELECTORS: ${{ steps.params.outputs.images }}
+          DRY_RUN: ${{ steps.params.outputs.dry_run }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          read -r -a images <<< "$IMAGE_SELECTORS"
+          # Selectors are positional only; reject option-like input so it cannot become --push.
+          for image in "${images[@]}"; do
+            if [[ ! "$image" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+              echo "invalid image selector: $image" >&2
+              exit 1
+            fi
+          done
+          mkdir -p digests
+          # Keeps the artifact non-empty so merge-native can always download it.
+          echo "$PLATFORM" > "digests/ran-${PLATFORM//\//-}"
+          args=(--native --platforms "$PLATFORM")
+          if [ "$DRY_RUN" != "true" ]; then args+=(--push --digest-dir digests); fi
+          bun scripts/dfcli/main.ts publish "${args[@]}" -- "${images[@]}"
+
+      - name: Upload platform digests
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-digests-${{ matrix.arch }}
+          path: digests/
+          if-no-files-found: error
+          retention-days: 1
+
+  merge-native:
+    name: Merge native digests
+    needs: publish-native
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # workflow_dispatch defaults are not populated on push events.
+      - name: Resolve inputs
+        id: params
+        shell: bash
+        env:
+          INPUT_IMAGES: ${{ inputs.images }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          {
+            echo "images=${INPUT_IMAGES:-}"
+            echo "dry_run=${INPUT_DRY_RUN:-false}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download platform digests
+        uses: actions/download-artifact@v8
+        with:
+          pattern: native-digests-*
+          merge-multiple: true
+          path: digests
+
+      - name: Merge digests and move aliases
+        if: steps.params.outputs.dry_run != 'true'
+        shell: bash
+        env:
+          IMAGE_SELECTORS: ${{ steps.params.outputs.images }}
+        run: |
+          set -euo pipefail
+          read -r -a images <<< "$IMAGE_SELECTORS"
+          # Selectors are positional only; reject option-like input so it cannot become --push.
+          for image in "${images[@]}"; do
+            if [[ ! "$image" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+              echo "invalid image selector: $image" >&2
+              exit 1
+            fi
+          done
+          bun scripts/dfcli/main.ts publish --native --push --merge digests -- "${images[@]}"

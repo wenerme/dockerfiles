@@ -70,10 +70,11 @@ docker pull wener/php:8.4
 | php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r1` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
 | debian | `ghcr.io/wenerme/dockerfiles/debian:13.7-r0` | `13`<br>`trixie`<br>`latest` | - | `docker.io/library/debian:13.7` | [debian](debian/) |
 | debian bookworm | `ghcr.io/wenerme/dockerfiles/debian:bookworm-12.15-r0` | `12`<br>`bookworm` | - | `docker.io/library/debian:12.15` | [debian](debian/) |
+| postgres | `ghcr.io/wenerme/dockerfiles/postgres:18.6-r0` | `18`<br>`18.6`<br>`latest` | - | `docker.io/library/postgres:18.6-alpine3.24` | [postgres](postgres/) |
 
 ### 其他镜像
 
-26 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
+25 个镜像组从各自目录发布，镜像仓库和标签见各目录。变体列出额外的镜像变体，基础镜像列出父镜像仓库。
 
 | 镜像 | 变体 | 基础镜像 |
 |---|---|---|
@@ -94,7 +95,6 @@ docker pull wener/php:8.4
 | [mihomo](mihomo/) | - | `golang`<br>`wener/base` |
 | [ml](ml/) | pytorch | `python`<br>`quay.io/wener/pytorch` |
 | [surya-ocr](ml/surya-ocr/) | - | `quay.io/wener/pytorch` |
-| [postgres](postgres/) | - | `postgres` |
 | [samba](samba/) | - | `wener/app` |
 | [sing-box](sing-box/) | - | `wener/base` |
 | [sni-rev-proxy](sni-rev-proxy/) | - | `wener/base` |
