@@ -6,7 +6,7 @@ variable "POSTGRES_VERSION" { default = "18.6" }
 variable "PG_MAJOR" { default = split(".", POSTGRES_VERSION)[0] }
 variable "PG_IMAGE_VERSION" { default = POSTGRES_VERSION }
 variable "PG_ALPINE_VERSION" { default = "3.24" }
-variable "PG_REVISION" { default = "1" }
+variable "PG_REVISION" { default = "2" }
 
 # Source pins: fetched by exact commit.
 variable "WRAPPERS_REPO" { default = "https://github.com/wenerme/wrappers.git" }
@@ -33,6 +33,8 @@ variable "PG_REPACK_VERSION" { default = "1.5.3" }
 variable "PG_PARTMAN_VERSION" { default = "5.5.0" }
 variable "PGMQ_VERSION" { default = "1.13.1" }
 variable "TIMESCALEDB_VERSION" { default = "2.31.0" }
+# timescaledb versions of earlier images (18.3-r0: 2.25.2, 18.3-r1: 2.26.1); kept loadable, see the Dockerfile.
+variable "TIMESCALEDB_OLD_VERSIONS" { default = "2.25.2 2.26.0 2.26.1" }
 variable "PGSODIUM_VERSION" { default = "3.1.11" }
 variable "VAULT_VERSION" { default = "0.3.2" }
 
@@ -69,6 +71,7 @@ target "base" {
 		PG_PARTMAN_VERSION      = PG_PARTMAN_VERSION
 		PGMQ_VERSION            = PGMQ_VERSION
 		TIMESCALEDB_VERSION     = TIMESCALEDB_VERSION
+		TIMESCALEDB_OLD_VERSIONS = TIMESCALEDB_OLD_VERSIONS
 		PGSODIUM_VERSION        = PGSODIUM_VERSION
 		VAULT_VERSION           = VAULT_VERSION
 	}

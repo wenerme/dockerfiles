@@ -265,6 +265,14 @@ else
   docker logs "$SODIUM" 2>&1 | tail -10
 fi
 
+# ── test: upgrade from earlier published images ─────────────────
+# UPGRADE_FROM: space-separated old images (default: those existing databases were created with); "none" skips.
+if [[ "${UPGRADE_FROM:-}" != "none" ]]; then
+  log "Upgrade drill (upgrade-test.sh)"
+  read -r -a UPGRADE_IMAGES <<< "${UPGRADE_FROM:-}"
+  if bash "$(dirname "$0")/upgrade-test.sh" "$IMAGE" "${UPGRADE_IMAGES[@]}"; then ok "upgrade drill"; else fail "upgrade drill"; fi
+fi
+
 # ── summary ─────────────────────────────────────────────────────
 echo ""
 log "Results: $PASS passed, $FAIL failed"

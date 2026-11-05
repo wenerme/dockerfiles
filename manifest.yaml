@@ -473,6 +473,6 @@ images:
         version:
           scheme: app
           app: "18.6"
-          revision: 1
+          revision: 2
         aliases: ["18", "${app}", "latest"]
         track: { docker: postgres, prefix: "18.", suffix: "-alpine3.24" }

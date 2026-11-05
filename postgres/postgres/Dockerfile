@@ -306,6 +306,35 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
         -DPROJECT_INSTALL_METHOD="docker"; \
     cd build && make install DESTDIR=/tmp/install
 
+# Databases created by earlier images still use those timescaledb versions: the loader opens
+# timescaledb-<installed>.so, so without it every connection to such a database fails until
+# `ALTER EXTENSION timescaledb UPDATE`. Keep each old version's libraries and install script;
+# the loader, control file and the <old>--<new> update scripts come from the current build.
+ARG TIMESCALEDB_OLD_VERSIONS="2.25.2 2.26.0 2.26.1"
+RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
+    set -eux; \
+    ext=/tmp/install/usr/local/share/postgresql/extension; \
+    lib=/tmp/install/usr/local/lib/postgresql; \
+    for v in ${TIMESCALEDB_OLD_VERSIONS}; do \
+      [ "$v" = "${TIMESCALEDB_VERSION}" ] && continue; \
+      test -e $ext/timescaledb--$v--${TIMESCALEDB_VERSION}.sql; \
+      git clone -q --branch $v --depth 1 https://github.com/timescale/timescaledb.git /tmp/timescaledb-$v; \
+      cd /tmp/timescaledb-$v; \
+      ./bootstrap \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DREGRESS_CHECKS=OFF \
+          -DTAP_CHECKS=OFF \
+          -DWARNINGS_AS_ERRORS=OFF \
+          -DGENERATE_DOWNGRADE_SCRIPT=OFF \
+          -DPROJECT_INSTALL_METHOD="docker"; \
+      make -C build -j2 install DESTDIR=/tmp/old-$v; \
+      cp /tmp/old-$v/usr/local/lib/postgresql/timescaledb-$v.so \
+         /tmp/old-$v/usr/local/lib/postgresql/timescaledb-tsl-$v.so $lib/; \
+      cp /tmp/old-$v/usr/local/share/postgresql/extension/timescaledb--$v.sql $ext/; \
+      cd /; rm -rf /tmp/timescaledb-$v /tmp/old-$v; \
+    done; \
+    ls $lib $ext | grep -E '^timescaledb(-tsl)?-[0-9.]+\.so$|^timescaledb--[0-9.]+\.sql$'
+
 # ── pljs (JavaScript for PostgreSQL via QuickJS) ─────────────────
 FROM build AS pljs
 
