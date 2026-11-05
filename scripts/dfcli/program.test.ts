@@ -26,6 +26,20 @@ describe('dfcli command tree', () => {
     expect(result.stderr.toString()).toContain('invalid image selector "--push"');
   });
 
+  test('native publish never writes a canonical tag from one platform or an untested image', () => {
+    const run = (...args: string[]) => Bun.spawnSync([process.execPath, main, 'publish', ...args, 'postgres'], { stdout: 'pipe', stderr: 'pipe' });
+    for (const [args, message] of [
+      [['--native', '--push', '--platforms', 'linux/amd64'], 'native --push needs --digest-dir or --merge'],
+      [['--native', '--push', '--merge', 'd', '--platforms', 'linux/amd64'], '--merge always merges every platform'],
+      [['--native', '--push', '--digest-dir', 'd', '--merge', 'd'], 'mutually exclusive'],
+      [['--digest-dir', 'd'], 'need --native --push'],
+    ] as const) {
+      const result = run(...args);
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr.toString()).toContain(message);
+    }
+  });
+
   test('unknown commands fail with a suggestion', () => {
     const result = Bun.spawnSync([process.execPath, main, 'stauts'], { stdout: 'pipe', stderr: 'pipe' });
     expect(result.exitCode).not.toBe(0);

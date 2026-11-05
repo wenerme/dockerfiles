@@ -1,30 +1,40 @@
 variable "IMAGE_NAME" { default = "postgres" }
 
-variable "PG_VERSION" { default = "18.4" }
-variable "PG_MAJOR" { default = split(".", PG_VERSION)[0] }
-variable "PG_IMAGE_VERSION" { default = PG_VERSION }
+# Full PostgreSQL release; manifest.yaml binds its app version here. Not named PG_VERSION:
+# that Dockerfile arg is the major version used for pgrx features (pg18).
+variable "POSTGRES_VERSION" { default = "18.6" }
+variable "PG_MAJOR" { default = split(".", POSTGRES_VERSION)[0] }
+variable "PG_IMAGE_VERSION" { default = POSTGRES_VERSION }
 variable "PG_ALPINE_VERSION" { default = "3.24" }
 variable "PG_REVISION" { default = "0" }
 
+# Source pins: fetched by exact commit.
 variable "WRAPPERS_REPO" { default = "https://github.com/wenerme/wrappers.git" }
-variable "WRAPPERS_BRANCH" { default = "develop" }
-variable "WRAPPERS_REV" { default = "51f30aedf12d74db4c58b2073868ec8f161e703a" }
-variable "PGRX_VERSION" { default = "0.19.1" }
-variable "PGVECTOR_VERSION" { default = "0.8.3" }
-variable "PG_CRON_VERSION" { default = "1.6.7" }
-variable "PG_TLE_VERSION" { default = "1.5.2" }
-variable "PG_STAT_MONITOR_VERSION" { default = "2.3.2" }
+variable "WRAPPERS_REV" { default = "ecafbf1979af81a18bcb57d790bd167208d3ffa0" }
+variable "PLJS_REPO" { default = "https://github.com/wenerme/pljs.git" }
+variable "PLJS_REV" { default = "d59634ed2fe98d6342956a79af5be0874d811a5f" }
+variable "PG_WODEKIT_REV" { default = "65fbc46b79dbce692a7ec8bbeb2f2ae5016cc4b4" }
+# wrappers requirements: its pgrx pin, workspace rust-version and bundled DuckDB (checked in the build).
+variable "PGRX_VERSION" { default = "0.19.2" }
+variable "RUST_VERSION" { default = "1.97.1" }
+variable "DUCKDB_VERSION" { default = "v1.5.6" }
+# Versions installed by earlier images; kept loadable and given an update path.
+variable "WRAPPERS_OLD_VERSIONS" { default = "0.6.0" }
+
+variable "PGVECTOR_VERSION" { default = "0.8.7" }
+variable "PG_CRON_VERSION" { default = "1.6.8" }
+variable "PG_TLE_VERSION" { default = "1.5.3" }
+variable "PG_STAT_MONITOR_VERSION" { default = "2.4.0" }
 variable "PGAUDIT_VERSION" { default = "18.0" }
 variable "PG_HASHIDS_VERSION" { default = "1.2.1" }
-variable "PGSQL_HTTP_VERSION" { default = "1.7.1" }
-variable "PG_NET_VERSION" { default = "0.20.3" }
+variable "PGSQL_HTTP_VERSION" { default = "1.7.2" }
+variable "PG_NET_VERSION" { default = "0.20.5" }
 variable "PG_REPACK_VERSION" { default = "1.5.3" }
-variable "PG_PARTMAN_VERSION" { default = "5.4.3" }
-variable "PGMQ_VERSION" { default = "1.11.1" }
-variable "TIMESCALEDB_VERSION" { default = "2.28.1" }
-variable "PLJS_REPO" { default = "https://github.com/wenerme/pljs.git" }
-variable "PLJS_BRANCH" { default = "develop" }
-variable "DUCKDB_VERSION" { default = "v1.5.4" }
+variable "PG_PARTMAN_VERSION" { default = "5.5.0" }
+variable "PGMQ_VERSION" { default = "1.13.1" }
+variable "TIMESCALEDB_VERSION" { default = "2.31.0" }
+variable "PGSODIUM_VERSION" { default = "3.1.11" }
+variable "VAULT_VERSION" { default = "0.3.2" }
 
 group "default" {
 	targets = ["postgres"]
@@ -39,9 +49,14 @@ target "base" {
 		PG_IMAGE_VERSION        = PG_IMAGE_VERSION
 		PG_ALPINE_VERSION       = PG_ALPINE_VERSION
 		WRAPPERS_REPO           = WRAPPERS_REPO
-		WRAPPERS_BRANCH         = WRAPPERS_BRANCH
 		WRAPPERS_REV            = WRAPPERS_REV
+		PLJS_REPO               = PLJS_REPO
+		PLJS_REV                = PLJS_REV
+		PG_WODEKIT_REV          = PG_WODEKIT_REV
 		PGRX_VERSION            = PGRX_VERSION
+		RUST_VERSION            = RUST_VERSION
+		DUCKDB_VERSION          = DUCKDB_VERSION
+		WRAPPERS_OLD_VERSIONS   = WRAPPERS_OLD_VERSIONS
 		PGVECTOR_VERSION        = PGVECTOR_VERSION
 		PG_CRON_VERSION         = PG_CRON_VERSION
 		PG_TLE_VERSION          = PG_TLE_VERSION
@@ -54,9 +69,8 @@ target "base" {
 		PG_PARTMAN_VERSION      = PG_PARTMAN_VERSION
 		PGMQ_VERSION            = PGMQ_VERSION
 		TIMESCALEDB_VERSION     = TIMESCALEDB_VERSION
-		PLJS_REPO               = PLJS_REPO
-		PLJS_BRANCH             = PLJS_BRANCH
-		DUCKDB_VERSION          = DUCKDB_VERSION
+		PGSODIUM_VERSION        = PGSODIUM_VERSION
+		VAULT_VERSION           = VAULT_VERSION
 	}
 }
 
@@ -77,13 +91,13 @@ function "tags" {
 		"quay.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_MAJOR}",
 		"ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_MAJOR}",
 
-		"docker.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_VERSION}-r${PG_REVISION}",
-		"quay.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_VERSION}-r${PG_REVISION}",
-		"ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_VERSION}-r${PG_REVISION}",
+		"docker.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${POSTGRES_VERSION}-r${PG_REVISION}",
+		"quay.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${POSTGRES_VERSION}-r${PG_REVISION}",
+		"ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${POSTGRES_VERSION}-r${PG_REVISION}",
 
-		"docker.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_VERSION}-alpine-${PG_ALPINE_VERSION}-r${PG_REVISION}",
-		"quay.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_VERSION}-alpine-${PG_ALPINE_VERSION}-r${PG_REVISION}",
-		"ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${PG_VERSION}-alpine-${PG_ALPINE_VERSION}-r${PG_REVISION}",
+		"docker.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${POSTGRES_VERSION}-alpine-${PG_ALPINE_VERSION}-r${PG_REVISION}",
+		"quay.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${POSTGRES_VERSION}-alpine-${PG_ALPINE_VERSION}-r${PG_REVISION}",
+		"ghcr.io/wenerme/dockerfiles/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}${POSTGRES_VERSION}-alpine-${PG_ALPINE_VERSION}-r${PG_REVISION}",
 
 		"docker.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}alpine-${PG_ALPINE_VERSION}",
 		"quay.io/wener/${IMAGE_NAME}:${notequal("latest", name) ? "${name}-" : ""}alpine-${PG_ALPINE_VERSION}",

@@ -25,9 +25,10 @@ const postgresSources: UpstreamSource[] = [
   { name: 'PG_NET_VERSION', repo: 'supabase/pg_net', pattern: /^v\d+\.\d+\.\d+$/, strip: /^v/ },
   { name: 'PG_REPACK_VERSION', repo: 'reorg/pg_repack', pattern: /^ver_\d+\.\d+\.\d+$/, strip: /^ver_/ },
   { name: 'PG_PARTMAN_VERSION', repo: 'pgpartman/pg_partman', pattern: /^v\d+\.\d+\.\d+$/, strip: /^v/ },
-  { name: 'PGMQ_VERSION', repo: 'tembo-io/pgmq', pattern: /^v\d+\.\d+\.\d+$/, strip: /^v/ },
+  { name: 'PGMQ_VERSION', repo: 'pgmq/pgmq', pattern: /^v\d+\.\d+\.\d+$/, strip: /^v/ },
   { name: 'TIMESCALEDB_VERSION', repo: 'timescale/timescaledb', pattern: /^\d+\.\d+\.\d+$/ },
-  { name: 'DUCKDB_VERSION', repo: 'duckdb/duckdb', pattern: /^v\d+\.\d+\.\d+$/ },
+  { name: 'PGSODIUM_VERSION', repo: 'michelp/pgsodium', pattern: /^v\d+\.\d+\.\d+$/, strip: /^v/ },
+  { name: 'VAULT_VERSION', repo: 'supabase/vault', pattern: /^v\d+\.\d+\.\d+$/, strip: /^v/ },
 ];
 
 async function latestStableTag(source: UpstreamSource) {
@@ -43,17 +44,19 @@ async function latestStableTag(source: UpstreamSource) {
 async function postgresVersions() {
   const bake = readFileSync(path.join(root, 'postgres/docker-bake.hcl'), 'utf8');
   const current = (name: string) => bake.match(new RegExp(`variable "${name}" \\{ default = "([^"]*)" \\}`))?.[1] ?? '';
-  const [postgresTags, wrappersHead, ...latest] = await Promise.all([
-    $`crane ls docker.io/library/postgres`.quiet().text(),
-    $`git ls-remote https://github.com/wenerme/wrappers.git refs/heads/develop`.quiet().text(),
-    ...postgresSources.map(latestStableTag),
+  const heads = ['wrappers', 'pljs', 'pg_wodekit'];
+  const [revisions, latest] = await Promise.all([
+    Promise.all(heads.map((repo) => $`git ls-remote ${`https://github.com/wenerme/${repo}.git`} refs/heads/develop`.quiet().text())),
+    Promise.all(postgresSources.map(latestStableTag)),
   ]);
-  const postgres = postgresTags.split('\n')
-    .filter((tag) => /^18\.\d+-alpine3\.24$/.test(tag))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-    .at(-1)?.replace('-alpine3.24', '') ?? '';
-  console.log(`PG_VERSION current=${current('PG_VERSION')} latestAlpine3.24=${postgres}`);
-  console.log(`WRAPPERS_REV current=${current('WRAPPERS_REV')} latestDevelop=${wrappersHead.split(/\s+/)[0] ?? ''}`);
+  // The PostgreSQL release itself is tracked in manifest.yaml (`just update`).
+  console.log(`POSTGRES_VERSION current=${current('POSTGRES_VERSION')} (tracked by just update)`);
+  for (const [index, repo] of heads.entries()) {
+    const name = `${repo.toUpperCase()}_REV`;
+    console.log(`${name} current=${current(name)} latestDevelop=${revisions[index].split(/\s+/)[0] ?? ''}`);
+  }
+  // pgrx, Rust and DuckDB follow the wrappers commit; the Dockerfile checks them against it.
+  for (const name of ['PGRX_VERSION', 'RUST_VERSION', 'DUCKDB_VERSION']) console.log(`${name} current=${current(name)} (must match WRAPPERS_REV)`);
   for (const [index, source] of postgresSources.entries()) {
     console.log(`${source.name} current=${current(source.name)} latest=${latest[index] || '(not found)'}`);
   }

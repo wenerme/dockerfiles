@@ -1,13 +1,16 @@
 # wener/postgres
 
 Drop-in replacement for the [official PostgreSQL Docker image](https://hub.docker.com/_/postgres) with additional
-extensions pre-installed. Based on `postgres:18-alpine`.
+extensions pre-installed. Based on `postgres:18.6-alpine3.24`, built for `linux/amd64` and `linux/arm64`.
 
 ```bash
-docker pull wener/postgres:18
+docker pull ghcr.io/wenerme/dockerfiles/postgres:18
 # or
+docker pull wener/postgres:18
 docker pull quay.io/wener/postgres:18
 ```
+
+Tags: `18.6-r0` is immutable; `18.6`, `18` and `latest` move to the newest build.
 
 ## Included Extensions
 
@@ -15,28 +18,30 @@ docker pull quay.io/wener/postgres:18
 
 | Extension                                                     | Version | Preload | Description                                    |
 |---------------------------------------------------------------|---------|---------|------------------------------------------------|
-| [pgvector](https://github.com/pgvector/pgvector)              | 0.8.2   | No      | Vector similarity search (ivfflat, hnsw)       |
-| [timescaledb](https://github.com/timescale/timescaledb)       | 2.25.2  | Yes     | Time-series data, hypertables, compression     |
-| [pg_cron](https://github.com/citusdata/pg_cron)               | 1.6.7   | Yes     | Cron-based job scheduler                       |
-| [pg_partman](https://github.com/pgpartman/pg_partman)         | 5.4.3   | Yes (bgw) | Automated partition management               |
-| [pgmq](https://github.com/pgmq/pgmq)                         | 1.11.0  | No      | Lightweight message queue (like SQS)           |
-| [pg_tle](https://github.com/aws/pg_tle)                       | 1.5.2   | Yes     | Trusted Language Extensions framework          |
+| [pgvector](https://github.com/pgvector/pgvector)              | 0.8.7   | No      | Vector similarity search (ivfflat, hnsw)       |
+| [timescaledb](https://github.com/timescale/timescaledb)       | 2.31.0  | Yes     | Time-series data, hypertables, compression     |
+| [pg_cron](https://github.com/citusdata/pg_cron)               | 1.6.8   | Yes     | Cron-based job scheduler                       |
+| [pg_partman](https://github.com/pgpartman/pg_partman)         | 5.5.0   | Yes (bgw) | Automated partition management               |
+| [pgmq](https://github.com/pgmq/pgmq)                         | 1.13.1  | No      | Lightweight message queue (like SQS)           |
+| [pg_tle](https://github.com/aws/pg_tle)                       | 1.5.3   | Yes     | Trusted Language Extensions framework          |
 
 ### Monitoring & Audit
 
 | Extension                                                     | Version | Preload | Description                                    |
 |---------------------------------------------------------------|---------|---------|------------------------------------------------|
-| [pg_stat_monitor](https://github.com/percona/pg_stat_monitor) | 2.3.2   | Yes     | Query performance monitoring                   |
+| [pg_stat_monitor](https://github.com/percona/pg_stat_monitor) | 2.4.0   | Yes     | Query performance monitoring                   |
 | [pgaudit](https://github.com/pgaudit/pgaudit)                 | 18.0    | Yes     | Session and object audit logging               |
 
 ### Networking & HTTP
 
 | Extension                                                     | Version | Preload | Description                                    |
 |---------------------------------------------------------------|---------|---------|------------------------------------------------|
-| [http](https://github.com/pramsey/pgsql-http)                 | 1.7.0   | No      | HTTP client for PostgreSQL                     |
-| [pg_net](https://github.com/supabase/pg_net)                  | 0.20.2  | Yes     | Async HTTP/HTTPS requests from SQL             |
+| [http](https://github.com/pramsey/pgsql-http)                 | 1.7.2   | No      | HTTP client for PostgreSQL                     |
+| [pg_net](https://github.com/supabase/pg_net)                  | 0.20.5  | Yes     | Async HTTP/HTTPS requests from SQL             |
 
-### Foreign Data Wrappers (supabase/wrappers)
+### Foreign Data Wrappers ([wenerme/wrappers](https://github.com/wenerme/wrappers), wrappers 0.6.4)
+
+A fork of supabase/wrappers with extra FDWs (Tencent CLS, Prometheus) and fixes; DuckDB 1.5.6.
 
 | FDW                | Handler                       | Description              |
 |--------------------|-------------------------------|--------------------------|
@@ -55,8 +60,8 @@ All FDWs are accessed via `CREATE EXTENSION wrappers;` then `CREATE FOREIGN DATA
 
 | Extension                                                     | Version | Preload | Description                                    |
 |---------------------------------------------------------------|---------|---------|------------------------------------------------|
-| [pgsodium](https://github.com/michelp/pgsodium)               | 3.1.9   | Yes     | Encryption using libsodium                     |
-| [vault](https://github.com/supabase/vault)                    | 0.3.1   | No      | Encrypted secrets storage (requires pgsodium)  |
+| [pgsodium](https://github.com/michelp/pgsodium)               | 3.1.11  | Yes     | Encryption using libsodium                     |
+| [vault](https://github.com/supabase/vault)                    | 0.3.2   | No      | Encrypted secrets storage (requires pgsodium)  |
 | [pg_hashids](https://github.com/iCyberon/pg_hashids)          | 1.2.1   | No      | Short unique ID generation from integers       |
 | [pg_repack](https://github.com/reorg/pg_repack)               | 1.5.3   | No      | Online table reorganization                    |
 
@@ -183,6 +188,12 @@ CREATE EXTENSION supabase_vault;  -- requires pgsodium
 
 ### supabase wrappers
 
+Databases created with earlier images (wrappers 0.6.0) keep working: the old library name stays
+loadable, and `ALTER EXTENSION wrappers UPDATE;` moves them to the current version. The update
+recreates `wrappers_fdw_stats`, so its statistics and any grants on it (for example `SELECT` for a
+read-only role) are lost; re-run those grants afterwards.
+
+
 ```sql
 CREATE EXTENSION wrappers;
 CREATE FOREIGN DATA WRAPPER clickhouse_wrapper
@@ -202,21 +213,15 @@ This image preserves full compatibility with the official `postgres` Alpine imag
 
 ## Build
 
+The [Postgres workflow](../../.github/workflows/postgres.yml) is run manually. It builds each
+platform on a native runner (`linux/amd64` on `ubuntu-latest`, `linux/arm64` on `ubuntu-24.04-arm`)
+and runs [`test.sh`](test.sh) against it; with `publish` enabled on the default branch it then
+publishes the multi-platform tag to GHCR. Versions and source commits are pinned in
+[`../docker-bake.hcl`](../docker-bake.hcl); the PostgreSQL release and revision come from the
+repository `manifest.yaml`.
+
 ```bash
-# Load for current platform
+# Build for the current platform and run the smoke tests
 make load:postgres
-
-# Push multi-arch
-make push:postgres
-
-# Print build config
-make print
-```
-
-Pin to a specific PostgreSQL version:
-
-```bash
-docker buildx bake --load \
-  --set '*.platform=linux/arm64' \
-  --set '*.args.PG_VERSION=18'
+./test.sh wener/postgres:latest
 ```

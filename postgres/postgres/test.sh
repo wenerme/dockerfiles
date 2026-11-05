@@ -27,19 +27,21 @@ docker run --rm -d \
   -e POSTGRES_HOST_AUTH_METHOD=trust \
   "$IMAGE" \
   postgres \
-    -c shared_preload_libraries=pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor \
+    -c shared_preload_libraries=timescaledb,pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor,pg_partman_bgw \
     -c cron.database_name=postgres \
+    -c timescaledb.telemetry_level=off \
   >/dev/null
 
 log "Waiting for PostgreSQL to be ready..."
 for i in $(seq 1 30); do
-  if docker exec "$CONTAINER" pg_isready -U postgres &>/dev/null; then
+  # TCP, not the socket: the entrypoint's temporary init server listens on the socket only.
+  if docker exec "$CONTAINER" pg_isready -h 127.0.0.1 -U postgres &>/dev/null; then
     break
   fi
   sleep 1
 done
 
-if ! docker exec "$CONTAINER" pg_isready -U postgres &>/dev/null; then
+if ! docker exec "$CONTAINER" pg_isready -h 127.0.0.1 -U postgres &>/dev/null; then
   fail "PostgreSQL did not become ready in 30s"
   docker logs "$CONTAINER" 2>&1 | tail -30
   exit 1
@@ -64,15 +66,56 @@ psql_exec "INSERT INTO _test_vec (emb) VALUES ('[1,0,0]'), ('[0,1,0]'), ('[0,0,1
 psql_exec "CREATE INDEX IF NOT EXISTS _test_vec_hnsw ON _test_vec USING hnsw (emb vector_cosine_ops);" >/dev/null \
   && ok "HNSW index creation" || fail "HNSW index creation"
 
-# ── test: mysql_fdw ─────────────────────────────────────────────
-log "Testing mysql_fdw"
-psql_exec "CREATE EXTENSION IF NOT EXISTS mysql_fdw;" >/dev/null && ok "CREATE EXTENSION mysql_fdw" || fail "CREATE EXTENSION mysql_fdw"
+# ── test: supabase wrappers ─────────────────────────────────────
+log "Testing supabase wrappers"
+psql_exec "CREATE EXTENSION IF NOT EXISTS wrappers;" >/dev/null && ok "CREATE EXTENSION wrappers" || fail "CREATE EXTENSION wrappers"
 
-psql_exec "CREATE SERVER IF NOT EXISTS _test_mysql FOREIGN DATA WRAPPER mysql_fdw OPTIONS (host '127.0.0.1', port '3306');" >/dev/null \
-  && ok "CREATE SERVER with mysql_fdw" || fail "CREATE SERVER with mysql_fdw"
+WRAPPERS_VER=$(psql_exec "SELECT extversion FROM pg_extension WHERE extname = 'wrappers';")
+echo "  wrappers = $WRAPPERS_VER"
+for handler in click_house duckdb mysql prometheus redis s3 s3_vectors tencent_cls; do
+  N=$(psql_exec "SELECT count(*) FROM pg_proc WHERE proname = '${handler}_fdw_handler';")
+  if [[ "$N" == "1" ]]; then ok "${handler}_fdw_handler"; else fail "${handler}_fdw_handler missing"; fi
+done
 
-FDW=$(psql_exec "SELECT fdwname FROM pg_foreign_data_wrapper WHERE fdwname = 'mysql_fdw';")
-if [[ "$FDW" == "mysql_fdw" ]]; then ok "mysql_fdw registered"; else fail "mysql_fdw not found in pg_foreign_data_wrapper"; fi
+psql_exec "CREATE FOREIGN DATA WRAPPER _test_mysql_wrapper HANDLER mysql_fdw_handler VALIDATOR mysql_fdw_validator;" >/dev/null \
+  && ok "CREATE FOREIGN DATA WRAPPER (mysql_fdw_handler)" || fail "CREATE FOREIGN DATA WRAPPER (mysql_fdw_handler)"
+psql_exec "CREATE SERVER _test_mysql FOREIGN DATA WRAPPER _test_mysql_wrapper OPTIONS (conn_string 'mysql://u:p@127.0.0.1:3306/db');" >/dev/null \
+  && ok "CREATE SERVER with mysql wrapper" || fail "CREATE SERVER with mysql wrapper"
+
+# Databases created by earlier images still reference wrappers 0.6.0.
+UPGRADE=$(psql_exec "SELECT count(*) FROM pg_extension_update_paths('wrappers') WHERE source = '0.6.0' AND target = '$WRAPPERS_VER' AND path IS NOT NULL;")
+if [[ "$WRAPPERS_VER" == "0.6.0" || "$UPGRADE" == "1" ]]; then ok "wrappers update path 0.6.0 -> $WRAPPERS_VER"; else fail "no wrappers update path 0.6.0 -> $WRAPPERS_VER"; fi
+psql_exec "LOAD '\$libdir/wrappers-0.6.0';" >/dev/null && ok "wrappers-0.6.0 library still loadable" || fail "LOAD wrappers-0.6.0"
+
+# ── test: timescaledb ───────────────────────────────────────────
+log "Testing timescaledb"
+psql_exec "CREATE EXTENSION IF NOT EXISTS timescaledb;" >/dev/null && ok "CREATE EXTENSION timescaledb" || fail "CREATE EXTENSION timescaledb"
+psql_exec "CREATE TABLE _test_metrics (time timestamptz NOT NULL, value double precision);" >/dev/null
+HT=$(psql_exec "SELECT count(*) FROM create_hypertable('_test_metrics', by_range('time'));")
+if [[ "$HT" == "1" ]]; then ok "create_hypertable()"; else fail "create_hypertable(): $HT"; fi
+
+# ── test: pgmq / pg_partman ─────────────────────────────────────
+log "Testing pgmq and pg_partman"
+psql_exec "CREATE EXTENSION IF NOT EXISTS pgmq;" >/dev/null && ok "CREATE EXTENSION pgmq" || fail "CREATE EXTENSION pgmq"
+psql_exec "SELECT pgmq.create('_test_q');" >/dev/null
+psql_exec "SELECT pgmq.send('_test_q', '{\"k\":1}'::jsonb);" >/dev/null
+MSG=$(psql_exec "SELECT message->>'k' FROM pgmq.read('_test_q', 30, 1);")
+if [[ "$MSG" == "1" ]]; then ok "pgmq send/read"; else fail "pgmq read: $MSG"; fi
+psql_exec "CREATE SCHEMA IF NOT EXISTS partman; CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;" >/dev/null \
+  && ok "CREATE EXTENSION pg_partman" || fail "CREATE EXTENSION pg_partman"
+
+# ── test: pljs / pg_wodekit ─────────────────────────────────────
+log "Testing pljs and pg_wodekit"
+psql_exec "CREATE EXTENSION IF NOT EXISTS pljs;" >/dev/null && ok "CREATE EXTENSION pljs" || fail "CREATE EXTENSION pljs"
+psql_exec "CREATE FUNCTION _test_js(a int) RETURNS int LANGUAGE pljs AS 'return a * 2;';" >/dev/null
+JS=$(psql_exec "SELECT _test_js(21);")
+if [[ "$JS" == "42" ]]; then ok "pljs function"; else fail "pljs function: $JS"; fi
+psql_exec "CREATE EXTENSION IF NOT EXISTS pg_wodekit;" >/dev/null && ok "CREATE EXTENSION pg_wodekit" || fail "CREATE EXTENSION pg_wodekit"
+
+# ── test: DuckDB extensions for duckdb_fdw ──────────────────────
+log "Testing DuckDB extensions"
+HTTPFS=$(docker exec "$CONTAINER" sh -c 'ls /usr/local/lib/duckdb/extensions/*/*/httpfs.duckdb_extension 2>/dev/null')
+if [[ $(printf '%s\n' "$HTTPFS" | grep -c .) == "1" ]]; then ok "httpfs at ${HTTPFS#/usr/local/lib/duckdb/extensions/}"; else fail "expected one httpfs extension, got: $HTTPFS"; fi
 
 # ── test: pg_cron ───────────────────────────────────────────────
 log "Testing pg_cron"
@@ -172,7 +215,7 @@ docker run -d --name "$SODIUM" --user 1001:1001 \
   >/dev/null
 sodium_ready() {
   for _ in $(seq 1 30); do
-    docker exec "$SODIUM" pg_isready -U postgres -q &>/dev/null && return 0
+    docker exec "$SODIUM" pg_isready -h 127.0.0.1 -U postgres -q &>/dev/null && return 0
     sleep 1
   done
   return 1
@@ -186,12 +229,13 @@ if sodium_ready; then
   if [[ "$KEY_MODE" == "600 1001" ]]; then ok "root key is 0600, owned by 1001"; else fail "root key mode/owner: $KEY_MODE"; fi
   KEY_HASH=$(sodium_key_hash)
   printf '%s\n' "CREATE EXTENSION pgsodium;" "CREATE EXTENSION supabase_vault CASCADE;" \
-    "SELECT vault.create_secret('probe-value', '_test_probe');" | sodium_sql >/dev/null \
-    && ok "vault.create_secret()" || fail "vault.create_secret()"
+    "SELECT vault.create_secret('probe-value', '_test_probe');" | sodium_sql >/tmp/pg-sodium-$$.out \
+    && ok "vault.create_secret()" || { fail "vault.create_secret()"; sed 's/^/    /' /tmp/pg-sodium-$$.out; }
+  rm -f /tmp/pg-sodium-$$.out
   docker restart "$SODIUM" >/dev/null
   if sodium_ready; then ok "restart with existing key"; else fail "restart with existing key"; fi
   if [[ "$(sodium_key_hash)" == "$KEY_HASH" ]]; then ok "root key unchanged after restart"; else fail "root key changed after restart"; fi
-  DEC=$(sodium_sql -c "SELECT decrypted_secret = 'probe-value' FROM vault.decrypted_secrets WHERE name = '_test_probe';")
+  DEC=$(sodium_sql -c "SELECT decrypted_secret = 'probe-value' FROM vault.decrypted_secrets WHERE name = '_test_probe';" || true)
   if [[ "$DEC" == "t" ]]; then ok "vault secret decrypts after restart"; else fail "vault decrypt after restart: $DEC"; fi
 else
   fail "fresh PGDATA with pgsodium preloaded did not start"
