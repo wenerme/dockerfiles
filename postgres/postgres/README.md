@@ -188,11 +188,6 @@ CREATE EXTENSION supabase_vault;  -- requires pgsodium
 
 ### supabase wrappers
 
-Databases created with earlier images (wrappers 0.6.0) keep working: the old library name stays
-loadable, and `ALTER EXTENSION wrappers UPDATE;` moves them to the current version. The update
-recreates `wrappers_fdw_stats`, so its statistics and any grants on it (for example `SELECT` for a
-read-only role) are lost; re-run those grants afterwards.
-
 
 ```sql
 CREATE EXTENSION wrappers;
@@ -202,7 +197,30 @@ CREATE SERVER clickhouse_svr FOREIGN DATA WRAPPER clickhouse_wrapper
   OPTIONS (conn_string 'tcp://default:@localhost:9000/default');
 ```
 
-## Compatibility
+## Upgrading from earlier images
+
+A data directory created by `18.3-r0` or `18.3-r1` starts on this image without any
+`ALTER EXTENSION`, and can still be started on the old image afterwards:
+
+- timescaledb: the libraries of 2.25.2, 2.26.0 and 2.26.1 are kept (the loader opens
+  `timescaledb-<installed>.so`), so hypertables, compression and continuous aggregates keep working
+  on the installed version.
+- wrappers: `wrappers-0.6.0.so` stays loadable.
+- The other extensions' libraries work with their older installed SQL versions.
+
+Update when convenient, timescaledb first and as the first command of a new session:
+
+```sql
+ALTER EXTENSION timescaledb UPDATE;
+ALTER EXTENSION wrappers UPDATE;  -- likewise pgsodium, supabase_vault, vector, pg_net, ...
+```
+
+After `ALTER EXTENSION timescaledb UPDATE` the database needs this or a later image. The wrappers
+update recreates `wrappers_fdw_stats`, so its statistics and any grants on it (for example `SELECT`
+for a read-only role) are lost; re-run those grants afterwards.
+
+[`upgrade-test.sh`](upgrade-test.sh) runs this path against the earlier images; `test.sh` includes it.
+
 
 This image preserves full compatibility with the official `postgres` Alpine image:
 
