@@ -1,0 +1,149 @@
+name: Postgres
+
+# Builds the manifest's build.native images (postgres) on a runner of each architecture: the Rust/C++/DuckDB
+# build is too heavy for QEMU. Manual only; ghcr.yml skips these images.
+#   publish=false: build and run postgres/test.sh on each platform against a registry on the runner.
+#   publish=true (default branch only): build, test, push each platform by digest, then merge them into the
+#   canonical GHCR tag and move its aliases. An existing canonical tag is never rebuilt.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Push to GHCR after the tests pass (default branch only).
+        required: true
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: ${{ inputs.publish && 'ghcr-publish' || format('postgres-verify-{0}', github.ref) }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux/amd64, arch: amd64, runner: ubuntu-latest }
+          - { platform: linux/arm64, arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 300
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Refuse to publish from another branch
+        if: inputs.publish && github.ref_name != github.event.repository.default_branch
+        run: |
+          echo "publish=true runs only on ${{ github.event.repository.default_branch }}" >&2
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The build needs more disk than the runner leaves free.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+
+      # Verification target; bound to loopback so nothing outside the runner can read or write it.
+      - name: Start local registry
+        if: ${{ !inputs.publish }}
+        run: docker run -d --name registry -p 127.0.0.1:5000:5000 registry:3.0.0@sha256:6c5666b861f3505b116bb9aa9b25175e71210414bd010d92035ff64018f9457e
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          # BuildKit runs in a container; host networking lets it reach the local registry.
+          driver-opts: network=host
+
+      - name: Login to GHCR
+        if: inputs.publish
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and test
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          set -euo pipefail
+          mkdir -p digests
+          # Keeps the artifact non-empty so the merge job can always download it.
+          echo "$PLATFORM" > "digests/ran-${PLATFORM//\//-}"
+          if [ "$PUBLISH" = "true" ]; then
+            bun scripts/dfcli/main.ts publish --native --platforms "$PLATFORM" --push --digest-dir digests
+          else
+            bun scripts/dfcli/main.ts publish --native --platforms "$PLATFORM" --verify-registry localhost:5000
+          fi
+
+      - name: Upload platform digests
+        if: inputs.publish
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-digests-${{ matrix.arch }}
+          path: digests/
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge platform digests
+    needs: build
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download platform digests
+        uses: actions/download-artifact@v8
+        with:
+          pattern: native-digests-*
+          merge-multiple: true
+          path: digests
+
+      - name: Merge digests and move aliases
+        run: bun scripts/dfcli/main.ts publish --native --push --merge digests

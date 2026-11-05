@@ -88,7 +88,7 @@ export function registerImageCommands(program: Command) {
     .option('--push', 'build and push missing tags (intended for GitHub Actions)')
     .option('--platforms <list>', 'comma-separated platform override, e.g. linux/amd64')
     .option('--verify-registry <host:port>', 'build missing tags and push them to a local registry instead of GHCR (pull request checks)')
-    .option('--native', 'handle build.native variants only, on a runner of the selected platform; other runs skip them')
+    .option('--native', 'handle build.native variants only (postgres.yml), on a runner of the selected platform; other runs skip them')
     .option('--digest-dir <dir>', 'with --native --push: push one platform by digest, test it and record the digest here')
     .option('--merge <dir>', 'with --native --push: merge the recorded platform digests into canonical tags and move aliases')
     .action(async (selectors: string[], options: {
@@ -119,7 +119,7 @@ export function registerImageCommands(program: Command) {
       try {
         for (const release of planReleases(releases, selectors)) {
           if (Boolean(release.build.native) !== Boolean(options.native)) {
-            if (release.build.native) results.push({ id: release.id, ref: release.ref, action: 'skip (native job)' });
+            if (release.build.native) results.push({ id: release.id, ref: release.ref, action: 'skip (native build, postgres.yml)' });
             continue;
           }
           current = release.id;

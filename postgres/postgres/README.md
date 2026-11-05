@@ -213,9 +213,10 @@ This image preserves full compatibility with the official `postgres` Alpine imag
 
 ## Build
 
-GitHub Actions builds each platform on a native runner (`linux/amd64` on `ubuntu-latest`,
-`linux/arm64` on `ubuntu-24.04-arm`), runs [`test.sh`](test.sh) against it, then publishes the
-multi-platform tag to GHCR. Versions and source commits are pinned in
+The [Postgres workflow](../../.github/workflows/postgres.yml) is run manually. It builds each
+platform on a native runner (`linux/amd64` on `ubuntu-latest`, `linux/arm64` on `ubuntu-24.04-arm`)
+and runs [`test.sh`](test.sh) against it; with `publish` enabled on the default branch it then
+publishes the multi-platform tag to GHCR. Versions and source commits are pinned in
 [`../docker-bake.hcl`](../docker-bake.hcl); the PostgreSQL release and revision come from the
 repository `manifest.yaml`.
 

@@ -453,7 +453,8 @@ images:
         track: { docker: debian, prefix: "12." }
 
   # Official postgres Alpine image plus extensions (see postgres/postgres/README.md). The Rust/C++ build is too
-  # heavy for QEMU, so each platform builds on its own runner and is smoke-tested before the digests are merged.
+  # heavy for QEMU, so each platform builds on its own runner and is smoke-tested before the digests are merged;
+  # that runs only when .github/workflows/postgres.yml is dispatched manually (ghcr.yml skips it).
   # The Alpine branch (3.24) is also pinned as PG_ALPINE_VERSION in postgres/docker-bake.hcl.
   - name: postgres
     variants:

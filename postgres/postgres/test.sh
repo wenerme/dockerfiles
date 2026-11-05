@@ -34,13 +34,14 @@ docker run --rm -d \
 
 log "Waiting for PostgreSQL to be ready..."
 for i in $(seq 1 30); do
-  if docker exec "$CONTAINER" pg_isready -U postgres &>/dev/null; then
+  # TCP, not the socket: the entrypoint's temporary init server listens on the socket only.
+  if docker exec "$CONTAINER" pg_isready -h 127.0.0.1 -U postgres &>/dev/null; then
     break
   fi
   sleep 1
 done
 
-if ! docker exec "$CONTAINER" pg_isready -U postgres &>/dev/null; then
+if ! docker exec "$CONTAINER" pg_isready -h 127.0.0.1 -U postgres &>/dev/null; then
   fail "PostgreSQL did not become ready in 30s"
   docker logs "$CONTAINER" 2>&1 | tail -30
   exit 1
@@ -214,7 +215,7 @@ docker run -d --name "$SODIUM" --user 1001:1001 \
   >/dev/null
 sodium_ready() {
   for _ in $(seq 1 30); do
-    docker exec "$SODIUM" pg_isready -U postgres -q &>/dev/null && return 0
+    docker exec "$SODIUM" pg_isready -h 127.0.0.1 -U postgres -q &>/dev/null && return 0
     sleep 1
   done
   return 1
@@ -228,12 +229,13 @@ if sodium_ready; then
   if [[ "$KEY_MODE" == "600 1001" ]]; then ok "root key is 0600, owned by 1001"; else fail "root key mode/owner: $KEY_MODE"; fi
   KEY_HASH=$(sodium_key_hash)
   printf '%s\n' "CREATE EXTENSION pgsodium;" "CREATE EXTENSION supabase_vault CASCADE;" \
-    "SELECT vault.create_secret('probe-value', '_test_probe');" | sodium_sql >/dev/null \
-    && ok "vault.create_secret()" || fail "vault.create_secret()"
+    "SELECT vault.create_secret('probe-value', '_test_probe');" | sodium_sql >/tmp/pg-sodium-$$.out \
+    && ok "vault.create_secret()" || { fail "vault.create_secret()"; sed 's/^/    /' /tmp/pg-sodium-$$.out; }
+  rm -f /tmp/pg-sodium-$$.out
   docker restart "$SODIUM" >/dev/null
   if sodium_ready; then ok "restart with existing key"; else fail "restart with existing key"; fi
   if [[ "$(sodium_key_hash)" == "$KEY_HASH" ]]; then ok "root key unchanged after restart"; else fail "root key changed after restart"; fi
-  DEC=$(sodium_sql -c "SELECT decrypted_secret = 'probe-value' FROM vault.decrypted_secrets WHERE name = '_test_probe';")
+  DEC=$(sodium_sql -c "SELECT decrypted_secret = 'probe-value' FROM vault.decrypted_secrets WHERE name = '_test_probe';" || true)
   if [[ "$DEC" == "t" ]]; then ok "vault secret decrypts after restart"; else fail "vault decrypt after restart: $DEC"; fi
 else
   fail "fresh PGDATA with pgsodium preloaded did not start"
