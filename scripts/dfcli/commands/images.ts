@@ -97,6 +97,9 @@ export function registerImageCommands(program: Command) {
       if (options.push && options.verifyRegistry) throw new Error('--push and --verify-registry are mutually exclusive');
       if ((options.digestDir || options.merge) && !(options.native && options.push)) throw new Error('--digest-dir and --merge need --native --push');
       if (options.digestDir && options.merge) throw new Error('--digest-dir and --merge are mutually exclusive');
+      // A native canonical tag is written only by --merge, from every tested platform digest.
+      if (options.native && options.push && !options.digestDir && !options.merge) throw new Error('native --push needs --digest-dir or --merge');
+      if (options.merge && options.platforms) throw new Error('--merge always merges every platform of the Bake target; drop --platforms');
       validateSelectors(selectors);
       const verify = options.verifyRegistry ? parseLocalRegistry(options.verifyRegistry) : undefined;
       // Parents built in this verification run are consumed from the local registry, not GHCR.
@@ -137,7 +140,7 @@ export function registerImageCommands(program: Command) {
             continue;
           }
           if (options.merge) {
-            const wanted = platforms.length ? platforms : source.target![release.build.target].platforms ?? [];
+            const wanted = source.target![release.build.target].platforms ?? [];
             if (!wanted.length) throw new Error('no platforms to merge');
             const digests = wanted.map((platform) => {
               const file = path.join(options.merge!, digestFileName(release, platform));
@@ -161,7 +164,7 @@ export function registerImageCommands(program: Command) {
           }
           console.error(`==> ${release.id}: building ${target}${platforms.length ? ` (${platforms.join(', ')})` : ''}`);
           await prepareBuild(root, release);
-          const pushed = await pushBake(root, release, bake);
+          const pushed = await pushBake(root, release, bake, Boolean(options.digestDir));
           if (options.digestDir) {
             const ref = `${release.repository}@${pushed}`;
             await testRelease(root, release, ref);

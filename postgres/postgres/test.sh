@@ -84,7 +84,7 @@ psql_exec "CREATE SERVER _test_mysql FOREIGN DATA WRAPPER _test_mysql_wrapper OP
 # Databases created by earlier images still reference wrappers 0.6.0.
 UPGRADE=$(psql_exec "SELECT count(*) FROM pg_extension_update_paths('wrappers') WHERE source = '0.6.0' AND target = '$WRAPPERS_VER' AND path IS NOT NULL;")
 if [[ "$WRAPPERS_VER" == "0.6.0" || "$UPGRADE" == "1" ]]; then ok "wrappers update path 0.6.0 -> $WRAPPERS_VER"; else fail "no wrappers update path 0.6.0 -> $WRAPPERS_VER"; fi
-if docker exec "$CONTAINER" test -e /usr/local/lib/postgresql/wrappers-0.6.0.so; then ok "wrappers-0.6.0.so still loadable"; else fail "wrappers-0.6.0.so missing"; fi
+psql_exec "LOAD '\$libdir/wrappers-0.6.0';" >/dev/null && ok "wrappers-0.6.0 library still loadable" || fail "LOAD wrappers-0.6.0"
 
 # ── test: timescaledb ───────────────────────────────────────────
 log "Testing timescaledb"

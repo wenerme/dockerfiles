@@ -543,15 +543,14 @@ export async function prepareBuild(root: string, release: Release) {
   });
 }
 
-export async function pushBake(root: string, release: Release, bake: BakePrint): Promise<string | undefined> {
+export async function pushBake(root: string, release: Release, bake: BakePrint, byDigest = false): Promise<string | undefined> {
   const dir = path.resolve(root, release.build.dir);
   const temp = mkdtempSync(path.join(tmpdir(), 'dockerfiles-bake-'));
   try {
     const file = path.join(temp, 'docker-bake.json');
     const metadata = path.join(temp, 'metadata.json');
     writeFileSync(file, JSON.stringify(executionBake(bake, dir), null, 2));
-    // --push would replace a push-by-digest output; that output already pushes.
-    const byDigest = Boolean(bake.target?.[release.build.target]?.output);
+    // --push would replace the push-by-digest output, which already pushes.
     await run(['docker', 'buildx', 'bake', '--file', file, '--metadata-file', metadata, ...(byDigest ? [] : ['--push']), release.build.target], {
       cwd: dir, timeoutMs: 5 * 60 * 60_000,
     });
