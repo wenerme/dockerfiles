@@ -5,7 +5,10 @@
 #
 #   upgrade-test.sh <new-image> [old-image...]
 #
-# Old images default to the published tags that existing databases were created with.
+# Old images default to the tags existing databases were created with, plus the release currently
+# published for the same PostgreSQL major (ghcr.io/wenerme/dockerfiles/postgres:<major>). The latter
+# fails a build that drops an extension version the previous release installs, e.g. forgetting to
+# move the old TIMESCALEDB_VERSION into TIMESCALEDB_OLD_VERSIONS.
 # TEST_PLATFORM (e.g. linux/amd64) selects a platform of multi-platform tags.
 # No -e: a failing check must be reported, not end the run silently.
 set -uo pipefail
@@ -13,10 +16,24 @@ set -uo pipefail
 NEW="${1:?usage: upgrade-test.sh <new-image> [old-image...]}"
 shift
 OLD_IMAGES=("$@")
-[[ ${#OLD_IMAGES[@]} -eq 0 ]] && OLD_IMAGES=(quay.io/wener/postgres:18.3-r1 quay.io/wener/postgres:18.3-r0)
+PUBLISHED=ghcr.io/wenerme/dockerfiles/postgres
 
 PLATFORM_ARGS=()
 [[ -n "${TEST_PLATFORM:-}" ]] && PLATFORM_ARGS=(--platform "$TEST_PLATFORM")
+
+docker pull -q "${PLATFORM_ARGS[@]}" "$NEW" >/dev/null 2>&1 || docker image inspect "$NEW" >/dev/null || { echo "cannot pull $NEW" >&2; exit 1; }
+if [[ ${#OLD_IMAGES[@]} -eq 0 ]]; then
+  OLD_IMAGES=(quay.io/wener/postgres:18.3-r1 quay.io/wener/postgres:18.3-r0)
+  MAJOR=$(docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$NEW" | sed -n 's/^PG_MAJOR=//p')
+  if [[ -n "$MAJOR" ]] && docker pull -q "${PLATFORM_ARGS[@]}" "$PUBLISHED:$MAJOR" >/dev/null 2>&1; then
+    # Testing the published release itself would only repeat the drill.
+    if [[ "$(docker image inspect --format '{{.Id}}' "$PUBLISHED:$MAJOR")" != "$(docker image inspect --format '{{.Id}}' "$NEW")" ]]; then
+      OLD_IMAGES=("$PUBLISHED:$MAJOR" "${OLD_IMAGES[@]}")
+    fi
+  else
+    echo "no published $PUBLISHED:${MAJOR:-?}; skipping the previous-release drill"
+  fi
+fi
 C="pg-upgrade-test-$$"
 VOL="pg-upgrade-test-$$"
 PASS=0

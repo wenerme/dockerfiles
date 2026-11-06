@@ -310,6 +310,8 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 # timescaledb-<installed>.so, so without it every connection to such a database fails until
 # `ALTER EXTENSION timescaledb UPDATE`. Keep each old version's libraries and install script;
 # the loader, control file and the <old>--<new> update scripts come from the current build.
+# When bumping TIMESCALEDB_VERSION, add the previous one here; drop a version only once no
+# database has it installed (SELECT extversion FROM pg_extension WHERE extname = 'timescaledb').
 ARG TIMESCALEDB_OLD_VERSIONS="2.25.2 2.26.0 2.26.1"
 RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
     set -eux; \
