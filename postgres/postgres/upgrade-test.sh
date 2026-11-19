@@ -218,9 +218,13 @@ for OLD in "${OLD_IMAGES[@]}"; do
   check "vector distance" "0" "SELECT emb <-> '[1,2,3]' FROM items;"
   check "wrappers server" "mysql_probe" "SELECT srvname FROM pg_foreign_server;"
   check "all extension C functions resolve" "ok" "$C_FUNCTIONS_OK"
-  ERRORS=$(docker logs "$C" 2>&1 | grep -E 'could not (access|load)|undefined symbol|PANIC|terminated by signal|threw an error|permission denied' || true)
-  if [[ -z "$ERRORS" ]]; then ok "no load errors in the server log"
-  else fail "server log ($(printf '%s\n' "$ERRORS" | wc -l | tr -d ' ') lines): $(printf '%s\n' "$ERRORS" | sed -E 's/^.*(ERROR|FATAL|PANIC|LOG): +//' | sort | uniq -c | head -5)"; fi
+  LOG_ERRORS='could not (access|load)|undefined symbol|PANIC|terminated by signal|threw an error|permission denied'
+  ERRORS=$(docker logs "$C" 2>&1 | grep -E "$LOG_ERRORS" || true)
+  if [[ -z "$ERRORS" ]]; then ok "no load or job errors in the server log"
+  else
+    fail "server log ($(printf '%s\n' "$ERRORS" | wc -l | tr -d ' ') lines): $(printf '%s\n' "$ERRORS" | sed -E 's/^.*(ERROR|FATAL|PANIC|LOG): +//' | sort | uniq -c | head -5)"
+    docker logs "$C" 2>&1 | grep -E -B2 -A3 "$LOG_ERRORS" | head -30 | sed 's/^/      /'
+  fi
   down
 
   log "rollback: old image on the data directory the new image ran on"
