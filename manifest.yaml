@@ -330,13 +330,15 @@ images:
             app: VERSION
             alpine: ALPINE_RELEASE
             revision: REV
+        # Held on the published 3.24.3 build: Alpine 3.24 nginx 1.30.7-r0 conflicts with
+        # nginx-mod-http-acme-0.4.1-r5 (depends on nginx~1.30.6). Return to base.default once rebuilt.
         base:
-          image: base
-          variant: default
+          ref: "ghcr.io/wenerme/dockerfiles/base:3.24.3-r0@sha256:3887df43864787b5e65ae5e814cd489abc08fc2f11a67900f4c3a8e10abb2afa"
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "1.30.7-r0"
+          app: "1.30.6-r0"
+          alpine: "3.24.3"
           revision: 0
         track: { apk: nginx }
 
@@ -376,7 +378,7 @@ images:
         version:
           scheme: app-alpine
           app: "8.3.36-r0"
-          revision: 0
+          revision: 1
         aliases: ["8.3", "8.3-alpine-${alpine}"]
         track: { apk: php83 }
       - name: "8.4"
@@ -394,7 +396,7 @@ images:
         version:
           scheme: app-alpine
           app: "8.4.27-r0"
-          revision: 0
+          revision: 1
         aliases: ["8.4", "8.4-alpine-${alpine}"]
         track: { apk: php84 }
       - name: "8.5"
@@ -412,7 +414,7 @@ images:
         version:
           scheme: app-alpine
           app: "8.5.12-r0"
-          revision: 0
+          revision: 1
         aliases: ["8.5", "8.5-alpine-${alpine}"]
         track: { apk: php85 }
 
