@@ -167,6 +167,9 @@ jobs_run() { # the timescaledb scheduler of each database keeps running the 'tic
   q="SELECT total_successes FROM timescaledb_information.job_stats s JOIN timescaledb_information.jobs j USING (job_id)
      WHERE j.proc_name = 'tick';"
   for db in postgres appdb; do
+    # A run interrupted by the previous `docker stop` counts as a crash, and timescaledb waits at
+    # least 5 minutes before retrying it; schedule the next run now so only the scheduler is tested.
+    sql -d "$db" -c "SELECT alter_job(job_id, next_start => now()) FROM timescaledb_information.jobs WHERE proc_name = 'tick';" >/dev/null
     before=$(sql -d "$db" -c "$q")
     if ! [[ "$before" =~ ^[0-9]+$ ]]; then fail "timescaledb job succeeds in $db: $before"; continue; fi
     now=$before
@@ -177,8 +180,8 @@ jobs_run() { # the timescaledb scheduler of each database keeps running the 'tic
     done
     if [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )); then ok "timescaledb job succeeds in $db"
     else fail "timescaledb job succeeds in $db: successes stayed at $before ($(sql -d "$db" -c \
-      "SELECT string_agg(job_id || ' ' || coalesce(last_run_status, '-') || ' ' || total_failures || ' failed', ', ')
-         FROM timescaledb_information.job_stats;"))"; fi
+      "SELECT string_agg(format('%s %s, %s failed, %s crashed, next %s', job_id, coalesce(last_run_status, '-'),
+         total_failures, total_crashes, to_char(next_start, 'HH24:MI:SS')), '; ') FROM timescaledb_information.job_stats;"))"; fi
   done
 }
 
