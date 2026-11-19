@@ -47,8 +47,12 @@ trap cleanup EXIT
 
 # The getkey GUCs are explicit: images before 18.3-r2 have no default-path getkey script.
 PG_ARGS=(postgres
-  -c shared_preload_libraries=timescaledb,pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor,pgsodium,supabase_vault
+  -c shared_preload_libraries=timescaledb,pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor,pgsodium,supabase_vault,pg_partman_bgw
   -c cron.database_name=postgres
+  -c pg_partman_bgw.dbname=postgres
+  -c pg_partman_bgw.role=postgres
+  -c pg_partman_bgw.interval=2
+  -c max_worker_processes=32
   -c timescaledb.telemetry_level=off
   -c pgsodium.getkey_script=/usr/local/bin/pgsodium_getkey.sh
   -c vault.getkey_script=/usr/local/bin/pgsodium_getkey.sh)
@@ -109,6 +113,20 @@ CREATE SCHEMA partman;
 CREATE EXTENSION pg_partman SCHEMA partman;
 CREATE EXTENSION pg_hashids;
 CREATE EXTENSION http;
+CREATE TABLE ticks (t timestamptz NOT NULL DEFAULT now());
+CREATE PROCEDURE tick(job_id int, config jsonb) LANGUAGE sql AS $$ INSERT INTO ticks DEFAULT VALUES $$;
+SELECT add_job('tick', interval '2 seconds');
+-- The timescaledb loader starts each database's job scheduler; 2.32 runs it as the database owner,
+-- so a database owned by a regular role is the case that differs from the superuser-owned postgres.
+CREATE ROLE app LOGIN;
+CREATE DATABASE appdb OWNER app;
+\c appdb
+CREATE EXTENSION timescaledb;
+SET ROLE app;
+CREATE TABLE ticks (t timestamptz NOT NULL DEFAULT now());
+CREATE PROCEDURE tick(job_id int, config jsonb) LANGUAGE sql AS $$ INSERT INTO ticks DEFAULT VALUES $$;
+SELECT add_job('tick', interval '2 seconds');
+RESET ROLE;
 SQL
 )
 
@@ -137,17 +155,43 @@ SQL
 snapshot() { # expected row counts for later restarts
   local v
   v=$(sql -c "SELECT count(*) FROM metrics;") && [[ "$v" =~ ^[0-9]+$ ]] && ROWS=$v
-  v=$(sql -c "SELECT count(*) FROM metrics WHERE time < now() - interval '3 days';") && [[ "$v" =~ ^[0-9]+$ ]] && COMPRESSED_ROWS=$v
+  v=$(sql -c "SELECT count(*) FROM metrics WHERE time < '$CUTOFF';") && [[ "$v" =~ ^[0-9]+$ ]] && COMPRESSED_ROWS=$v
   v=$(sql -c "SELECT count(*) FROM metrics_daily;") && [[ "$v" =~ ^[0-9]+$ ]] && CAGG_ROWS=$v
   return 0
+}
+
+jobs_run() { # the timescaledb scheduler of each database keeps running the 'tick' job successfully
+  # A run can do its work and still be recorded as failed (PostgreSQL 18.7 portal check,
+  # timescale/timescaledb#11038), so count successful runs rather than rows written.
+  local db q before now
+  q="SELECT total_successes FROM timescaledb_information.job_stats s JOIN timescaledb_information.jobs j USING (job_id)
+     WHERE j.proc_name = 'tick';"
+  for db in postgres appdb; do
+    # A run interrupted by the previous `docker stop` counts as a crash, and timescaledb waits at
+    # least 5 minutes before retrying it; schedule the next run now so only the scheduler is tested.
+    sql -d "$db" -c "SELECT alter_job(job_id, next_start => now()) FROM timescaledb_information.jobs WHERE proc_name = 'tick';" >/dev/null
+    before=$(sql -d "$db" -c "$q")
+    if ! [[ "$before" =~ ^[0-9]+$ ]]; then fail "timescaledb job succeeds in $db: $before"; continue; fi
+    now=$before
+    for _ in $(seq 1 45); do
+      sleep 1
+      now=$(sql -d "$db" -c "$q")
+      [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )) && break
+    done
+    if [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )); then ok "timescaledb job succeeds in $db"
+    else fail "timescaledb job succeeds in $db: successes stayed at $before ($(sql -d "$db" -c \
+      "SELECT string_agg(format('%s %s, %s failed, %s crashed, next %s', job_id, coalesce(last_run_status, '-'),
+         total_failures, total_crashes, to_char(next_start, 'HH24:MI:SS')), '; ') FROM timescaledb_information.job_stats;"))"; fi
+  done
 }
 
 verify_data() { # shared checks after any restart
   check "hypertable rows" "$ROWS" "SELECT count(*) FROM metrics;"
   check "compressed chunks readable" "$COMPRESSED_ROWS" \
-    "SELECT count(*) FROM metrics WHERE time < now() - interval '3 days';"
+    "SELECT count(*) FROM metrics WHERE time < '$CUTOFF';"
   check "continuous aggregate" "$CAGG_ROWS" "SELECT count(*) FROM metrics_daily;"
   check "vault secret decrypts" "upgrade-probe" "SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'probe';"
+  jobs_run
 }
 
 for OLD in "${OLD_IMAGES[@]}"; do
@@ -157,9 +201,12 @@ for OLD in "${OLD_IMAGES[@]}"; do
 
   if ! up "$OLD"; then fail "old image $OLD did not start"; continue; fi
   if out=$(printf '%s\n' "$SEED" | sql); then ok "seeded on $OLD"; else fail "seed on $OLD: $out"; down; continue; fi
+  jobs_run
   OLD_VERSIONS=$(sql -c "SELECT string_agg(extname || '=' || extversion, ' ' ORDER BY extname) FROM pg_extension;")
   echo "  old: $OLD_VERSIONS"
   ROWS=0 COMPRESSED_ROWS=0 CAGG_ROWS=0
+  # Fixed, so the waits in later stages do not move rows across the boundary.
+  CUTOFF=$(sql -c "SELECT now() - interval '3 days';")
   snapshot
   down
 
@@ -185,9 +232,13 @@ for OLD in "${OLD_IMAGES[@]}"; do
   check "vector distance" "0" "SELECT emb <-> '[1,2,3]' FROM items;"
   check "wrappers server" "mysql_probe" "SELECT srvname FROM pg_foreign_server;"
   check "all extension C functions resolve" "ok" "$C_FUNCTIONS_OK"
-  ERRORS=$(docker logs "$C" 2>&1 | grep -E 'could not (access|load)|undefined symbol|PANIC|terminated by signal' || true)
-  if [[ -z "$ERRORS" ]]; then ok "no load errors in the server log"
-  else fail "server log ($(printf '%s\n' "$ERRORS" | wc -l | tr -d ' ') lines): $(printf '%s\n' "$ERRORS" | sed -E 's/^.*(ERROR|FATAL|PANIC|LOG): +//' | sort | uniq -c | head -5)"; fi
+  LOG_ERRORS='could not (access|load)|undefined symbol|PANIC|terminated by signal|threw an error|permission denied|cannot drop portal|exited with exit code 1'
+  ERRORS=$(docker logs "$C" 2>&1 | grep -E "$LOG_ERRORS" || true)
+  if [[ -z "$ERRORS" ]]; then ok "no load or job errors in the server log"
+  else
+    fail "server log ($(printf '%s\n' "$ERRORS" | wc -l | tr -d ' ') lines): $(printf '%s\n' "$ERRORS" | sed -E 's/^.*(ERROR|FATAL|PANIC|LOG): +//' | sort | uniq -c | head -5)"
+    docker logs "$C" 2>&1 | grep -E -B2 -A3 "$LOG_ERRORS" | head -30 | sed 's/^/      /'
+  fi
   down
 
   log "rollback: old image on the data directory the new image ran on"
@@ -204,6 +255,8 @@ for OLD in "${OLD_IMAGES[@]}"; do
   for ext in $outdated; do
     if out=$(sql -c "ALTER EXTENSION \"$ext\" UPDATE;"); then ok "ALTER EXTENSION $ext UPDATE"; else fail "ALTER EXTENSION $ext UPDATE: $out"; fi
   done
+  if out=$(sql -d appdb -c "ALTER EXTENSION timescaledb UPDATE;"); then ok "ALTER EXTENSION timescaledb UPDATE in appdb"
+  else fail "ALTER EXTENSION timescaledb UPDATE in appdb: $out"; fi
   check "every extension at the image default" "" \
     "SELECT string_agg(e.extname || '=' || e.extversion, ' ') FROM pg_extension e
        JOIN pg_available_extensions a ON a.name = e.extname WHERE e.extversion <> a.default_version;"

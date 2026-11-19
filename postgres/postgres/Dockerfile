@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
 ARG PG_VERSION=18
-ARG PG_IMAGE_VERSION=18.6
+ARG PG_IMAGE_VERSION=18.7
 ARG PG_ALPINE_VERSION=3.24
 
 # ── base build stage ────────────────────────────────────────────
 FROM postgres:${PG_IMAGE_VERSION}-alpine${PG_ALPINE_VERSION} AS build
 
-ARG PG_IMAGE_VERSION=18.6
+ARG PG_IMAGE_VERSION=18.7
 ARG PG_ALPINE_VERSION=3.24
 ARG TARGETARCH
 ARG TARGETVARIANT
@@ -260,7 +260,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 FROM build AS pg_partman
 
 ARG TARGETARCH
-ARG PG_PARTMAN_VERSION=5.5.0
+ARG PG_PARTMAN_VERSION=5.5.1
 
 RUN git clone --branch v${PG_PARTMAN_VERSION} --depth 1 \
         https://github.com/pgpartman/pg_partman.git /tmp/pg_partman
@@ -288,13 +288,17 @@ FROM build AS timescaledb
 
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG TIMESCALEDB_VERSION=2.31.0
+ARG TIMESCALEDB_VERSION=2.32.0
 
 RUN --mount=type=cache,id=apk-pg-build-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/etc/apk/cache \
     apk add dpkg-dev dpkg icu-dev
 
+# PostgreSQL 18.7 breaks scheduled jobs of every timescaledb release without the upstream portal fix
+# (2.32.0 and all the old versions below); see timescaledb-portal-fix.sh.
+COPY --chmod=755 timescaledb-portal-fix.sh /usr/local/bin/
 RUN git clone --branch ${TIMESCALEDB_VERSION} --depth 1 \
-        https://github.com/timescale/timescaledb.git /tmp/timescaledb
+        https://github.com/timescale/timescaledb.git /tmp/timescaledb \
+    && timescaledb-portal-fix.sh /tmp/timescaledb
 
 RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
     cd /tmp/timescaledb; \
@@ -312,7 +316,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
 # the loader, control file and the <old>--<new> update scripts come from the current build.
 # When bumping TIMESCALEDB_VERSION, add the previous one here; drop a version only once no
 # database has it installed (SELECT extversion FROM pg_extension WHERE extname = 'timescaledb').
-ARG TIMESCALEDB_OLD_VERSIONS="2.25.2 2.26.0 2.26.1"
+ARG TIMESCALEDB_OLD_VERSIONS="2.25.2 2.26.0 2.26.1 2.31.0"
 RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
     set -eux; \
     ext=/tmp/install/usr/local/share/postgresql/extension; \
@@ -321,6 +325,7 @@ RUN --mount=type=cache,id=ccache-pgext-$TARGETARCH,target=/root/.ccache \
       [ "$v" = "${TIMESCALEDB_VERSION}" ] && continue; \
       test -e $ext/timescaledb--$v--${TIMESCALEDB_VERSION}.sql; \
       git clone -q --branch $v --depth 1 https://github.com/timescale/timescaledb.git /tmp/timescaledb-$v; \
+      timescaledb-portal-fix.sh /tmp/timescaledb-$v; \
       cd /tmp/timescaledb-$v; \
       ./bootstrap \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
