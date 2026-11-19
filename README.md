@@ -47,27 +47,27 @@ Published to GHCR. Canonical tags are never overwritten; short tags follow the l
 
 | Image | Canonical tag | Short tags | Alpine | Base | Source |
 |---|---|---|---|---|---|
-| base | `ghcr.io/wenerme/dockerfiles/base:3.24.3-r0` | `latest`<br>`3.24.3`<br>`3.24` | 3.24.3 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
-| base openrc | `ghcr.io/wenerme/dockerfiles/base:openrc-3.24.3-r0` | `openrc`<br>`3.24.3-openrc`<br>`3.24-openrc` | 3.24.3 | `base` | [base](base/) |
-| app | `ghcr.io/wenerme/dockerfiles/app:3.24.3-r0` | `latest`<br>`3.24.3`<br>`3.24` | 3.24.3 | `base:openrc` | [app](app/) |
-| app ssh | `ghcr.io/wenerme/dockerfiles/app:ssh-3.24.3-r0` | `ssh`<br>`3.24.3-ssh`<br>`3.24-ssh` | 3.24.3 | `app` | [app](app/) |
-| app workspace | `ghcr.io/wenerme/dockerfiles/app:workspace-3.24.3-r0` | `workspace`<br>`3.24.3-workspace`<br>`3.24-workspace` | 3.24.3 | `app:ssh` | [app](app/) |
-| agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.3-r0` | - | 3.24.3 | `base` | [agent](agent/) |
-| pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r3` | - | 3.24.3 | `base` | [pdns](pdns/) |
-| node 26 | `ghcr.io/wenerme/dockerfiles/node:26-26.12.1-alpine-3.24.3-r0` | `26`<br>`26.12.1`<br>`latest` | 3.24.3 | `base` | [node](node/) |
-| node 24 | `ghcr.io/wenerme/dockerfiles/node:24-24.22.1-alpine-3.24.3-r0` | `24`<br>`24.22.1` | 3.24.3 | `base` | [node](node/) |
-| frp | `ghcr.io/wenerme/dockerfiles/frp:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
-| frpc | `ghcr.io/wenerme/dockerfiles/frpc:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
-| frps | `ghcr.io/wenerme/dockerfiles/frps:0.71.1-alpine-3.24.3-r0` | `0.71.1`<br>`latest` | 3.24.3 | `base` | [frp](frp/) |
-| bun | `ghcr.io/wenerme/dockerfiles/bun:1.4.4-alpine-3.24.3-r0` | `1.4.4`<br>`latest` | 3.24.3 | `base` | [bun](bun/) |
-| node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.22.1-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [node-builder](node-builder/) |
-| go | `ghcr.io/wenerme/dockerfiles/go:1.26.10-r0-alpine-3.24.3-r0` | `latest` | 3.24.3 | `base` | [go](go/) |
-| go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.10-r0-alpine-3.24.3-r0` | - | 3.24.3 | `go` | [go-builder](go-builder/) |
-| nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.6-r0-alpine-3.24.3-r0` | - | 3.24.3 | `base` | [nginx](nginx/) |
+| base | `ghcr.io/wenerme/dockerfiles/base:3.24.4-r0` | `latest`<br>`3.24.4`<br>`3.24` | 3.24.4 | `scratch (Alpine minirootfs)` | [base/base](base/base/) |
+| base openrc | `ghcr.io/wenerme/dockerfiles/base:openrc-3.24.4-r0` | `openrc`<br>`3.24.4-openrc`<br>`3.24-openrc` | 3.24.4 | `base` | [base](base/) |
+| app | `ghcr.io/wenerme/dockerfiles/app:3.24.4-r0` | `latest`<br>`3.24.4`<br>`3.24` | 3.24.4 | `base:openrc` | [app](app/) |
+| app ssh | `ghcr.io/wenerme/dockerfiles/app:ssh-3.24.4-r0` | `ssh`<br>`3.24.4-ssh`<br>`3.24-ssh` | 3.24.4 | `app` | [app](app/) |
+| app workspace | `ghcr.io/wenerme/dockerfiles/app:workspace-3.24.4-r0` | `workspace`<br>`3.24.4-workspace`<br>`3.24-workspace` | 3.24.4 | `app:ssh` | [app](app/) |
+| agent | `ghcr.io/wenerme/dockerfiles/agent:3.24.4-r0` | - | 3.24.4 | `base` | [agent](agent/) |
+| pdns | `ghcr.io/wenerme/dockerfiles/pdns:5.0.7-r4` | - | 3.24.4 | `base` | [pdns](pdns/) |
+| node 26 | `ghcr.io/wenerme/dockerfiles/node:26-26.13.1-alpine-3.24.4-r0` | `26`<br>`26.13.1`<br>`latest` | 3.24.4 | `base` | [node](node/) |
+| node 24 | `ghcr.io/wenerme/dockerfiles/node:24-24.22.3-alpine-3.24.4-r0` | `24`<br>`24.22.3` | 3.24.4 | `base` | [node](node/) |
+| frp | `ghcr.io/wenerme/dockerfiles/frp:0.72.0-alpine-3.24.4-r0` | `0.72.0`<br>`latest` | 3.24.4 | `base` | [frp](frp/) |
+| frpc | `ghcr.io/wenerme/dockerfiles/frpc:0.72.0-alpine-3.24.4-r0` | `0.72.0`<br>`latest` | 3.24.4 | `base` | [frp](frp/) |
+| frps | `ghcr.io/wenerme/dockerfiles/frps:0.72.0-alpine-3.24.4-r0` | `0.72.0`<br>`latest` | 3.24.4 | `base` | [frp](frp/) |
+| bun | `ghcr.io/wenerme/dockerfiles/bun:1.4.4-alpine-3.24.4-r0` | `1.4.4`<br>`latest` | 3.24.4 | `base` | [bun](bun/) |
+| node-builder | `ghcr.io/wenerme/dockerfiles/node-builder:24.22.3-alpine-3.24.4-r0` | - | 3.24.4 | `base` | [node-builder](node-builder/) |
+| go | `ghcr.io/wenerme/dockerfiles/go:1.26.11-r0-alpine-3.24.4-r0` | `latest` | 3.24.4 | `base` | [go](go/) |
+| go-builder | `ghcr.io/wenerme/dockerfiles/go-builder:1.26.11-r0-alpine-3.24.4-r0` | - | 3.24.4 | `go` | [go-builder](go-builder/) |
+| nginx | `ghcr.io/wenerme/dockerfiles/nginx:1.30.7-r0-alpine-3.24.4-r0` | - | 3.24.4 | `base` | [nginx](nginx/) |
 | php 8.2 | `ghcr.io/wenerme/dockerfiles/php:8.2-8.2.26-r0-alpine-3.19.1-r0` | `8.2`<br>`8.2-alpine-3.19.1` | 3.19.1 | `quay.io/wener/nginx:alpine-3.19.1` | [php](php/) |
-| php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.3-r1` | `8.3`<br>`8.3-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
-| php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.3-r1` | `8.4`<br>`8.4-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
-| php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.3-r1` | `8.5`<br>`8.5-alpine-3.24.3` | 3.24.3 | `nginx` | [php](php/) |
+| php 8.3 | `ghcr.io/wenerme/dockerfiles/php:8.3-8.3.36-r0-alpine-3.24.4-r0` | `8.3`<br>`8.3-alpine-3.24.4` | 3.24.4 | `nginx` | [php](php/) |
+| php 8.4 | `ghcr.io/wenerme/dockerfiles/php:8.4-8.4.27-r0-alpine-3.24.4-r0` | `8.4`<br>`8.4-alpine-3.24.4` | 3.24.4 | `nginx` | [php](php/) |
+| php 8.5 | `ghcr.io/wenerme/dockerfiles/php:8.5-8.5.12-r0-alpine-3.24.4-r0` | `8.5`<br>`8.5-alpine-3.24.4` | 3.24.4 | `nginx` | [php](php/) |
 | debian | `ghcr.io/wenerme/dockerfiles/debian:13.7-r0` | `13`<br>`trixie`<br>`latest` | - | `docker.io/library/debian:13.7` | [debian](debian/) |
 | debian bookworm | `ghcr.io/wenerme/dockerfiles/debian:bookworm-12.15-r0` | `12`<br>`bookworm` | - | `docker.io/library/debian:12.15` | [debian](debian/) |
 | postgres | `ghcr.io/wenerme/dockerfiles/postgres:18.6-r2` | `18`<br>`18.6`<br>`latest` | - | `docker.io/library/postgres:18.6-alpine3.24` | [postgres](postgres/) |
