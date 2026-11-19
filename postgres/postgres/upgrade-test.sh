@@ -109,6 +109,20 @@ CREATE SCHEMA partman;
 CREATE EXTENSION pg_partman SCHEMA partman;
 CREATE EXTENSION pg_hashids;
 CREATE EXTENSION http;
+CREATE TABLE ticks (t timestamptz NOT NULL DEFAULT now());
+CREATE PROCEDURE tick(job_id int, config jsonb) LANGUAGE sql AS $$ INSERT INTO ticks DEFAULT VALUES $$;
+SELECT add_job('tick', interval '2 seconds');
+-- The timescaledb loader starts each database's job scheduler; 2.32 runs it as the database owner,
+-- so a database owned by a regular role is the case that differs from the superuser-owned postgres.
+CREATE ROLE app LOGIN;
+CREATE DATABASE appdb OWNER app;
+\c appdb
+CREATE EXTENSION timescaledb;
+SET ROLE app;
+CREATE TABLE ticks (t timestamptz NOT NULL DEFAULT now());
+CREATE PROCEDURE tick(job_id int, config jsonb) LANGUAGE sql AS $$ INSERT INTO ticks DEFAULT VALUES $$;
+SELECT add_job('tick', interval '2 seconds');
+RESET ROLE;
 SQL
 )
 
@@ -142,12 +156,30 @@ snapshot() { # expected row counts for later restarts
   return 0
 }
 
+jobs_run() { # the timescaledb scheduler of each database keeps running the 'tick' job
+  local db before now
+  for db in postgres appdb; do
+    before=$(sql -d "$db" -c "SELECT count(*) FROM ticks;")
+    if ! [[ "$before" =~ ^[0-9]+$ ]]; then fail "timescaledb job runs in $db: $before"; continue; fi
+    now=$before
+    for _ in $(seq 1 45); do
+      sleep 1
+      now=$(sql -d "$db" -c "SELECT count(*) FROM ticks;")
+      [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )) && break
+    done
+    if [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )); then ok "timescaledb job runs in $db"
+    else fail "timescaledb job runs in $db: ticks stayed at $before ($(sql -d "$db" -c \
+      "SELECT string_agg(job_id || ' ' || coalesce(last_run_status, '-'), ', ') FROM timescaledb_information.job_stats;"))"; fi
+  done
+}
+
 verify_data() { # shared checks after any restart
   check "hypertable rows" "$ROWS" "SELECT count(*) FROM metrics;"
   check "compressed chunks readable" "$COMPRESSED_ROWS" \
     "SELECT count(*) FROM metrics WHERE time < now() - interval '3 days';"
   check "continuous aggregate" "$CAGG_ROWS" "SELECT count(*) FROM metrics_daily;"
   check "vault secret decrypts" "upgrade-probe" "SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'probe';"
+  jobs_run
 }
 
 for OLD in "${OLD_IMAGES[@]}"; do
@@ -157,6 +189,7 @@ for OLD in "${OLD_IMAGES[@]}"; do
 
   if ! up "$OLD"; then fail "old image $OLD did not start"; continue; fi
   if out=$(printf '%s\n' "$SEED" | sql); then ok "seeded on $OLD"; else fail "seed on $OLD: $out"; down; continue; fi
+  jobs_run
   OLD_VERSIONS=$(sql -c "SELECT string_agg(extname || '=' || extversion, ' ' ORDER BY extname) FROM pg_extension;")
   echo "  old: $OLD_VERSIONS"
   ROWS=0 COMPRESSED_ROWS=0 CAGG_ROWS=0
@@ -185,7 +218,7 @@ for OLD in "${OLD_IMAGES[@]}"; do
   check "vector distance" "0" "SELECT emb <-> '[1,2,3]' FROM items;"
   check "wrappers server" "mysql_probe" "SELECT srvname FROM pg_foreign_server;"
   check "all extension C functions resolve" "ok" "$C_FUNCTIONS_OK"
-  ERRORS=$(docker logs "$C" 2>&1 | grep -E 'could not (access|load)|undefined symbol|PANIC|terminated by signal' || true)
+  ERRORS=$(docker logs "$C" 2>&1 | grep -E 'could not (access|load)|undefined symbol|PANIC|terminated by signal|threw an error|permission denied' || true)
   if [[ -z "$ERRORS" ]]; then ok "no load errors in the server log"
   else fail "server log ($(printf '%s\n' "$ERRORS" | wc -l | tr -d ' ') lines): $(printf '%s\n' "$ERRORS" | sed -E 's/^.*(ERROR|FATAL|PANIC|LOG): +//' | sort | uniq -c | head -5)"; fi
   down
@@ -204,6 +237,8 @@ for OLD in "${OLD_IMAGES[@]}"; do
   for ext in $outdated; do
     if out=$(sql -c "ALTER EXTENSION \"$ext\" UPDATE;"); then ok "ALTER EXTENSION $ext UPDATE"; else fail "ALTER EXTENSION $ext UPDATE: $out"; fi
   done
+  if out=$(sql -d appdb -c "ALTER EXTENSION timescaledb UPDATE;"); then ok "ALTER EXTENSION timescaledb UPDATE in appdb"
+  else fail "ALTER EXTENSION timescaledb UPDATE in appdb: $out"; fi
   check "every extension at the image default" "" \
     "SELECT string_agg(e.extname || '=' || e.extversion, ' ') FROM pg_extension e
        JOIN pg_available_extensions a ON a.name = e.extname WHERE e.extversion <> a.default_version;"

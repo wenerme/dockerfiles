@@ -2,7 +2,7 @@ variable "IMAGE_NAME" { default = "postgres" }
 
 # Full PostgreSQL release; manifest.yaml binds its app version here. Not named PG_VERSION:
 # that Dockerfile arg is the major version used for pgrx features (pg18).
-variable "POSTGRES_VERSION" { default = "18.6" }
+variable "POSTGRES_VERSION" { default = "18.7" }
 variable "PG_MAJOR" { default = split(".", POSTGRES_VERSION)[0] }
 variable "PG_IMAGE_VERSION" { default = POSTGRES_VERSION }
 variable "PG_ALPINE_VERSION" { default = "3.24" }
@@ -32,10 +32,10 @@ variable "PG_NET_VERSION" { default = "0.20.5" }
 variable "PG_REPACK_VERSION" { default = "1.5.3" }
 variable "PG_PARTMAN_VERSION" { default = "5.5.0" }
 variable "PGMQ_VERSION" { default = "1.13.1" }
-variable "TIMESCALEDB_VERSION" { default = "2.31.0" }
-# timescaledb versions of earlier images (18.3-r0: 2.25.2, 18.3-r1: 2.26.1); kept loadable, see the Dockerfile.
+variable "TIMESCALEDB_VERSION" { default = "2.32.0" }
+# timescaledb versions of earlier images (18.3-r0: 2.25.2, 18.3-r1: 2.26.1, 18.6-r2: 2.31.0); kept loadable, see the Dockerfile.
 # Bumping TIMESCALEDB_VERSION: add the previous one here. Likewise WRAPPERS_OLD_VERSIONS for the wrappers crate version.
-variable "TIMESCALEDB_OLD_VERSIONS" { default = "2.25.2 2.26.0 2.26.1" }
+variable "TIMESCALEDB_OLD_VERSIONS" { default = "2.25.2 2.26.0 2.26.1 2.31.0" }
 variable "PGSODIUM_VERSION" { default = "3.1.11" }
 variable "VAULT_VERSION" { default = "0.3.2" }
 

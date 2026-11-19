@@ -1,7 +1,7 @@
 # wener/postgres
 
 Drop-in replacement for the [official PostgreSQL Docker image](https://hub.docker.com/_/postgres) with additional
-extensions pre-installed. Based on `postgres:18.6-alpine3.24`, built for `linux/amd64` and `linux/arm64`.
+extensions pre-installed. Based on `postgres:18.7-alpine3.24`, built for `linux/amd64` and `linux/arm64`.
 
 ```bash
 docker pull ghcr.io/wenerme/dockerfiles/postgres:18
@@ -10,7 +10,7 @@ docker pull wener/postgres:18
 docker pull quay.io/wener/postgres:18
 ```
 
-Tags: `18.6-r0` is immutable; `18.6`, `18` and `latest` move to the newest build.
+Tags: `18.7-r0` is immutable; `18.7`, `18` and `latest` move to the newest build.
 
 ## Included Extensions
 
@@ -19,7 +19,7 @@ Tags: `18.6-r0` is immutable; `18.6`, `18` and `latest` move to the newest build
 | Extension                                                     | Version | Preload | Description                                    |
 |---------------------------------------------------------------|---------|---------|------------------------------------------------|
 | [pgvector](https://github.com/pgvector/pgvector)              | 0.8.7   | No      | Vector similarity search (ivfflat, hnsw)       |
-| [timescaledb](https://github.com/timescale/timescaledb)       | 2.31.0  | Yes     | Time-series data, hypertables, compression     |
+| [timescaledb](https://github.com/timescale/timescaledb)       | 2.32.0  | Yes     | Time-series data, hypertables, compression     |
 | [pg_cron](https://github.com/citusdata/pg_cron)               | 1.6.8   | Yes     | Cron-based job scheduler                       |
 | [pg_partman](https://github.com/pgpartman/pg_partman)         | 5.5.0   | Yes (bgw) | Automated partition management               |
 | [pgmq](https://github.com/pgmq/pgmq)                         | 1.13.1  | No      | Lightweight message queue (like SQS)           |
