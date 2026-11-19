@@ -10,10 +10,13 @@
 # match exactly once fails the build.
 set -eu
 f="$1/tsl/src/bgw_policy/job.c"
-if grep -q 'MarkPortalDone(portal);' "$f"; then
+active=$(grep -c 'portal->status = PORTAL_ACTIVE;' "$f" || true)
+marked=$(grep -c 'MarkPortalDone(portal);' "$f" || true)
+if [ "$active" -ge 1 ] && [ "$marked" -ge 1 ]; then
 	echo "timescaledb portal fix: already upstream in $1"
 	exit 0
 fi
+[ "$active" = 0 ] && [ "$marked" = 0 ] || { echo "partial portal fix in $f; review it" >&2; exit 1; }
 [ "$(grep -c 'portal->resowner = CurrentResourceOwner;' "$f")" = 1 ] || { echo "unexpected portal setup in $f" >&2; exit 1; }
 [ "$(grep -c 'PortalDrop(portal, false);' "$f")" = 1 ] || { echo "unexpected PortalDrop in $f" >&2; exit 1; }
 awk '
@@ -22,5 +25,8 @@ awk '
 	{ print }
 ' "$f" > "$f.new"
 mv "$f.new" "$f"
-[ "$(grep -c 'portal->status = PORTAL_ACTIVE;' "$f")" = 1 ] && [ "$(grep -c 'MarkPortalDone(portal);' "$f")" = 1 ]
+if [ "$(grep -c 'portal->status = PORTAL_ACTIVE;' "$f")" != 1 ] || [ "$(grep -c 'MarkPortalDone(portal);' "$f")" != 1 ]; then
+	echo "portal fix verification failed in $f" >&2
+	exit 1
+fi
 echo "timescaledb portal fix: applied to $1"
