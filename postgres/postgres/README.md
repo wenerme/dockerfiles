@@ -21,7 +21,7 @@ Tags: `18.7-r0` is immutable; `18.7`, `18` and `latest` move to the newest build
 | [pgvector](https://github.com/pgvector/pgvector)              | 0.8.7   | No      | Vector similarity search (ivfflat, hnsw)       |
 | [timescaledb](https://github.com/timescale/timescaledb)       | 2.32.0  | Yes     | Time-series data, hypertables, compression     |
 | [pg_cron](https://github.com/citusdata/pg_cron)               | 1.6.8   | Yes     | Cron-based job scheduler                       |
-| [pg_partman](https://github.com/pgpartman/pg_partman)         | 5.5.0   | Yes (bgw) | Automated partition management               |
+| [pg_partman](https://github.com/pgpartman/pg_partman)         | 5.5.1   | Yes (bgw) | Automated partition management               |
 | [pgmq](https://github.com/pgmq/pgmq)                         | 1.13.1  | No      | Lightweight message queue (like SQS)           |
 | [pg_tle](https://github.com/aws/pg_tle)                       | 1.5.3   | Yes     | Trusted Language Extensions framework          |
 

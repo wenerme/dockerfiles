@@ -30,7 +30,7 @@ variable "PG_HASHIDS_VERSION" { default = "1.2.1" }
 variable "PGSQL_HTTP_VERSION" { default = "1.7.2" }
 variable "PG_NET_VERSION" { default = "0.20.5" }
 variable "PG_REPACK_VERSION" { default = "1.5.3" }
-variable "PG_PARTMAN_VERSION" { default = "5.5.0" }
+variable "PG_PARTMAN_VERSION" { default = "5.5.1" }
 variable "PGMQ_VERSION" { default = "1.13.1" }
 variable "TIMESCALEDB_VERSION" { default = "2.32.0" }
 # timescaledb versions of earlier images (18.3-r0: 2.25.2, 18.3-r1: 2.26.1, 18.6-r2: 2.31.0); kept loadable, see the Dockerfile.

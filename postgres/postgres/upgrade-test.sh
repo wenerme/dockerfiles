@@ -47,8 +47,12 @@ trap cleanup EXIT
 
 # The getkey GUCs are explicit: images before 18.3-r2 have no default-path getkey script.
 PG_ARGS=(postgres
-  -c shared_preload_libraries=timescaledb,pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor,pgsodium,supabase_vault
+  -c shared_preload_libraries=timescaledb,pg_cron,pg_tle,pg_net,pgaudit,pg_stat_monitor,pgsodium,supabase_vault,pg_partman_bgw
   -c cron.database_name=postgres
+  -c pg_partman_bgw.dbname=postgres
+  -c pg_partman_bgw.role=postgres
+  -c pg_partman_bgw.interval=2
+  -c max_worker_processes=32
   -c timescaledb.telemetry_level=off
   -c pgsodium.getkey_script=/usr/local/bin/pgsodium_getkey.sh
   -c vault.getkey_script=/usr/local/bin/pgsodium_getkey.sh)
@@ -151,32 +155,37 @@ SQL
 snapshot() { # expected row counts for later restarts
   local v
   v=$(sql -c "SELECT count(*) FROM metrics;") && [[ "$v" =~ ^[0-9]+$ ]] && ROWS=$v
-  v=$(sql -c "SELECT count(*) FROM metrics WHERE time < now() - interval '3 days';") && [[ "$v" =~ ^[0-9]+$ ]] && COMPRESSED_ROWS=$v
+  v=$(sql -c "SELECT count(*) FROM metrics WHERE time < '$CUTOFF';") && [[ "$v" =~ ^[0-9]+$ ]] && COMPRESSED_ROWS=$v
   v=$(sql -c "SELECT count(*) FROM metrics_daily;") && [[ "$v" =~ ^[0-9]+$ ]] && CAGG_ROWS=$v
   return 0
 }
 
-jobs_run() { # the timescaledb scheduler of each database keeps running the 'tick' job
-  local db before now
+jobs_run() { # the timescaledb scheduler of each database keeps running the 'tick' job successfully
+  # A run can do its work and still be recorded as failed (PostgreSQL 18.7 portal check,
+  # timescale/timescaledb#11038), so count successful runs rather than rows written.
+  local db q before now
+  q="SELECT total_successes FROM timescaledb_information.job_stats s JOIN timescaledb_information.jobs j USING (job_id)
+     WHERE j.proc_name = 'tick';"
   for db in postgres appdb; do
-    before=$(sql -d "$db" -c "SELECT count(*) FROM ticks;")
-    if ! [[ "$before" =~ ^[0-9]+$ ]]; then fail "timescaledb job runs in $db: $before"; continue; fi
+    before=$(sql -d "$db" -c "$q")
+    if ! [[ "$before" =~ ^[0-9]+$ ]]; then fail "timescaledb job succeeds in $db: $before"; continue; fi
     now=$before
     for _ in $(seq 1 45); do
       sleep 1
-      now=$(sql -d "$db" -c "SELECT count(*) FROM ticks;")
+      now=$(sql -d "$db" -c "$q")
       [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )) && break
     done
-    if [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )); then ok "timescaledb job runs in $db"
-    else fail "timescaledb job runs in $db: ticks stayed at $before ($(sql -d "$db" -c \
-      "SELECT string_agg(job_id || ' ' || coalesce(last_run_status, '-'), ', ') FROM timescaledb_information.job_stats;"))"; fi
+    if [[ "$now" =~ ^[0-9]+$ ]] && (( now > before )); then ok "timescaledb job succeeds in $db"
+    else fail "timescaledb job succeeds in $db: successes stayed at $before ($(sql -d "$db" -c \
+      "SELECT string_agg(job_id || ' ' || coalesce(last_run_status, '-') || ' ' || total_failures || ' failed', ', ')
+         FROM timescaledb_information.job_stats;"))"; fi
   done
 }
 
 verify_data() { # shared checks after any restart
   check "hypertable rows" "$ROWS" "SELECT count(*) FROM metrics;"
   check "compressed chunks readable" "$COMPRESSED_ROWS" \
-    "SELECT count(*) FROM metrics WHERE time < now() - interval '3 days';"
+    "SELECT count(*) FROM metrics WHERE time < '$CUTOFF';"
   check "continuous aggregate" "$CAGG_ROWS" "SELECT count(*) FROM metrics_daily;"
   check "vault secret decrypts" "upgrade-probe" "SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'probe';"
   jobs_run
@@ -193,6 +202,8 @@ for OLD in "${OLD_IMAGES[@]}"; do
   OLD_VERSIONS=$(sql -c "SELECT string_agg(extname || '=' || extversion, ' ' ORDER BY extname) FROM pg_extension;")
   echo "  old: $OLD_VERSIONS"
   ROWS=0 COMPRESSED_ROWS=0 CAGG_ROWS=0
+  # Fixed, so the waits in later stages do not move rows across the boundary.
+  CUTOFF=$(sql -c "SELECT now() - interval '3 days';")
   snapshot
   down
 
@@ -218,7 +229,7 @@ for OLD in "${OLD_IMAGES[@]}"; do
   check "vector distance" "0" "SELECT emb <-> '[1,2,3]' FROM items;"
   check "wrappers server" "mysql_probe" "SELECT srvname FROM pg_foreign_server;"
   check "all extension C functions resolve" "ok" "$C_FUNCTIONS_OK"
-  LOG_ERRORS='could not (access|load)|undefined symbol|PANIC|terminated by signal|threw an error|permission denied'
+  LOG_ERRORS='could not (access|load)|undefined symbol|PANIC|terminated by signal|threw an error|permission denied|cannot drop portal|exited with exit code 1'
   ERRORS=$(docker logs "$C" 2>&1 | grep -E "$LOG_ERRORS" || true)
   if [[ -z "$ERRORS" ]]; then ok "no load or job errors in the server log"
   else
