@@ -67,7 +67,7 @@ RUN --mount=type=cache,id=apk-${TARGETARCH}${TARGETVARIANT},sharing=locked,targe
     yq-go \
     zip \
 		&& apk add --upgrade -X https://mirrors.aliyun.com/alpine/edge/community zellij \
-    && apk add -X https://mirrors.aliyun.com/alpine/edge/testing duckdb \
+    && apk add -X https://mirrors.aliyun.com/alpine/edge/community duckdb \
     && curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
 
 RUN npm add -g \

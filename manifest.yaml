@@ -20,7 +20,7 @@ images:
             revision: REV
         version:
           scheme: alpine
-          alpine: "3.24.3"
+          alpine: "3.24.4"
           revision: 0
         # Floating tags: latest, patch (3.24.3) and minor (3.24) follow the newest canonical tag.
         aliases: ["latest", "${alpine}", "${alpine_minor}"]
@@ -125,7 +125,7 @@ images:
         version:
           scheme: app
           app: "5.0.7"
-          revision: 3
+          revision: 4
         track: { apk: pdns, pkgrel: false }
 
   # Node.js runtime from the official musl builds; one variant per maintained major line.
@@ -145,7 +145,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "26.12.1"
+          app: "26.13.1"
           revision: 0
         aliases: ["26", "${app}", "latest"]
         track: { nodejs: "26" }
@@ -163,7 +163,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "24.22.1"
+          app: "24.22.3"
           revision: 0
         aliases: ["24", "${app}"]
         track: { nodejs: "24" }
@@ -185,7 +185,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "0.71.1"
+          app: "0.72.0"
           revision: 0
         aliases: ["${app}", "latest"]
         track: { github: fatedier/frp }
@@ -205,7 +205,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "0.71.1"
+          app: "0.72.0"
           revision: 0
         aliases: ["${app}", "latest"]
         track: { github: fatedier/frp }
@@ -225,7 +225,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "0.71.1"
+          app: "0.72.0"
           revision: 0
         aliases: ["${app}", "latest"]
         track: { github: fatedier/frp }
@@ -271,7 +271,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "24.22.1"
+          app: "24.22.3"
           revision: 0
         # Node.js LTS line; follows the unofficial musl builds the Dockerfile downloads.
         track: { nodejs: "24" }
@@ -293,7 +293,7 @@ images:
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
-          app: "1.26.10-r0"
+          app: "1.26.11-r0"
           revision: 0
         # The APK version ends in -rN, which is reserved for canonical tags, so it cannot be an alias.
         aliases: ["latest"]
@@ -316,7 +316,7 @@ images:
           arg: GO_BASE_IMAGE
         version:
           scheme: app-alpine
-          app: "1.26.10-r0"
+          app: "1.26.11-r0"
           revision: 0
         track: { apk: go }
 
@@ -330,13 +330,15 @@ images:
             app: VERSION
             alpine: ALPINE_RELEASE
             revision: REV
+        # Held on the published 3.24.3 build: Alpine 3.24 nginx 1.30.7-r0 conflicts with
+        # nginx-mod-http-acme-0.4.1-r5 (depends on nginx~1.30.6). Return to base.default once rebuilt.
         base:
-          image: base
-          variant: default
+          ref: "ghcr.io/wenerme/dockerfiles/base:3.24.3-r0@sha256:3887df43864787b5e65ae5e814cd489abc08fc2f11a67900f4c3a8e10abb2afa"
           context: "wener/base:${alpine}"
         version:
           scheme: app-alpine
           app: "1.30.6-r0"
+          alpine: "3.24.3"
           revision: 0
         track: { apk: nginx }
 
